@@ -8,16 +8,44 @@ fi
 
 REAL_USER=${SUDO_USER:-$(whoami)}
 REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
-TARGET_DISK="/dev/nvme1n1"
 
-echo "⚠️  WARNING: Drive $TARGET_DISK will be COMPLETELY FORMATTED!"
-echo "   Current drives:"
-lsblk -d -o NAME,SIZE,MODEL | grep -v loop
+echo "🔍 Available storage drives:"
+echo "--------------------------------------------------------"
+lsblk -d -o NAME,SIZE,MODEL | grep -E "^(nvme|sd)"
+echo "--------------------------------------------------------"
 echo ""
-read -p "Are you sure '$TARGET_DISK' is the correct empty drive? (y/N): " confirm
+echo "Please enter the NAME of the EMPTY drive you want to format."
+echo "(For example: nvme0n1 or sda)"
+read -p "Target drive: " INPUT_DISK
+
+TARGET_DISK="/dev/$INPUT_DISK"
+
+if [ ! -b "$TARGET_DISK" ]; then
+    echo "❌ Error: Device $TARGET_DISK does not exist."
+    exit 1
+fi
+
+# 🚨 SAFETY CHECK: Ensure we are not formatting the active OS drive!
+if lsblk -n -o MOUNTPOINT "$TARGET_DISK" | grep -q -E "^/$|^/boot"; then
+    echo "❌ FATAL ERROR: $TARGET_DISK contains your active CachyOS system!"
+    echo "Aborting to prevent system destruction."
+    exit 1
+fi
+
+echo ""
+echo "⚠️  WARNING: Drive $TARGET_DISK will be COMPLETELY FORMATTED!"
+echo "   This will destroy ALL DATA on this drive."
+read -p "Are you ABSOLUTELY sure? (y/N): " confirm
 if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
     echo "Cancelled."
     exit 1
+fi
+
+# Handle partition naming scheme (/dev/nvme0n1p1 vs /dev/sda1)
+if [[ "$TARGET_DISK" == *nvme* ]]; then
+    PART_PREFIX="${TARGET_DISK}p"
+else
+    PART_PREFIX="${TARGET_DISK}"
 fi
 
 # ──────────────────────────────────────────────
@@ -27,7 +55,7 @@ echo "🛑 1. Stopping services (if running)..."
 systemctl stop docker libvirtd 2>/dev/null || true
 
 # ──────────────────────────────────────────────
-# 2. Partition NVMe 1
+# 2. Partition Target Drive
 # Layout (Proportional %):
 #   p1 DOCKER   15%  – Docker Engine data-root
 #   p2 LIBVIRT  15%  – VM qcow2 images
@@ -49,11 +77,11 @@ partprobe "$TARGET_DISK"
 sleep 1
 
 echo "🗂️  3. Formatting filesystems (ext4 + noatime)..."
-mkfs.ext4 -F -L DOCKER   "${TARGET_DISK}p1"
-mkfs.ext4 -F -L LIBVIRT  "${TARGET_DISK}p2"
-mkfs.ext4 -F -L PROJECTS "${TARGET_DISK}p3"
-mkfs.ext4 -F -L GAMES    "${TARGET_DISK}p4"
-mkfs.ext4 -F -L SYNC     "${TARGET_DISK}p5"
+mkfs.ext4 -F -L DOCKER   "${PART_PREFIX}1"
+mkfs.ext4 -F -L LIBVIRT  "${PART_PREFIX}2"
+mkfs.ext4 -F -L PROJECTS "${PART_PREFIX}3"
+mkfs.ext4 -F -L GAMES    "${PART_PREFIX}4"
+mkfs.ext4 -F -L SYNC     "${PART_PREFIX}5"
 
 echo "📁 4. Creating mount points..."
 # Docker Desktop stores its VM image in ~/.docker/desktop/
@@ -68,7 +96,7 @@ cp /etc/fstab /etc/fstab.bak
 if ! grep -q "LABEL=PROJECTS" /etc/fstab; then
     cat >> /etc/fstab << 'EOF'
 
-# ── NVMe 1 data partitions ──────────────────────────────────────────────────
+# ── Target Drive data partitions ─────────────────────────────────────────────
 # noatime: skip access-time writes → extends SSD lifespan, improves perf
 # DOCKER partition → /data/docker (symlinked from ~/.docker in setup_user.sh)
 LABEL=DOCKER    /data/docker             ext4  defaults,noatime  0 2
