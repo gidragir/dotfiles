@@ -67,8 +67,8 @@ paru -S --needed --noconfirm \
 echo "🐋 1.1. Redirecting Docker Desktop storage to NVMe 1..."
 # If ~/.docker already exists and is NOT a symlink, back it up
 if [ -d "$HOME/.docker" ] && [ ! -L "$HOME/.docker" ]; then
-    echo "   Backing up existing ~/.docker to /data/docker-backup..."
-    mv "$HOME/.docker" /data/docker-backup
+    echo "   Backing up existing ~/.docker to ~/.docker.bak..."
+    mv "$HOME/.docker" "$HOME/.docker.bak"
 fi
 mkdir -p /data/docker
 ln -sfn /data/docker "$HOME/.docker"
