@@ -36,14 +36,12 @@ paru -S --needed --noconfirm \
     biome \
     turbo \
     obsidian \
-    zotero-bin \
     ferdium-bin \
     tor-browser-bin \
     starship \
     openrgb \
     piper \
     libratbag \
-    hadolint \
     helm \
     jq \
     yq \
