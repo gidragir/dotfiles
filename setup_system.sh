@@ -28,20 +28,20 @@ systemctl stop docker libvirtd 2>/dev/null || true
 
 # ──────────────────────────────────────────────
 # 2. Partition NVMe 1
-# Layout (1 TB):
-#   p1 DOCKER   150 GB  – Docker Engine data-root
-#   p2 LIBVIRT  150 GB  – VM qcow2 images
-#   p3 PROJECTS 220 GB  – code, sccache, cargo registry
-#   p4 GAMES    450 GB  – Steam libraries
-#   p5 SYNC      30 GB  – Obsidian, Zotero local copies
+# Layout (Proportional %):
+#   p1 DOCKER   15%  – Docker Engine data-root
+#   p2 LIBVIRT  15%  – VM qcow2 images
+#   p3 PROJECTS 22%  – code, sccache, cargo registry
+#   p4 GAMES    45%  – Steam libraries
+#   p5 SYNC      3%  – Obsidian, Zotero local copies
 # ──────────────────────────────────────────────
 echo "💾 2. Partitioning drive $TARGET_DISK..."
 parted -s "$TARGET_DISK" mklabel gpt
-parted -s "$TARGET_DISK" mkpart DOCKER   ext4   1MiB  151GiB
-parted -s "$TARGET_DISK" mkpart LIBVIRT  ext4 151GiB  301GiB
-parted -s "$TARGET_DISK" mkpart PROJECTS ext4 301GiB  521GiB
-parted -s "$TARGET_DISK" mkpart GAMES    ext4 521GiB  971GiB
-parted -s "$TARGET_DISK" mkpart SYNC     ext4 971GiB  100%
+parted -s "$TARGET_DISK" mkpart DOCKER   ext4  0%   15%
+parted -s "$TARGET_DISK" mkpart LIBVIRT  ext4 15%  30%
+parted -s "$TARGET_DISK" mkpart PROJECTS ext4 30%  52%
+parted -s "$TARGET_DISK" mkpart GAMES    ext4 52%  97%
+parted -s "$TARGET_DISK" mkpart SYNC     ext4 97%  100%
 
 # Wait for kernel to re-read partition table
 sleep 2
