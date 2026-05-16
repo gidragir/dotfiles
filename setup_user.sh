@@ -24,6 +24,7 @@ fi
 # ──────────────────────────────────────────────────────────────────────────────
 
 echo "📦 1. Installing utilities and applications (via paru)..."
+# --needed prevents reinstalling packages that are already up to date
 paru -S --needed --noconfirm \
     rustup \
     bun \
@@ -55,17 +56,9 @@ paru -S --needed --noconfirm \
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Docker Desktop storage → /data/docker
-#
-# Docker Desktop stores its VM disk image in ~/.docker/desktop/
-# We symlink ~/.docker → /data/docker so the VM image lives on NVMe 1.
-#
-# IMPORTANT: Do this BEFORE first launch of Docker Desktop.
-# After first launch, also change the disk image location in:
-#   Docker Desktop → Settings → Resources → Advanced → Disk image location
-#   Set it to: /data/docker/desktop-vm
 # ──────────────────────────────────────────────────────────────────────────────
 echo "🐋 1.1. Redirecting Docker Desktop storage to NVMe 1..."
-# If ~/.docker already exists and is NOT a symlink, back it up
+# If ~/.docker already exists and is NOT a symlink, back it up safely
 if [ -d "$HOME/.docker" ] && [ ! -L "$HOME/.docker" ]; then
     echo "   Backing up existing ~/.docker to ~/.docker.bak..."
     mv "$HOME/.docker" "$HOME/.docker.bak"
@@ -74,8 +67,8 @@ mkdir -p /data/docker
 ln -sfn /data/docker "$HOME/.docker"
 echo "   ~/.docker → /data/docker (NVMe 1)"
 
-# Enable Docker Desktop to autostart
-systemctl --user enable --now docker-desktop
+# Enable Docker Desktop to autostart (safely ignore if it fails or is already enabled)
+systemctl --user enable --now docker-desktop 2>/dev/null || true
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 2. LazyVim
@@ -92,15 +85,24 @@ fi
 # 3. Rust (rustup + cargo)
 # ──────────────────────────────────────────────────────────────────────────────
 echo "🦀 3. Configuring Rust..."
-# Source cargo env in case rustup was just installed
-[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+# Source cargo env safely
+if [ -f "$HOME/.cargo/env" ]; then
+    source "$HOME/.cargo/env"
+fi
 
 if ! command -v cargo &>/dev/null; then
     rustup default stable
     source "$HOME/.cargo/env"
+else
+    echo "   Rustup/Cargo is already installed."
 fi
 
-cargo install cargo-ramdisk
+# Idempotent installation of cargo-ramdisk
+if ! command -v cargo-ramdisk &>/dev/null; then
+    cargo install cargo-ramdisk
+else
+    echo "   cargo-ramdisk already installed, skipping."
+fi
 
 # ~/.cargo/config.toml — mold linker + sccache + redirect registry cache
 mkdir -p "$HOME/.cargo"
@@ -122,10 +124,6 @@ rustflags = ["-C", "link-arg=-fuse-ld=mold"]
 CARGO_HOME         = { value = "/data/projects/.cargo-cache", force = false }
 EOF
 
-# Note: CARGO_HOME in env table only sets it for cargo subprocesses.
-# For the toolchain itself (rustup/cargo binary), CARGO_HOME must be in shell env.
-# We handle that in .zshrc below.
-
 # ──────────────────────────────────────────────────────────────────────────────
 # 4. Create cache directories on /data/projects
 # ──────────────────────────────────────────────────────────────────────────────
@@ -138,28 +136,19 @@ ln -sfn /data/projects ~/projects
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 5. pnpm via corepack
-# corepack is the Node.js-native way to manage package managers.
-# pnpm store → XDG_DATA_HOME/pnpm (no ~/. pollution)
 # ──────────────────────────────────────────────────────────────────────────────
 echo "📦 5. Configuring pnpm via corepack..."
 mkdir -p "$HOME/.local/bin"
-# Enable corepack and install pnpm shim into ~/.local/bin
+# Enable corepack (idempotent by design)
 corepack enable --install-directory "$HOME/.local/bin" pnpm
 
-# Set pnpm store to XDG-compliant location (inside ~/.local/share — stays on NVMe 0,
-# but is inside XDG hierarchy, not ~/. root clutter)
+# Set pnpm store to XDG-compliant location
 mkdir -p "$HOME/.local/share/pnpm-store"
-# This will be picked up by pnpm automatically via PNPM_HOME env var (set in .zshrc)
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 6. uv (Python) — follows XDG by default, no extra config needed
-#    Cache  → ~/.cache/uv
-#    Data   → ~/.local/share/uv  (tools, managed pythons)
-#    Config → ~/.config/uv
+# 6. uv (Python)
 # ──────────────────────────────────────────────────────────────────────────────
 echo "🐍 6. uv is XDG-compliant by default, no extra config needed."
-# Optionally redirect uv cache to NVMe 1 if it grows large:
-# export UV_CACHE_DIR=/data/projects/.uv-cache  (add to .zshrc if needed)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 7. Shell environment (.zshrc)
@@ -172,7 +161,7 @@ if [ ! -f "$ZSHRC" ]; then
     touch "$ZSHRC"
 fi
 
-# Disable OMZ/p10k themes if present (we use starship for prompt)
+# Disable OMZ/p10k themes if present
 sed -i 's/^ZSH_THEME=.*/ZSH_THEME=""/g' "$ZSHRC" 2>/dev/null || true
 sed -i 's/^source.*powerlevel10k.zsh-theme/#&/g' "$ZSHRC" 2>/dev/null || true
 sed -i 's/^\[\[ ! -f ~\/.p10k.zsh \]\]/#&/g' "$ZSHRC" 2>/dev/null || true
@@ -222,22 +211,10 @@ autoload -Uz edit-command-line
 zle -N edit-command-line
 bindkey -M vicmd 'v' edit-command-line
 
-# ── Paste fix ────────────────────────────────────────────────────────────────
-# Ghostty and Warp handle bracketed paste correctly natively.
-# The 'unset zle_bracketed_paste' fix was for Alacritty only — NOT needed here.
-# OMZ safe-paste plugin keeps bracketed paste working safely:
-# (add 'safe-paste' to plugins=() array in your OMZ config if desired)
-
 # ── Sandbox: test Wayland GUI tools without polluting main session ─────────────
-# Usage: niri-sandbox
-#   - Starts a nested Niri compositor in a new window
-#   - Install/test any bar, applet, or compositor setting inside it
-#   - Close the window → everything is gone, no cleanup needed
 alias niri-sandbox='WAYLAND_DISPLAY=wayland-sandbox niri --session'
 
 # Distrobox: quickly spin up a throwaway container for CLI tool testing
-# Usage: sandbox-box ubuntu  OR  sandbox-box archlinux
-# After testing: distrobox rm sandbox (removes container + all installed packages)
 sandbox-box() {
     local image="${1:-archlinux}"
     distrobox create --name sandbox --image "$image" --yes 2>/dev/null || true
@@ -256,15 +233,16 @@ eval "$(starship init zsh)"
 ZSHBLOCK
 fi
 
-# Load cargo env for current session
-[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+# Load cargo env for current session safely
+if [ -f "$HOME/.cargo/env" ]; then
+    source "$HOME/.cargo/env"
+fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 8. Starship config (Vi-mode indicators)
+# 8. Starship config
 # ──────────────────────────────────────────────────────────────────────────────
 echo "🌠 8. Writing Starship config..."
 mkdir -p "$HOME/.config"
-# Only write if not already managed by Stow
 if [ ! -L "$HOME/.config/starship.toml" ] && [ ! -f "$HOME/.config/starship.toml" ]; then
     cat > "$HOME/.config/starship.toml" << 'EOF'
 [character]
@@ -332,14 +310,18 @@ EOF
 mkdir -p "$HOME/.cache/rclone"
 
 systemctl --user daemon-reload
-systemctl --user enable rclone-mount.service
-systemctl --user enable rclone-sync.timer
+systemctl --user enable rclone-mount.service 2>/dev/null || true
+systemctl --user enable rclone-sync.timer 2>/dev/null || true
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 10. ratbagd (mouse daemon) — requires root, must run as system service
+# 10. ratbagd (mouse daemon)
 # ──────────────────────────────────────────────────────────────────────────────
 echo "🖱️  10. Enabling ratbagd (mouse daemon)..."
-sudo systemctl enable --now ratbagd
+if ! systemctl is-enabled ratbagd &>/dev/null; then
+    sudo systemctl enable --now ratbagd
+else
+    echo "   ratbagd is already enabled."
+fi
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 11. Dotfiles structure (GNU Stow)
