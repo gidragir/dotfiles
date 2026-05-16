@@ -34,8 +34,7 @@ paru -S --needed --noconfirm \
     neovim \
     lefthook \
     biome \
-    turbo-bin \
-    yaak-app-bin \
+    turbo \
     obsidian \
     zotero-bin \
     ferdium-bin \
