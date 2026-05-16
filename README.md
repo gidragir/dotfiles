@@ -1,13 +1,3 @@
----
-tags:
-  - sticky_note
-created: 2026-05-16 21:11
-connections:
-  - "[[STICKY]]"
-cssclasses:
-  - hide-properties_editing
-type: sticky_note
----
 # 🚀 CachyOS Niri: Ultimate Developer Setup
 
 Scripts for automatic configuration of a clean **CachyOS (Niri)** installation. Transforms a bare system into an ideal development environment for Rust, TypeScript, and Python — with Neovim terminal workflow, dotfiles via GNU Stow, Docker Desktop, and optimized dual-NVMe partitioning.
