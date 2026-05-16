@@ -104,7 +104,7 @@ else
     echo "   cargo-ramdisk already installed, skipping."
 fi
 
-# ~/.cargo/config.toml — mold linker + sccache + redirect registry cache
+# ~/.cargo/config.toml — mold linker + sccache
 mkdir -p "$HOME/.cargo"
 cat > "$HOME/.cargo/config.toml" << 'EOF'
 # ── Build optimizations ──────────────────────────────────────────────────────
@@ -116,12 +116,6 @@ rustc-wrapper = "sccache"
 # mold is ~2–5× faster than ld at the link step
 linker = "clang"
 rustflags = ["-C", "link-arg=-fuse-ld=mold"]
-
-# ── Redirect large caches off NVMe 0 (/home) → /data/projects ───────────────
-# cargo registry = downloaded source tarballs of crates (~can grow to 5–15 GB)
-# cargo git = git-based crate checkouts
-[env]
-CARGO_HOME         = { value = "/data/projects/.cargo-cache", force = false }
 EOF
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -130,6 +124,19 @@ EOF
 echo "📁 4. Creating cache directories on NVMe 1..."
 mkdir -p /data/projects/.sccache
 mkdir -p /data/projects/.cargo-cache/{registry,git}
+
+# Redirect Cargo heavy cache dirs via symlinks (safer than CARGO_HOME env)
+if [ -d "$HOME/.cargo/registry" ] && [ ! -L "$HOME/.cargo/registry" ]; then
+    mv "$HOME/.cargo/registry"/* /data/projects/.cargo-cache/registry/ 2>/dev/null || true
+    rm -rf "$HOME/.cargo/registry"
+fi
+if [ -d "$HOME/.cargo/git" ] && [ ! -L "$HOME/.cargo/git" ]; then
+    mv "$HOME/.cargo/git"/* /data/projects/.cargo-cache/git/ 2>/dev/null || true
+    rm -rf "$HOME/.cargo/git"
+fi
+
+ln -sfn /data/projects/.cargo-cache/registry "$HOME/.cargo/registry"
+ln -sfn /data/projects/.cargo-cache/git "$HOME/.cargo/git"
 
 # Projects symlink
 ln -sfn /data/projects ~/projects
@@ -184,7 +191,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # ── Rust / Cargo ─────────────────────────────────────────────────────────────
 # Toolchain (rustup, cargo binary) stays in ~/.cargo (default CARGO_HOME)
-# Registry/git caches are redirected to NVMe 1 via ~/.cargo/config.toml [env]
+# Registry/git caches are redirected to NVMe 1 via symlinks
 export SCCACHE_DIR="/data/projects/.sccache"
 
 # ── Node / pnpm ──────────────────────────────────────────────────────────────
