@@ -26,6 +26,8 @@ fi
 echo "📦 1. Installing utilities and applications (via paru)..."
 # --needed prevents reinstalling packages that are already up to date
 paru -S --needed --noconfirm \
+    vivaldi \
+    visual-studio-code-bin \
     rustup \
     bun \
     uv \
@@ -82,30 +84,44 @@ else
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 3. Rust (rustup + cargo)
+# 3. Rust & Cargo (Optimized Layout)
 # ──────────────────────────────────────────────────────────────────────────────
-echo "🦀 3. Configuring Rust..."
-# Source cargo env safely
+echo "🦀 3. Configuring Rust & Cargo Storage..."
+
+# 3.1. Create base directories for caches on NVMe 1
+mkdir -p "$HOME/.cargo"
+mkdir -p /data/projects/.cargo-cache/{registry,git}
+mkdir -p /data/projects/.sccache
+
+# 3.2. Create symlinks BEFORE installing anything via Cargo
+echo "   Linking Cargo caches to NVMe 1..."
+for dir in registry git; do
+    if [ -d "$HOME/.cargo/$dir" ] && [ ! -L "$HOME/.cargo/$dir" ]; then
+        echo "   Moving existing $dir to NVMe 1..."
+        cp -a "$HOME/.cargo/$dir/." "/data/projects/.cargo-cache/$dir/" 2>/dev/null || true
+        rm -rf "$HOME/.cargo/$dir"
+    fi
+    ln -sfn "/data/projects/.cargo-cache/$dir" "$HOME/.cargo/$dir"
+done
+
+# 3.3. Install/Configure Rust toolchain
+if ! command -v rustup &>/dev/null; then
+    rustup default stable
+fi
+
+# Source cargo env safely for the current script session
 if [ -f "$HOME/.cargo/env" ]; then
     source "$HOME/.cargo/env"
 fi
 
-if ! command -v cargo &>/dev/null; then
-    rustup default stable
-    source "$HOME/.cargo/env"
-else
-    echo "   Rustup/Cargo is already installed."
-fi
-
-# Idempotent installation of cargo-ramdisk
+# 3.4. Idempotent installation of cargo-ramdisk
 if ! command -v cargo-ramdisk &>/dev/null; then
     cargo install cargo-ramdisk
 else
     echo "   cargo-ramdisk already installed, skipping."
 fi
 
-# ~/.cargo/config.toml — mold linker + sccache
-mkdir -p "$HOME/.cargo"
+# 3.5. Write ~/.cargo/config.toml — mold linker + sccache
 cat > "$HOME/.cargo/config.toml" << 'EOF'
 # ── Build optimizations ──────────────────────────────────────────────────────
 [build]
@@ -119,26 +135,9 @@ rustflags = ["-C", "link-arg=-fuse-ld=mold"]
 EOF
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 4. Create cache directories on /data/projects
+# 4. Projects symlink
 # ──────────────────────────────────────────────────────────────────────────────
-echo "📁 4. Creating cache directories on NVMe 1..."
-mkdir -p /data/projects/.sccache
-mkdir -p /data/projects/.cargo-cache/{registry,git}
-
-# Redirect Cargo heavy cache dirs via symlinks (safer than CARGO_HOME env)
-if [ -d "$HOME/.cargo/registry" ] && [ ! -L "$HOME/.cargo/registry" ]; then
-    mv "$HOME/.cargo/registry"/* /data/projects/.cargo-cache/registry/ 2>/dev/null || true
-    rm -rf "$HOME/.cargo/registry"
-fi
-if [ -d "$HOME/.cargo/git" ] && [ ! -L "$HOME/.cargo/git" ]; then
-    mv "$HOME/.cargo/git"/* /data/projects/.cargo-cache/git/ 2>/dev/null || true
-    rm -rf "$HOME/.cargo/git"
-fi
-
-ln -sfn /data/projects/.cargo-cache/registry "$HOME/.cargo/registry"
-ln -sfn /data/projects/.cargo-cache/git "$HOME/.cargo/git"
-
-# Projects symlink
+echo "📁 4. Symlinking projects folder..."
 ln -sfn /data/projects ~/projects
 
 # ──────────────────────────────────────────────────────────────────────────────
