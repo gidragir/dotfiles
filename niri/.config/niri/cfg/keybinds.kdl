@@ -67,6 +67,9 @@ binds {
     Mod+Shift+CTRL+Right                { move-column-to-monitor-right; }
     Mod+Shift+CTRL+UP                   { move-column-to-monitor-up; }
     Mod+Shift+CTRL+Down                 { move-column-to-monitor-down; }
+    
+    Mod+Shift+Alt+Left                 { consume-or-expel-window-left; }
+    Mod+Shift+Alt+Right                { consume-or-expel-window-right; }
 
     // ─── Workspace Switching ───
     Mod+WheelScrollDown                 cooldown-ms=150 { focus-workspace-down; }
@@ -109,6 +112,7 @@ binds {
     // ─── Layout Controls ───
     Mod+R  { switch-preset-column-width; }
     Mod+CTRL+F                          { fullscreen-window; }
+    Mod+Shift+F                          { maximize-window-to-edges; }
     Mod+C                               { center-column; }
     Mod+CTRL+C                          { center-visible-columns; }
     Mod+Minus                           { set-column-width "-10%"; }
@@ -118,7 +122,7 @@ binds {
 
     // ─── Modes ───
     Mod+T                               { toggle-window-floating; }
-    Mod+F                               { expand-column-to-available-width; }
+    Mod+F                               { maximize-column; }
     Mod+W                               { toggle-column-tabbed-display; }
 
     // ─── Screenshots ───
