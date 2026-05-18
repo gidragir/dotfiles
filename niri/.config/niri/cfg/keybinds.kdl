@@ -5,13 +5,21 @@ binds {
 
     // ─── noctalia-shell keybinds ───
     // https://docs.noctalia.dev/getting-started/keybinds/
+    Mod+V { spawn "sh" "-c" "cliphist list | rofi -dmenu -theme ~/.config/rofi/cliphist.rasi | cliphist decode | wl-copy"; }
+    Mod+Alt+N { spawn "/home/alatau/.local/bin/obsidian-note.sh"; }
+    
+    Mod+Alt+V { spawn "sh" "-c" "wl-paste >> ~/Documents/ObsidianVault/STICKY/$(date +'%Y-%m-%d %H:%M').md && notify-send 'Obsidian' 'Заметка создана!'"; }
 
     Mod+Shift+ESCAPE                     { show-hotkey-overlay; }
 
     // ─── Applications ───
+    Mod+Shift+Z {spawn "nu" "-c" "source $nu.config-path; open-focus-id obsidian obsidian";}
+    Mod+Shift+A {spawn "nu" "-c" "source $nu.config-path; open-focus-id code code";}
+
     Mod+Return                          hotkey-overlay-title="Open Terminal: Ghostty" { spawn "ghostty"; }
     Mod+CTRL+Return                     hotkey-overlay-title="Open App Launcher: noctalia launcher" { spawn-sh "qs -c noctalia-shell ipc call launcher toggle"; }
     Mod+B                               hotkey-overlay-title="Open Browser: vivaldi" { spawn "vivaldi"; }
+    // Mod+B                               hotkey-overlay-title="Open Browser: vivaldi" { spawn "nu" "-c" "source $nu.config-path; open-focus-title vivaldi vivaldi-stable";}  
     Mod+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "qs -c noctalia-shell ipc call lockScreen lock"; }
     Mod+Shift+Q                        hotkey-overlay-title="Session Menu: noctalia sessionMenu" { spawn-sh "qs -c noctalia-shell ipc call sessionMenu toggle"; }
 
@@ -43,6 +51,9 @@ binds {
     Mod+K                               { focus-window-up; }
     Mod+Down                            { focus-window-down; }
     Mod+J                               { focus-window-down; }
+
+    Mod+Alt+WheelScrollUp               { focus-window-up; }
+    Mod+Alt+WheelScrollDown             { focus-window-down; }
 
     Mod+CTRL+Left                       { move-column-left; }
     Mod+CTRL+H                          { move-column-left; }
@@ -140,3 +151,5 @@ binds {
     Mod+Shift+P                         { power-off-monitors; } // Turn off screens (useful for OLED or privacy)
     Mod+O                               repeat=false { toggle-overview; }
 }
+
+include "env/keybinds.kdl"
