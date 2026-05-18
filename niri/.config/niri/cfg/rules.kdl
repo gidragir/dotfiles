@@ -38,11 +38,6 @@
     }
 
     window-rule {
-        match app-id="vivaldi-stable"
-        open-maximized-to-edges true
-    }
-
-    window-rule {
         match app-id="ferdium"
         open-maximized-to-edges true
     }
