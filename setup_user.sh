@@ -171,7 +171,7 @@ fi
 sed -i 's/^ZSH_THEME=.*/ZSH_THEME=""/g' "$ZSHRC" 2>/dev/null || true
 sed -i 's/^source.*powerlevel10k.zsh-theme/#&/g' "$ZSHRC" 2>/dev/null || true
 sed -i 's/^\[\[ ! -f ~\/.p10k.zsh \]\]/#&/g' "$ZSHRC" 2>/dev/null || true
-sed -i 's/^source ~\/.p10k.zsh/#&/g' "$ZSHRC" 2>/dev/null || true
+sed -i 's/^source ~\/.p10k.zsh/#&/g' "$ZSHRC" 2>/dev/null || truesed -i '1s|^|typeset -g POWERLEVEL9K_INSTANT_PROMPT=off\n|' "$ZSHRC" 2>/dev/null || true
 
 # Append dev environment block (idempotent — only once)
 if ! grep -q "# ── DEV ENVIRONMENT" "$ZSHRC"; then
