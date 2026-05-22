@@ -66,5 +66,6 @@ eval "$(starship init zsh)"
 # ─────────────────────────────────────────────────────────────────────────────
 source "$HOME/.zsh/alias/core.zsh"
 source "$HOME/.zsh/alias/git.zsh"
+source "$HOME/.zsh/alias/ansible.zsh"
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 #[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
