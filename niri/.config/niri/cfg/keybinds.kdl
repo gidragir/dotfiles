@@ -129,7 +129,8 @@ binds {
     // ─── Layout Controls ───
     Mod+R  { switch-preset-column-width; }
     Mod+CTRL+F                          { fullscreen-window; }
-    Mod+Shift+F                          { maximize-window-to-edges; }
+    Mod+Alt+F                           { expand-column-to-available-width; }
+    Mod+Shift+F                         { maximize-window-to-edges; }
     Mod+C                               { center-column; }
     Mod+CTRL+C                          { center-visible-columns; }
     Mod+Minus                           { set-column-width "-10%"; }
