@@ -22,7 +22,7 @@ binds {
     Mod+Shift+Z {spawn "nu" "-c" "source $nu.config-path; open-focus-id obsidian obsidian";}
     Mod+Shift+A {spawn "nu" "-c" "source $nu.config-path; open-focus-id code code";}
 
-    Mod+Return                          hotkey-overlay-title="Open Terminal: Ghostty" { spawn "ghostty"; }
+    Mod+Return                          hotkey-overlay-title="Open Terminal: Ghostty" { spawn "ghostty" "-e" "zellij"; }
     Mod+CTRL+Return                     hotkey-overlay-title="Open App Launcher: noctalia launcher" { spawn-sh "qs -c noctalia-shell ipc call launcher toggle"; }
     Mod+B                               hotkey-overlay-title="Open Browser: vivaldi" { spawn "vivaldi"; }
     // Mod+B                               hotkey-overlay-title="Open Browser: vivaldi" { spawn "nu" "-c" "source $nu.config-path; open-focus-title vivaldi vivaldi-stable";}  

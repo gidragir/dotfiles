@@ -54,7 +54,8 @@ paru -S --needed --noconfirm \
     git \
     ghostty \
     warp-terminal \
-    docker-desktop   # AUR: ships its own docker CLI + compose, no conflict with engine packages
+    superfile \
+    zellij
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Docker Desktop storage → /data/docker

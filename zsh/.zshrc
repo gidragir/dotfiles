@@ -71,3 +71,19 @@ source "$HOME/.zsh/alias/ansible.zsh"
 #[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 export KUBECONFIG=$HOME/.kube/config
+
+spf_tv_search() {
+    local target
+    target=$(tv files)
+    
+    if [[ -n "$target" ]]; then
+        if [[ -d "$target" ]]; then
+            spf "$target"
+        else
+            spf "$(dirname "$target")"
+        fi
+    fi
+}
+
+# Создание короткого алиаса
+alias spft=spf_tv_search
