@@ -176,6 +176,8 @@ chmod 775 /var/lib/libvirt/images
 groupadd -f docker
 usermod -aG docker,libvirt,kvm "$REAL_USER"
 
+gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║  ✅ System setup complete!                                    ║"
