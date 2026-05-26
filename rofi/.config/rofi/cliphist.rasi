@@ -1,0 +1,74 @@
+configuration {
+    modi: "dmenu";
+    show-icons: false;
+    display-dmenu: "📋 Clipboard";
+}
+
+* {
+    /* Цвета в стиле темной Windows 11 */
+    bg: #1f1f1f;
+    fg: #ffffff;
+    accent: #0078d4;
+    selected-bg: #323232;
+    border-col: #454545;
+}
+
+window {
+    width: 350px;
+    height: 500px;
+    anchor: south east;
+    location: south east;
+    x-offset: -20px;
+    y-offset: -20px;
+    background-color: @bg;
+    border: 2px;
+    border-color: @border-col;
+    border-radius: 12px;
+}
+
+mainbox {
+    background-color: @bg;
+    children: [ inputbar, listview ];
+}
+
+inputbar {
+    children: [ prompt, entry ];
+    background-color: @bg;
+    padding: 10px;
+}
+
+prompt {
+    background-color: @accent;
+    text-color: @fg;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+entry {
+    placeholder: "Search...";
+    placeholder-color: #888888;
+    text-color: @fg;
+    padding: 5px;
+    margin: 0 0 0 10px;
+}
+
+listview {
+    columns: 1;
+    lines: 10;
+    padding: 5px;
+}
+
+element {
+    padding: 10px;
+    border-radius: 8px;
+}
+
+element selected {
+    background-color: @selected-bg;
+    text-color: @accent;
+}
+
+element-text {
+    text-color: inherit;
+    vertical-align: 0.5;
+}
