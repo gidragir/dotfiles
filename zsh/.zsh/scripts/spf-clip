@@ -1,0 +1,4 @@
+#!/bin/bash
+FILE="${1:-$(pwd)}"
+ABS=$(realpath "$FILE")
+printf "file://%s" "$ABS" | wl-copy -t text/uri-list

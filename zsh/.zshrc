@@ -87,3 +87,4 @@ spf_tv_search() {
 
 # Создание короткого алиаса
 alias spft=spf_tv_search
+export PATH="$HOME/projects/dotfiles/zsh/.zsh/scripts:$PATH"
