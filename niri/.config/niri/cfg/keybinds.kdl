@@ -14,7 +14,7 @@ binds {
     Mod+Alt+N { spawn "/home/alatau/.local/bin/obsidian-note.sh"; }
     
     Mod+Alt+V { spawn "sh" "-c" "wl-paste >> ~/Documents/ObsidianVault/STICKY/$(date +'%Y-%m-%d %H:%M').md && notify-send 'Obsidian' 'Заметка создана!'"; }
-    Mod+V { spawn "bash" "-c" "/home/alatau/projects/dotfiles/zsh/.zsh/scripts/clipboard-picker.sh"; }
+    Mod+V { spawn "bash" "-c" "~/.zsh/scripts/clipboard-picker.sh"; }
 
     Mod+Shift+ESCAPE                     { show-hotkey-overlay; }
 
