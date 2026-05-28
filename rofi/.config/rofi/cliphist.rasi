@@ -1,66 +1,65 @@
 configuration {
     modi: "dmenu";
     show-icons: false;
-    display-dmenu: "📋 Clipboard";
+    display-dmenu: "";
 }
 
 * {
-    /* Цвета в стиле темной Windows 11 */
-    bg: #1f1f1f;
-    fg: #ffffff;
-    accent: #0078d4;
-    selected-bg: #323232;
-    border-col: #454545;
+    bg:          #141414;
+    fg:          #e0e0e0;
+    accent:      #0078d4;
+    selected-bg: #1e1e1e;
+    text-color:  #e0e0e0;
+    background-color: #141414;
 }
 
 window {
-    width: 350px;
-    height: 500px;
+    width: 320px;
     anchor: south east;
     location: south east;
-    x-offset: -20px;
-    y-offset: -20px;
+    x-offset: -16px;
+    y-offset: -16px;
     background-color: @bg;
-    border: 2px;
-    border-color: @border-col;
-    border-radius: 12px;
+    border: 1px;
+    border-color: #2a2a2a;
+    border-radius: 10px;
 }
 
 mainbox {
     background-color: @bg;
     children: [ inputbar, listview ];
+    padding: 6px;
+    spacing: 4px;
 }
 
 inputbar {
-    children: [ prompt, entry ];
-    background-color: @bg;
-    padding: 10px;
-}
-
-prompt {
-    background-color: @accent;
-    text-color: @fg;
-    padding: 5px 10px;
-    border-radius: 5px;
+    children: [ entry ];
+    background-color: #1e1e1e;
+    padding: 8px 12px;
+    border-radius: 6px;
 }
 
 entry {
-    placeholder: "Search...";
-    placeholder-color: #888888;
+    placeholder: "clipboard...";
+    placeholder-color: #555555;
     text-color: @fg;
-    padding: 5px;
-    margin: 0 0 0 10px;
+    background-color: transparent;
 }
 
 listview {
     columns: 1;
-    lines: 10;
-    padding: 5px;
+    lines: 8;
+    padding: 2px 0;
+    scrollbar: false;
+    background-color: @bg;
 }
 
 element {
-    padding: 10px;
-    border-radius: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    spacing: 0;
+    background-color: @bg;
+    text-color: @fg;
 }
 
 element selected {
@@ -71,4 +70,5 @@ element selected {
 element-text {
     text-color: inherit;
     vertical-align: 0.5;
+    background-color: transparent;
 }
