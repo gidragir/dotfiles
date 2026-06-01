@@ -26,7 +26,7 @@ binds {
     Mod+CTRL+Return                     hotkey-overlay-title="Open App Launcher: noctalia launcher" { spawn-sh "qs -c noctalia-shell ipc call launcher toggle"; }
     Mod+B                               hotkey-overlay-title="Open Browser: vivaldi" { spawn "vivaldi"; }
     // Mod+B                               hotkey-overlay-title="Open Browser: vivaldi" { spawn "nu" "-c" "source $nu.config-path; open-focus-title vivaldi vivaldi-stable";}  
-    Mod+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "qs -c noctalia-shell ipc call lockScreen lock"; }
+    Mod+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "qs -c noctalia-shell ipc call media pause && qs -c noctalia-shell ipc call lockScreen lock"; }
     Mod+Shift+Q                        hotkey-overlay-title="Session Menu: noctalia sessionMenu" { spawn-sh "qs -c noctalia-shell ipc call sessionMenu toggle"; }
 
     // Mod+E                               hotkey-overlay-title="File Manager: Nautilus" { spawn "nautilus"; }
