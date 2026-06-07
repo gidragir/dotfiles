@@ -32,19 +32,21 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/s
 | `/boot/efi` | 1 GB | EFI, FAT32 |
 | `/` | ~100 GB | System root |
 | `swap` | 8 GB | Suspend support (no hibernation needed) |
-| `/home` | ~891 GB | User data, toolchains, configs |
+| `/home` | ~891 GB | User data, toolchains, configs, and games (Steam, Epic, GOG via `~/Games`) |
 
 ### NVMe 1 — Data (`setup_system.sh` partitions this automatically)
 
-| LABEL | Mount Point | Size | Purpose |
-|-------|-------------|------|---------|
-| `DOCKER` | `/data/docker` → `~/.docker` | ~150 GB | Docker Desktop VM image |
-| `LIBVIRT` | `/var/lib/libvirt/images` | ~150 GB | QEMU/KVM virtual machine disks |
-| `PROJECTS` | `/data/projects` → `~/projects` | ~220 GB | Code + Rust/sccache caches |
-| `GAMES` | `/data/games` | ~450 GB | Steam game libraries |
-| `SYNC` | `/data/sync` | ~30 GB | Obsidian vault, Zotero library |
+| LABEL | Mount Point | Size | Filesystem | Purpose |
+|-------|-------------|------|------------|---------|
+| `DOCKER` | `/var/lib/docker` | ~250 GB | `xfs` | Native Docker data root (with prjquota) |
+| `LIBVIRT` | `/var/lib/libvirt/images` | ~250 GB | `ext4` | QEMU/KVM virtual machine disks |
+| `PROJECTS` | `/data/projects` → `~/projects` | ~450 GB | `btrfs` | Code + Rust/sccache caches (zstd:3 compression, reflink) |
+| `SYNC` | `/data/sync` | ~50 GB | `btrfs` | Obsidian vault, Zotero library (zstd:3 compression) |
 
-All partitions use `ext4` with `noatime` to reduce unnecessary writes and extend SSD lifespan.
+> [!NOTE]
+> **Unified Games Folder**: All game clients (Steam, Lutris, Heroic/Epic Games Store) should be configured to install games to `~/Games` (which is located on the large NVMe 0 drive). The system script automatically creates a symlink at `/data/games` pointing to `~/Games` to keep a clean, unified path accessible from anywhere.
+
+The BTRFS partitions use transparent `zstd:3` compression to save space and extend SSD lifespan. All mounts include `noatime` optimization.
 
 ## 🛠 Architecture and Tools
 
@@ -65,19 +67,25 @@ All partitions use `ext4` with `noatime` to reduce unnecessary writes and extend
 - Crate registry cache redirected to `/data/projects/.cargo-cache` — keeps NVMe 0 clean
 
 **TypeScript / JavaScript**
-- `bun` — runtime and bundler
-- `nodejs` — LTS via system package
-- `pnpm` — managed via `corepack` (Node.js native standard), installed to `~/.local/bin`
+- `nodejs` — LTS managed via `mise` (configured in `~/.config/mise/config.toml`)
+- `bun` — installed and managed via `mise`
+- `pnpm` — managed via `corepack` (enabled via Node.js from `mise`), shims installed to `~/.local/bin`
 - pnpm store at `~/.local/share/pnpm-store` (XDG-compliant, no `~/` root pollution)
 
 **Python**
-- `uv` — ultra-fast package and environment manager
+- `uv` — installed and managed via `mise`
+- `Python` — versioning and project environments managed entirely via `uv` (no global installation)
 - Follows XDG automatically: cache → `~/.cache/uv`, tools → `~/.local/share/uv`
 
-**CLI Utilities**
+**CLI & DevOps Utilities**
 - `zoxide` — smart `cd` with frecency ranking
-- `mise` — language version management (replaces `nvm`, `pyenv`, `rbenv`)
+- `mise` — tool and environment version manager (configured globally via `~/.config/mise/config.toml`)
 - `television` — blazing fast fuzzy search
+- `ripgrep` (`rg`), `fd`, `bat`, `eza` — modern Rust replacements for standard Unix tools
+- `lazygit`, `lazydocker` — terminal UI for git and docker
+- `direnv` — automatic directory-specific environment loader
+- `sops`, `age` — GitOps secrets management
+- `kubectl`, `kubectx`, `k3d`, `argocd` — Kubernetes development suite
 - `lefthook` — Git hooks manager
 - `biome` — linter and formatter for JS/TS
 - `turbo` — Turborepo for monorepos
@@ -85,10 +93,19 @@ All partitions use `ext4` with `noatime` to reduce unnecessary writes and extend
 
 ### 3. Containers and Virtualization
 
-**Docker Desktop**
-- Installed via AUR (`docker-desktop`) — ships its own Docker CLI and Compose, no conflict with system packages
-- `~/.docker` is symlinked to `/data/docker` (NVMe 1, 150 GB) — VM image stays off NVMe 0
-- After first launch, also set: Settings → Resources → Advanced → Disk image location → `/data/docker/desktop-vm`
+**Native Docker**
+- Installed natively and configured on a separate `XFS` partition mounted at `/var/lib/docker` (using `overlay2` storage driver and `prjquota`).
+- Fully native, avoiding Docker Desktop VM overhead.
+- **Automated Configuration (Ansible)**: You can configure the Docker storage partition (formatting to XFS with `ftype=1`, mounting via UUID with `prjquota`, and configuring `daemon.json` limits) using the provided `playbook.yml`. Run it locally with:
+  ```bash
+  ansible-playbook -i localhost, -c local playbook.yml --ask-become-pass
+  ```
+
+**Kubernetes & Local Registry (k3d)**
+- **k3d** runs k3s in lightweight docker containers.
+- **Local Nexus Registry**: Fully configured via `k3d/.config/k3d/registries.yaml`. Requests to `nexus.local:8082` are routed transparently to the host via host-gateway, allowing image pulls without editing k8s deployment YAMLs.
+- `k3d-create [name]` — custom Zsh function to bootstrap a local cluster mapped to your host's Nexus.
+- `k8s-install-argocd` — installs and waits for ArgoCD on the active cluster.
 
 **Sandbox environments**
 - `niri-sandbox` alias — nested Wayland compositor session for testing bars, applets, and compositor settings. Close the window → everything gone, no cleanup needed.
@@ -97,8 +114,6 @@ All partitions use `ext4` with `noatime` to reduce unnecessary writes and extend
 **Distrobox** — lightweight containers with full Wayland and audio passthrough, for running apps from other distributions without affecting the host.
 
 **Libvirt / QEMU/KVM** — full virtual machines when needed (1–2 VMs). VM disk images stored on NVMe 1 at `/var/lib/libvirt/images`.
-
-**DevOps:** `pulumi`, `helm`, `hadolint`
 
 ### 4. Synchronization (Rclone)
 
@@ -142,6 +157,50 @@ mv ~/.config/nvim ~/projects/dotfiles/nvim/.config/
 cd ~/projects/dotfiles && stow nvim
 ```
 
+## 🖥 Windows VM (QEMU/KVM) Setup
+
+To deploy a Windows 11 VM with UEFI, Secure Boot, TPM 2.0, and VirtIO drivers (disk/network performance):
+
+### 1. Download VirtIO Drivers
+Fedora provides signed VirtIO drivers required by Windows to detect the virtio disk and network interface during setup:
+```bash
+sudo wget https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso \
+  -O /var/lib/libvirt/images/virtio-win.iso
+```
+
+### 2. Copy the Windows 11 ISO to VM Storage
+Place your Windows ISO into the allocated `/var/lib/libvirt/images` directory:
+```bash
+sudo cp /path/to/windows11.iso /var/lib/libvirt/images/win11.iso
+```
+
+### 3. Create the VM via CLI
+Run the following command to bootstrap the VM:
+```bash
+sudo virt-install \
+  --name win11 \
+  --ram 8192 \
+  --vcpus 4 \
+  --cpu host-passthrough \
+  --os-variant win11 \
+  --disk path=/var/lib/libvirt/images/win11.qcow2,size=100,bus=virtio,format=qcow2,sparse=true \
+  --disk path=/var/lib/libvirt/images/win11.iso,device=cdrom \
+  --disk path=/var/lib/libvirt/images/virtio-win.iso,device=cdrom \
+  --network network=default,model=virtio \
+  --boot uefi,firmware.feature.name=secure-boot \
+  --tpm backend.type=emulator,backend.version=2.0,model=tpm-tis \
+  --graphics spice,listen=127.0.0.1 \
+  --video qxl \
+  --channel spicevmc \
+  --noautoconsole
+```
+
+### 4. Install and configure
+1. Open **`virt-manager`** from your launcher.
+2. Open the `win11` console and start the VM.
+3. When Windows asks "Where do you want to install Windows?" and shows no disks, click **Load driver** -> **Browse** -> Select the `virtio-win` CD-ROM drive -> `amd64` -> `w11` to load the SCSI controller driver.
+4. After Windows boots, open the VirtIO CD-ROM drive in Windows Explorer and run `virtio-win-gt-x64.msi` to install all missing guest tools (network, display, clipboard sharing).
+
 ## 🏁 What to do after installation
 
 **1. Configure rclone remote**
@@ -156,13 +215,9 @@ systemctl --user start rclone-mount.service
 ```
 
 **3. Restart the terminal**  
-Close the current window and open a new one to apply all shell config (aliases, `zoxide`, `mise`, Starship).
+Close the current window and open a new one to apply all shell config (aliases, `zoxide`, `mise`, Starship, `k8s`).
 
-**4. Configure Docker Desktop disk image location**  
-Launch Docker Desktop → Settings → Resources → Advanced → Disk image location  
-Set to: `/data/docker/desktop-vm`
-
-**5. Add Obsidian and Zotero data to `/data/sync`**  
+**4. Add Obsidian and Zotero data to `/data/sync`**  
 Point both apps to their respective folders inside `/data/sync/`.
 
 ## 🗂 Toolchain Storage Reference
@@ -173,5 +228,5 @@ Point both apps to their respective folders inside `/data/sync/`.
 | sccache | — | `/data/projects/.sccache/` (NVMe 1) |
 | pnpm | `~/.local/bin/` | `~/.local/share/pnpm-store/` (XDG) |
 | uv | `~/.local/share/uv/` | `~/.cache/uv/` (XDG) |
-| Docker Desktop | — | `/data/docker/` via `~/.docker` symlink |
+| Native Docker | — | `/var/lib/docker/` (XFS, NVMe 1) |
 | Libvirt VMs | — | `/var/lib/libvirt/images/` (NVMe 1) |

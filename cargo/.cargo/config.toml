@@ -1,0 +1,9 @@
+# ── Build optimizations ──────────────────────────────────────────────────────
+[build]
+# sccache caches compiled artifacts between projects (huge speedup on rebuild)
+rustc-wrapper = "sccache"
+
+[target.x86_64-unknown-linux-gnu]
+# mold is ~2–5× faster than ld at the link step
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]

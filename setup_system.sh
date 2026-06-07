@@ -57,39 +57,34 @@ systemctl stop docker libvirtd 2>/dev/null || true
 # ──────────────────────────────────────────────
 # 2. Partition Target Drive
 # Layout (Proportional %):
-#   p1 DOCKER   15%  – Docker Engine data-root
-#   p2 LIBVIRT  15%  – VM qcow2 images
-#   p3 PROJECTS 22%  – code, sccache, cargo registry
-#   p4 GAMES    45%  – Steam libraries
-#   p5 SYNC      3%  – Obsidian, Zotero local copies
+#   p1 DOCKER   25%  – Docker Engine data-root
+#   p2 LIBVIRT  25%  – VM qcow2 images
+#   p3 PROJECTS 45%  – code, sccache, cargo registry
+#   p4 SYNC      5%  – Obsidian, Zotero local copies
 # ──────────────────────────────────────────────
 echo "💾 2. Partitioning drive $TARGET_DISK..."
 parted -s "$TARGET_DISK" mklabel gpt
-parted -s "$TARGET_DISK" mkpart DOCKER   ext4  0%   15%
-parted -s "$TARGET_DISK" mkpart LIBVIRT  ext4 15%  30%
-parted -s "$TARGET_DISK" mkpart PROJECTS ext4 30%  52%
-parted -s "$TARGET_DISK" mkpart GAMES    ext4 52%  97%
-parted -s "$TARGET_DISK" mkpart SYNC     ext4 97%  100%
+parted -s "$TARGET_DISK" mkpart DOCKER   ext4  0%   25%
+parted -s "$TARGET_DISK" mkpart LIBVIRT  ext4 25%   50%
+parted -s "$TARGET_DISK" mkpart PROJECTS ext4 50%   95%
+parted -s "$TARGET_DISK" mkpart SYNC     ext4 95%  100%
 
 # Wait for kernel to re-read partition table
 sleep 2
 partprobe "$TARGET_DISK"
 sleep 1
 
-echo "🗂️  3. Formatting filesystems (ext4 + noatime)..."
-mkfs.ext4 -F -L DOCKER   "${PART_PREFIX}1"
+echo "🗂️  3. Formatting filesystems (ext4/btrfs)..."
+# DOCKER partition will be formatted as XFS and mounted by Ansible playbook
 mkfs.ext4 -F -L LIBVIRT  "${PART_PREFIX}2"
-mkfs.ext4 -F -L PROJECTS "${PART_PREFIX}3"
-mkfs.ext4 -F -L GAMES    "${PART_PREFIX}4"
-mkfs.ext4 -F -L SYNC     "${PART_PREFIX}5"
+mkfs.btrfs -f -L PROJECTS "${PART_PREFIX}3"
+mkfs.btrfs -f -L SYNC     "${PART_PREFIX}4"
 
-echo "📁 4. Creating mount points..."
-# Docker Desktop stores its VM image in ~/.docker/desktop/
-# We mount DOCKER partition to /data/docker and symlink ~/.docker → /data/docker
-# This is done in setup_user.sh (requires knowing the real user's home)
-mkdir -p /data/docker
+echo "📁 4. Creating mount points and games directory..."
 mkdir -p /var/lib/libvirt/images
-mkdir -p /data/{projects,games,sync,gdrive}
+mkdir -p /data/{projects,sync,gdrive}
+mkdir -p "$REAL_HOME/Games"
+ln -sfn "$REAL_HOME/Games" /data/games
 
 echo "📝 5. Configuring /etc/fstab..."
 cp /etc/fstab /etc/fstab.bak
@@ -98,12 +93,10 @@ if ! grep -q "LABEL=PROJECTS" /etc/fstab; then
 
 # ── Target Drive data partitions ─────────────────────────────────────────────
 # noatime: skip access-time writes → extends SSD lifespan, improves perf
-# DOCKER partition → /data/docker (symlinked from ~/.docker in setup_user.sh)
-LABEL=DOCKER    /data/docker             ext4  defaults,noatime  0 2
-LABEL=LIBVIRT   /var/lib/libvirt/images  ext4  defaults,noatime  0 2
-LABEL=PROJECTS  /data/projects           ext4  defaults,noatime  0 2
-LABEL=GAMES     /data/games              ext4  defaults,noatime  0 2
-LABEL=SYNC      /data/sync               ext4  defaults,noatime  0 2
+# DOCKER partition is managed by Ansible playbook (XFS, /var/lib/docker)
+LABEL=LIBVIRT   /var/lib/libvirt/images  ext4   defaults,noatime  0 2
+LABEL=PROJECTS  /data/projects           btrfs  defaults,noatime,compress=zstd:3,discard=async  0 0
+LABEL=SYNC      /data/sync               btrfs  defaults,noatime,compress=zstd:3,discard=async  0 0
 EOF
 fi
 
@@ -111,47 +104,39 @@ echo "🔗 6. Mounting all drives..."
 mount -a
 
 echo "🔑 7. Setting ownership for user '$REAL_USER'..."
+chown -R "$REAL_USER:$REAL_USER" "$REAL_HOME/Games"
+chown -h "$REAL_USER:$REAL_USER" /data/games
 chown -R "$REAL_USER:$REAL_USER" \
-    /data/docker \
     /data/projects \
-    /data/games \
     /data/sync \
     /data/gdrive
 # libvirt images dir must be owned by root/libvirt, fixed in step 10
 
 echo "📦 8. Installing system packages..."
-# NOTE: docker, docker-compose, docker-buildx are NOT installed here —
-# Docker Desktop ships its own versions and conflicts with those packages.
-# Docker Desktop is installed via AUR (docker-desktop) in setup_user.sh.
 pacman -Syu --needed --noconfirm \
     base-devel \
     parted \
+    btrfs-progs \
     libvirt \
     qemu-desktop \
+    virt-manager \
+    edk2-ovmf \
+    swtpm \
+    dnsmasq \
+    bridge-utils \
     rclone \
     mold \
     sccache \
     clang \
-    nodejs \
-    npm \
     distrobox \
-    podman \
+    docker \
+    docker-compose \
+    docker-buildx \
+    ansible \
     vim          # provides xxd, required by NCALayer installer
 
 # ──────────────────────────────────────────────
-# 9. subuid/subgid for Docker Desktop file sharing
-# Docker Desktop on Linux requires these for rootless container file access
-# ──────────────────────────────────────────────
-echo "🔑 9. Configuring subuid/subgid for Docker Desktop..."
-if ! grep -q "^${REAL_USER}:" /etc/subuid 2>/dev/null; then
-    echo "${REAL_USER}:100000:65536" >> /etc/subuid
-fi
-if ! grep -q "^${REAL_USER}:" /etc/subgid 2>/dev/null; then
-    echo "${REAL_USER}:100000:65536" >> /etc/subgid
-fi
-
-# ──────────────────────────────────────────────
-# 10. NCALayer (ЭЦП / digital signature for KZ gov services)
+# 9. NCALayer (ЭЦП / digital signature for KZ gov services)
 # Installs to ~/NCALayer by default (installer asks, we use defaults)
 # ──────────────────────────────────────────────
 echo "🇰🇿 10. Installing NCALayer..." 
@@ -163,16 +148,14 @@ sudo -u "$REAL_USER" bash "$NCALAYER_TMP/ncalayer/ncalayer.sh" --nogui
 rm -rf "$NCALAYER_TMP"
 echo "   ✅ NCALayer installed. Run: ~/NCALayer/ncalayer.sh --run"
 
-echo "🚀 11. Enabling and starting services..."
-# Docker Desktop manages its own daemon — we do NOT enable docker.service
-# Docker Desktop installer will create the docker group and start its service
+echo "🚀 10. Enabling and starting services..."
 systemctl enable --now libvirtd
+systemctl enable --now docker
 
 # libvirt needs its images dir owned correctly
 chown root:libvirt /var/lib/libvirt/images
 chmod 775 /var/lib/libvirt/images
 
-# Pre-create docker group so usermod works before Desktop is installed
 groupadd -f docker
 usermod -aG docker,libvirt,kvm "$REAL_USER"
 
