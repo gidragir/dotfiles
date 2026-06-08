@@ -7,4 +7,4 @@
     mode "2560x1440@359.979" // Set resolution and refresh rate
     scale 1 // No scaling (use 2 for HiDPI)
 }
-include "env/display.kdl"
+include optional=true "env/display.kdl"

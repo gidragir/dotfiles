@@ -7,21 +7,24 @@ input {
             layout "us,ru"
             options "grp:caps_toggle"
         }
-        numlock // Enable numlock on startup
+        numlock
     }
 
     touchpad {
-        tap // Enable tap-to-click
-        natural-scroll // Enable natural (macOS-style) scrolling
+        tap
+        natural-scroll
+        dwt
+        drag-lock
+        click-method "clickfinger"
+        accel-profile "adaptive"
+        accel-speed 0.9
     }
 
     mouse {
-        // If you want to disable Mouse Acceleration,
-        // uncomment the lines below.
-        //accel-profile "flat"
-        //accel-speed 0.0
+        // accel-profile "flat"
+        // accel-speed 0.0
     }
 
-    focus-follows-mouse // Automatically focus windows under the mouse pointer
-    workspace-auto-back-and-forth // Enable workspace back & forth switching
+    focus-follows-mouse
+    workspace-auto-back-and-forth
 }

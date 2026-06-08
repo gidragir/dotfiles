@@ -48,4 +48,4 @@
         open-maximized-to-edges true
     }
 
-    include "env/rules.kdl"
+    include optional=true "env/rules.kdl"

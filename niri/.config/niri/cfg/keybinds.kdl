@@ -16,7 +16,7 @@ binds {
     Mod+Alt+V { spawn "sh" "-c" "wl-paste >> ~/Documents/ObsidianVault/STICKY/$(date +'%Y-%m-%d %H:%M').md && notify-send 'Obsidian' 'Заметка создана!'"; }
     Mod+V { spawn "bash" "-c" "~/.zsh/scripts/clipboard-picker.sh"; }
 
-    Mod+Shift+ESCAPE                     { show-hotkey-overlay; }
+    // Mod+Shift+ESCAPE                     { show-hotkey-overlay; }
 
     // ─── Applications ───
     Mod+Shift+Z {spawn "nu" "-c" "source $nu.config-path; open-focus-id obsidian obsidian";}
@@ -28,6 +28,7 @@ binds {
     // Mod+B                               hotkey-overlay-title="Open Browser: vivaldi" { spawn "nu" "-c" "source $nu.config-path; open-focus-title vivaldi vivaldi-stable";}  
     Mod+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "qs -c noctalia-shell ipc call media pause && qs -c noctalia-shell ipc call lockScreen lock"; }
     Mod+Shift+Q                        hotkey-overlay-title="Session Menu: noctalia sessionMenu" { spawn-sh "qs -c noctalia-shell ipc call sessionMenu toggle"; }
+    Mod+Shift+Escape            { spawn "ghostty" "-e" "btop"; }
 
     // Mod+E                               hotkey-overlay-title="File Manager: Nautilus" { spawn "nautilus"; }
     Mod+E { spawn "ghostty" "-e" "spf"; }
@@ -82,8 +83,8 @@ binds {
 
     Mod+Shift+CTRL+Left                 { move-column-to-monitor-left; }
     Mod+Shift+CTRL+Right                { move-column-to-monitor-right; }
-    Mod+Shift+CTRL+UP                   { move-column-to-monitor-up; }
-    Mod+Shift+CTRL+Down                 { move-column-to-monitor-down; }
+    Mod+Shift+CTRL+UP                   { move-column-to-workspace-up; }
+    Mod+Shift+CTRL+Down                 { move-column-to-workspace-down; }
     
     Mod+Shift+Alt+Left                 { consume-or-expel-window-left; }
     Mod+Shift+Alt+Right                { consume-or-expel-window-right; }
@@ -155,6 +156,20 @@ binds {
     CTRL+ALT+Delete                     { quit; } // Also quits Niri
     Mod+Shift+P                         { power-off-monitors; } // Turn off screens (useful for OLED or privacy)
     Mod+O                               repeat=false { toggle-overview; }
+
+    Mod+TouchpadScrollRight  cooldown-ms=400 { focus-column-right; }
+    Mod+TouchpadScrollLeft cooldown-ms=400 { focus-column-left; }
+    Mod+TouchpadScrollDown  cooldown-ms=400 { focus-workspace-down; }
+    Mod+TouchpadScrollUp    cooldown-ms=400 { focus-workspace-up; }
+
+    Mod+Shift+TouchpadScrollLeft  cooldown-ms=400 { focus-monitor-left; }
+    Mod+Shift+TouchpadScrollRight cooldown-ms=400 { focus-monitor-right; }
+
+    Mod+Ctrl+TouchpadScrollLeft cooldown-ms=400 { move-column-left; } 
+    Mod+Ctrl+TouchpadScrollRight  cooldown-ms=400 { move-column-right; }
+
+    Mod+Shift+Alt+TouchpadScrollLeft cooldown-ms=400 { consume-or-expel-window-left; }
+    Mod+Shift+Alt+TouchpadScrollRight cooldown-ms=400{ consume-or-expel-window-right; }
 }
 
-include "env/keybinds.kdl"
+include optional=true "env/keybinds.kdl"
