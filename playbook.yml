@@ -1,0 +1,281 @@
+---
+# =============================================================================
+# Playbook : docker_storage.yml
+# Purpose  : Configure Docker storage — XFS (ftype=1 + prjquota) + overlay2
+# Requires : ansible.posix >= 1.4  |  Docker pre-installed  |  kernel >= 4.0
+# Usage    : ansible-playbook docker_storage.yml
+# =============================================================================
+
+- name: Configure Docker Storage with XFS and overlay2
+  hosts: all
+  become: true
+  gather_facts: true  # Нужно для проверки ansible_kernel
+
+  vars:
+    # Use the partition labeled 'DOCKER' by default (created by setup_system.sh)
+    docker_disk: "/dev/disk/by-partlabel/DOCKER"
+    docker_data_dir: "/var/lib/docker"
+    docker_config_dir: "/etc/docker"
+
+    # XFS mount options:
+    # noatime      – не обновлять atime (производительность; включает nodiratime
+    #                автоматически начиная с ядра 2.6.29 — отдельно не нужен)
+    # prjquota     – project-квоты, обязательны для overlay2.size per-container
+    # logbsize=256k – увеличенный буфер журнала (по умолчанию 32 k)
+    #                 даёт выигрыш на write-heavy нагрузке
+    # logbufs=8 УБРАН: это значение по умолчанию на современных ядрах
+    xfs_mount_opts: "defaults,noatime,prjquota,logbsize=256k"
+
+    # Лимит дискового пространства на контейнер (требует prjquota на XFS)
+    docker_container_size: "20G"
+
+    # Ротация логов контейнеров
+    docker_log_max_size: "50m"
+    docker_log_max_file: "3"
+
+    # overlay2 требует ядро >= 4.0 (нативная поддержка без override-флагов)
+    min_kernel_version: "4.0"
+
+  # ---------------------------------------------------------------------------
+  pre_tasks:
+
+    - name: "[PREFLIGHT] Получение реального пути блочного устройства"
+      ansible.builtin.command: readlink -f {{ docker_disk }}
+      register: _real_docker_disk
+      changed_when: false
+      tags: [always]
+
+    - name: "[PREFLIGHT] Обновление переменной docker_disk реальным путём"
+      ansible.builtin.set_fact:
+        docker_disk: "{{ _real_docker_disk.stdout }}"
+      tags: [always]
+
+    - name: "[PREFLIGHT] docker_disk должен быть /dev/* путём"
+      ansible.builtin.assert:
+        that:
+          - docker_disk is defined
+          - docker_disk is match('^/dev/')
+        fail_msg: "docker_disk='{{ docker_disk }}' — некорректный путь к блочному устройству."
+      tags: [always]
+
+    - name: "[PREFLIGHT] Проверка версии ядра (>= {{ min_kernel_version }})"
+      ansible.builtin.assert:
+        that:
+          - ansible_kernel is version(min_kernel_version, '>=')
+        fail_msg: >-
+          Ядро {{ ansible_kernel }} слишком старое.
+          overlay2 требует ядро >= {{ min_kernel_version }}.
+        success_msg: "Ядро {{ ansible_kernel }} поддерживается."
+      tags: [always]
+
+    - name: "[PREFLIGHT] Stat {{ docker_disk }}"
+      ansible.builtin.stat:
+        path: "{{ docker_disk }}"
+      register: _disk_stat
+      tags: [always]
+
+    - name: "[PREFLIGHT] Устройство должно существовать и быть блочным"
+      ansible.builtin.assert:
+        that:
+          - _disk_stat.stat.exists
+          - _disk_stat.stat.isblk
+        fail_msg: >-
+          {{ docker_disk }} не существует или не является блочным устройством
+          (exists={{ _disk_stat.stat.exists }},
+           isblk={{ _disk_stat.stat.isblk | default(false) }}).
+      tags: [always]
+
+    - name: "[PREFLIGHT] Проверка установки Docker"
+      ansible.builtin.command: docker --version
+      register: _docker_ver
+      changed_when: false
+      failed_when: false
+      tags: [always]
+
+    - name: "[PREFLIGHT] Предупреждение: Docker не установлен"
+      ansible.builtin.debug:
+        msg: >-
+          Docker НЕ установлен. daemon.json будет записан,
+          но конфигурация вступит в силу только после установки Docker.
+      when: _docker_ver.rc != 0
+      tags: [always]
+
+    - name: "[PREFLIGHT] Проверка: {{ docker_data_dir }} уже смонтирован?"
+      ansible.builtin.command: mountpoint -q {{ docker_data_dir }}
+      register: _mountpoint
+      changed_when: false
+      failed_when: false
+      tags: [always]
+
+    - name: "[PREFLIGHT] Список запущенных контейнеров"
+      ansible.builtin.command: docker ps -q
+      register: _running_containers
+      changed_when: false
+      failed_when: false
+      when:
+        - _docker_ver.rc == 0
+        - _mountpoint.rc == 0
+      tags: [always]
+
+    - name: "[PREFLIGHT] Предупреждение: есть запущенные контейнеры"
+      ansible.builtin.debug:
+        msg: >-
+          ВНИМАНИЕ: {{ _running_containers.stdout_lines | length }} запущенных
+          контейнер(а/ов). Рестарт Docker прервёт их, если live-restore
+          ещё не включён.
+      when:
+        - _running_containers is not skipped
+        - _running_containers.stdout | default('') | length > 0
+      tags: [always]
+
+  # ---------------------------------------------------------------------------
+  tasks:
+
+    # -- 1. Пакеты -----------------------------------------------------------
+
+    - name: "Установка xfsprogs (утилиты XFS)"
+      ansible.builtin.package:
+        name: xfsprogs
+        state: present
+      tags: [packages]
+
+    # -- 2. Подготовка диска ------------------------------------------------
+
+    - name: "Определение текущей ФС на {{ docker_disk }}"
+      ansible.builtin.command: blkid -o value -s TYPE {{ docker_disk }}
+      register: _disk_fstype
+      changed_when: false
+      failed_when: false  # Пустой вывод = нет ФС — это нормально
+      tags: [disk]
+
+    # ИСПРАВЛЕНИЕ: force=false + условие — не трогаем существующий XFS
+    - name: "Форматирование {{ docker_disk }} в XFS с ftype=1 (пропуск если уже XFS)"
+      ansible.builtin.filesystem:
+        fstype: xfs
+        dev: "{{ docker_disk }}"
+        opts: "-n ftype=1 -L docker"
+        force: false  # Никогда не перезаписывать существующую ФС
+      when: _disk_fstype.stdout | trim != "xfs"
+      tags: [disk]
+
+    - name: "Проверка ftype=1 на XFS (обязательно для overlay2)"
+      ansible.builtin.command: xfs_info {{ docker_disk }}
+      register: _xfs_info
+      changed_when: false
+      tags: [disk, validate]
+
+    - name: "Утверждение: ftype=1 включён"
+      ansible.builtin.assert:
+        that:
+          - "'ftype=1' in _xfs_info.stdout"
+        fail_msg: >-
+          {{ docker_disk }} НЕ имеет ftype=1. overlay2 не заработает!
+          Пересоздайте ФС вручную: mkfs.xfs -f -n ftype=1 {{ docker_disk }}
+        success_msg: "ftype=1 подтверждён."
+      tags: [disk, validate]
+
+    # -- 3. Монтирование -----------------------------------------------------
+
+    # ИСПРАВЛЕНИЕ: монтируем по UUID — имена /dev/sd* непостоянны
+    - name: "Получение UUID {{ docker_disk }}"
+      ansible.builtin.command: blkid -s UUID -o value {{ docker_disk }}
+      register: _disk_uuid
+      changed_when: false
+      tags: [mount]
+
+    - name: "Создание директории {{ docker_data_dir }}"
+      ansible.builtin.file:
+        path: "{{ docker_data_dir }}"
+        state: directory
+        mode: '0711'
+        owner: root
+        group: root
+      tags: [mount]
+
+    - name: "Монтирование XFS по UUID → {{ docker_data_dir }} (fstab)"
+      ansible.posix.mount:
+        path: "{{ docker_data_dir }}"
+        src: "UUID={{ _disk_uuid.stdout | trim }}"  # UUID вместо /dev/sdX
+        fstype: xfs
+        opts: "{{ xfs_mount_opts }}"
+        dump: "0"
+        passno: "2"
+        state: mounted
+      tags: [mount]
+
+    # -- 4. Конфигурация Docker daemon ---------------------------------------
+
+    - name: "Создание директории {{ docker_config_dir }}"
+      ansible.builtin.file:
+        path: "{{ docker_config_dir }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+      tags: [docker]
+
+    - name: "Деплой {{ docker_config_dir }}/daemon.json"
+      ansible.builtin.copy:
+        dest: "{{ docker_config_dir }}/daemon.json"
+        content: |
+          {
+            "storage-driver": "overlay2",
+            "storage-opts": [
+              "overlay2.size={{ docker_container_size }}"
+            ],
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "{{ docker_log_max_size }}",
+              "max-file": "{{ docker_log_max_file }}"
+            },
+            "live-restore": true
+          }
+        mode: '0644'
+        owner: root
+        group: root
+        backup: true  # Автобэкап предыдущего daemon.json с timestamp
+        validate: "python3 -m json.tool %s"  # Синтаксическая проверка JSON перед записью
+      notify: Restart Docker
+      tags: [docker]
+
+  # ---------------------------------------------------------------------------
+  post_tasks:
+
+    - name: "[POST] Проверка: {{ docker_data_dir }} смонтирован"
+      ansible.builtin.command: mountpoint -q {{ docker_data_dir }}
+      register: _post_mount
+      changed_when: false
+      tags: [always]
+
+    - name: "[POST] Утверждение: монтирование активно"
+      ansible.builtin.assert:
+        that: _post_mount.rc == 0
+        fail_msg: "{{ docker_data_dir }} НЕ смонтирован после конфигурации!"
+        success_msg: "Монтирование подтверждено."
+      tags: [always]
+
+    - name: "[POST] Итоговая сводка конфигурации"
+      ansible.builtin.debug:
+        msg:
+          - "╔══════════════════════════════════════════════════════╗"
+          - "║   Docker Storage — конфигурация завершена            ║"
+          - "╠══════════════════════════════════════════════════════╣"
+          - "║  Диск      : {{ docker_disk }}"
+          - "║  UUID      : {{ _disk_uuid.stdout | trim }}"
+          - "║  Точка     : {{ docker_data_dir }}"
+          - "║  ФС        : XFS  (ftype=1)"
+          - "║  Опции     : {{ xfs_mount_opts }}"
+          - "║  Драйвер   : overlay2"
+          - "║  Лимит     : {{ docker_container_size }} / контейнер"
+          - "║  Логи      : {{ docker_log_max_size }} × {{ docker_log_max_file }} файла"
+          - "╚══════════════════════════════════════════════════════╝"
+      tags: [always]
+
+  # ---------------------------------------------------------------------------
+  handlers:
+
+    - name: Restart Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
+        daemon_reload: true

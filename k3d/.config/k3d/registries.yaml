@@ -1,0 +1,7 @@
+mirrors:
+  "nexus.local:8082":
+    endpoint:
+      - "http://nexus.local:8082"
+  "localhost:8082":
+    endpoint:
+      - "http://nexus.local:8082"
