@@ -133,7 +133,8 @@ pacman -Syu --needed --noconfirm \
     docker-compose \
     docker-buildx \
     ansible \
-    vim          # provides xxd, required by NCALayer installer
+    vim \
+    hypridle
 
 # ──────────────────────────────────────────────
 # 9. NCALayer (ЭЦП / digital signature for KZ gov services)
