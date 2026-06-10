@@ -11,10 +11,12 @@ binds {
 
     // ─── noctalia-shell keybinds ───
     // https://docs.noctalia.dev/getting-started/keybinds/
-    Mod+Alt+N { spawn "/home/alatau/.local/bin/obsidian-note.sh"; }
+    Mod+Alt+N { spawn "~/.local/bin/obsidian-note.sh"; }
     
     Mod+Alt+V { spawn "sh" "-c" "wl-paste >> ~/Documents/ObsidianVault/STICKY/$(date +'%Y-%m-%d %H:%M').md && notify-send 'Obsidian' 'Заметка создана!'"; }
     Mod+V { spawn "bash" "-c" "~/.zsh/scripts/clipboard-picker.sh"; }
+    Mod+Z { spawn "bash" "-c" "zoxide query -l | rofi -dmenu -p 'Zoxide' -i | xargs -I {} code '{}'";}
+    Mod+X { spawn "bash" "-c" "ls ~/workspaces | rofi -dmenu -p 'Workspace' -i | xargs -I {} code ~/workspaces/{}"; }
 
     // Mod+Shift+ESCAPE                     { show-hotkey-overlay; }
 
