@@ -62,7 +62,8 @@ paru -S --needed --noconfirm \
     k9s \
     sops \
     age \
-    argocd
+    argocd \
+    rofi
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 2. Projects symlink & GNU Stow (Dotfiles)
