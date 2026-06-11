@@ -72,6 +72,7 @@ source "$HOME/.zsh/alias/k8s.zsh"
 #[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 export KUBECONFIG=$HOME/.kube/config
+export PATH="$HOME/projects/dotfiles/zsh/.zsh/scripts:$PATH"
 
 spf_tv_search() {
     local target
@@ -86,6 +87,16 @@ spf_tv_search() {
     fi
 }
 
-# Создание короткого алиаса
 alias spft=spf_tv_search
-export PATH="$HOME/projects/dotfiles/zsh/.zsh/scripts:$PATH"
+
+
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.m+1) ]]; then
+  compinit
+else
+  compinit -C
+fi
+
+if (( $+commands[carapace] )); then
+  source <(carapace _carapace)
+fi

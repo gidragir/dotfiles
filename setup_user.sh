@@ -63,7 +63,8 @@ paru -S --needed --noconfirm \
     sops \
     age \
     argocd \
-    rofi
+    rofi \
+    carapace-bin
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 2. Projects symlink & GNU Stow (Dotfiles)
