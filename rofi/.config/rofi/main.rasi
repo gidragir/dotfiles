@@ -1,0 +1,67 @@
+configuration {
+    modi: "dmenu";
+}
+
+* {
+    bg:          #141414;
+    fg:          #e0e0e0;
+    accent:      #0078d4;
+    selected-bg: #1e1e1e;
+    text-color:  #e0e0e0;
+    background-color: #141414;
+}
+
+window {
+    width: 500px;
+    background-color: @bg;
+    border: 1px;
+    border-color: #2a2a2a;
+    border-radius: 10px;
+}
+
+mainbox {
+    background-color: @bg;
+    children: [ inputbar, listview ];
+    padding: 6px;
+    spacing: 4px;
+}
+
+inputbar {
+    children: [ entry ];
+    background-color: #1e1e1e;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+entry {
+    placeholder-color: #555555;
+    text-color: @fg;
+    background-color: transparent;
+}
+
+listview {
+    columns: 1;
+    lines: 8;
+    padding: 2px 0;
+    scrollbar: false;
+    background-color: @bg;
+}
+
+element {
+    padding: 8px 12px;
+    border-radius: 6px;
+    spacing: 0;
+    background-color: @bg;
+    text-color: @fg;
+}
+
+element selected {
+    background-color: @selected-bg;
+    text-color: @accent;
+}
+
+element-text {
+    text-color: inherit;
+    vertical-align: 0.5;
+    background-color: transparent;
+}
