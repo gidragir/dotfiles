@@ -64,6 +64,7 @@ eval "$(zoxide init zsh)"
 eval "$(starship init zsh)"
 
 # ─────────────────────────────────────────────────────────────────────────────
+source "$HOME/.zsh/binds/main.zsh"
 source "$HOME/.zsh/alias/core.zsh"
 source "$HOME/.zsh/alias/git.zsh"
 source "$HOME/.zsh/alias/ansible.zsh"
