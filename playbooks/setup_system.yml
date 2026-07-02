@@ -1,0 +1,331 @@
+---
+# =============================================================================
+# Playbook : setup_system.yml
+# Purpose  : Partition drive, format/mount filesystems, install system packages,
+#            and configure services/groups on CachyOS.
+# Requires : Root privileges (run with become: true or as root user)
+# Usage    : ansible-playbook setup_system.yml
+# =============================================================================
+
+- name: System Setup and Package Maintenance
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  tasks:
+    # ── 1. Discover drive and prompt user if needed ──────────────────────────
+    - name: Show available storage drives
+      ansible.builtin.shell: |
+        echo "🔍 Available storage drives:"
+        echo "--------------------------------------------------------"
+        lsblk -d -o NAME,SIZE,MODEL | grep -E "^(nvme|sd)"
+        echo "--------------------------------------------------------"
+      register: lsblk_drives
+      changed_when: false
+
+    - name: Display available storage drives
+      ansible.builtin.debug:
+        msg: "{{ lsblk_drives.stdout_lines }}"
+
+    - name: Prompt for target disk name
+      ansible.builtin.pause:
+        prompt: "Please enter the NAME of the EMPTY drive you want to format (e.g., nvme0n1 or sda)"
+      register: disk_prompt_result
+      when: target_disk_name is not defined or target_disk_name == ""
+
+    - name: Set target disk name fact
+      ansible.builtin.set_fact:
+        target_disk_name: "{{ disk_prompt_result.user_input | default(target_disk_name | default('')) }}"
+      when: target_disk_name is not defined or target_disk_name == ""
+
+    - name: Clean up target disk name if /dev/ was included
+      ansible.builtin.set_fact:
+        target_disk_name: "{{ target_disk_name | replace('/dev/', '') | trim }}"
+
+    - name: Fail if target disk name is empty
+      ansible.builtin.fail:
+        msg: "Error: No target disk specified."
+      when: target_disk_name == ""
+
+    - name: Confirm formatting
+      ansible.builtin.pause:
+        prompt: "WARNING: Drive /dev/{{ target_disk_name }} will be COMPLETELY FORMATTED! This will destroy ALL DATA on it. Are you ABSOLUTELY sure? (y/N)"
+      register: confirm_prompt_result
+      when: confirm_format is not defined
+
+    - name: Fail if confirmation not received
+      ansible.builtin.fail:
+        msg: "Cancelled by user."
+      when:
+        - confirm_format is not defined
+        - confirm_prompt_result.user_input not in ['y', 'Y']
+
+    # ── 2. Perform Disk and Active OS Checks ─────────────────────────────────
+    - name: Check if target disk exists
+      ansible.builtin.stat:
+        path: "/dev/{{ target_disk_name }}"
+      register: target_disk_stat
+
+    - name: Fail if target disk does not exist
+      ansible.builtin.fail:
+        msg: "Error: Device /dev/{{ target_disk_name }} does not exist or is not a block device."
+      when: not target_disk_stat.stat.exists or not target_disk_stat.stat.isblk
+
+    - name: Check if target disk contains active OS partitions
+      ansible.builtin.shell: |
+        lsblk -n -o MOUNTPOINT "/dev/{{ target_disk_name }}" | grep -q -E "^/$|^/boot"
+      register: active_os_check
+      failed_when: false
+      changed_when: false
+
+    - name: Fail if target disk contains active system partitions
+      ansible.builtin.fail:
+        msg: "FATAL ERROR: /dev/{{ target_disk_name }} contains active system partitions (root or boot)!"
+      when: active_os_check.rc == 0
+
+    # ── 3. Stop Services and Partition Drive ──────────────────────────────────
+    - name: Determine partition prefix for NVMe
+      ansible.builtin.set_fact:
+        part_prefix: "/dev/{{ target_disk_name }}p"
+      when: "'nvme' in target_disk_name"
+
+    - name: Determine partition prefix for non-NVMe
+      ansible.builtin.set_fact:
+        part_prefix: "/dev/{{ target_disk_name }}"
+      when: "'nvme' not in target_disk_name"
+
+    - name: Stop docker and libvirtd services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+      loop:
+        - docker
+        - libvirtd
+      failed_when: false
+
+    - name: Partition target drive
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - "parted -s /dev/{{ target_disk_name }} mklabel gpt"
+        - "parted -s /dev/{{ target_disk_name }} mkpart DOCKER ext4 0% 25%"
+        - "parted -s /dev/{{ target_disk_name }} mkpart LIBVIRT ext4 25% 50%"
+        - "parted -s /dev/{{ target_disk_name }} mkpart PROJECTS ext4 50% 95%"
+        - "parted -s /dev/{{ target_disk_name }} mkpart SYNC ext4 95% 100%"
+
+    - name: Force kernel to re-read partition table
+      ansible.builtin.command: "partprobe /dev/{{ target_disk_name }}"
+      changed_when: false
+
+    - name: Wait for partition table update
+      ansible.builtin.pause:
+        seconds: 2
+
+    # ── 4. Format Filesystems ─────────────────────────────────────────────────
+    - name: Format DOCKER partition as XFS (for overlay2 + prjquota)
+      ansible.builtin.command: "mkfs.xfs -f -L docker {{ part_prefix }}1"
+
+    - name: Format LIBVIRT partition as ext4
+      ansible.builtin.command: "mkfs.ext4 -F -L LIBVIRT {{ part_prefix }}2"
+
+    - name: Format PROJECTS partition as btrfs
+      ansible.builtin.command: "mkfs.btrfs -f -L PROJECTS {{ part_prefix }}3"
+
+    - name: Format SYNC partition as btrfs
+      ansible.builtin.command: "mkfs.btrfs -f -L SYNC {{ part_prefix }}4"
+
+    # ── 5. Discover User and Configure Mounts ─────────────────────────────────
+    - name: Get real user name
+      ansible.builtin.set_fact:
+        real_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+    - name: Get real home directory
+      ansible.builtin.shell: getent passwd "{{ real_user }}" | cut -d: -f6
+      register: real_home_result
+      changed_when: false
+
+    - name: Set real home directory fact
+      ansible.builtin.set_fact:
+        real_home: "{{ real_home_result.stdout }}"
+
+    - name: Backup /etc/fstab
+      ansible.builtin.copy:
+        src: /etc/fstab
+        dest: /etc/fstab.bak
+        remote_src: yes
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Create mount points and games directory
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /var/lib/libvirt/images
+        - /data/projects
+        - /data/sync
+        - /data/gdrive
+        - "{{ real_home }}/Games"
+
+    - name: Create games symlink
+      ansible.builtin.file:
+        src: "{{ real_home }}/Games"
+        dest: /data/games
+        state: link
+        force: yes
+
+    - name: Get UUID of DOCKER partition
+      ansible.builtin.command: blkid -s UUID -o value "{{ part_prefix }}1"
+      register: docker_uuid_result
+      changed_when: false
+
+    - name: Get UUID of LIBVIRT partition
+      ansible.builtin.command: blkid -s UUID -o value "{{ part_prefix }}2"
+      register: libvirt_uuid_result
+      changed_when: false
+
+    - name: Get UUID of PROJECTS partition
+      ansible.builtin.command: blkid -s UUID -o value "{{ part_prefix }}3"
+      register: projects_uuid_result
+      changed_when: false
+
+    - name: Get UUID of SYNC partition
+      ansible.builtin.command: blkid -s UUID -o value "{{ part_prefix }}4"
+      register: sync_uuid_result
+      changed_when: false
+
+    - name: Ensure docker mount point directory exists with proper permissions
+      ansible.builtin.file:
+        path: /var/lib/docker
+        state: directory
+        mode: '0711'
+
+    - name: Mount DOCKER partition (XFS)
+      ansible.builtin.mount:
+        path: /var/lib/docker
+        src: "UUID={{ docker_uuid_result.stdout }}"
+        fstype: xfs
+        opts: defaults,noatime,prjquota,logbsize=256k
+        state: mounted
+
+    - name: Mount LIBVIRT partition (ext4)
+      ansible.builtin.mount:
+        path: /var/lib/libvirt/images
+        src: "UUID={{ libvirt_uuid_result.stdout }}"
+        fstype: ext4
+        opts: defaults,noatime
+        state: mounted
+
+    - name: Mount PROJECTS partition (btrfs)
+      ansible.builtin.mount:
+        path: /data/projects
+        src: "UUID={{ projects_uuid_result.stdout }}"
+        fstype: btrfs
+        opts: defaults,noatime,compress=zstd:3,discard=async
+        state: mounted
+
+    - name: Mount SYNC partition (btrfs)
+      ansible.builtin.mount:
+        path: /data/sync
+        src: "UUID={{ sync_uuid_result.stdout }}"
+        fstype: btrfs
+        opts: defaults,noatime,compress=zstd:3,discard=async
+        state: mounted
+
+    # ── 6. Configure User Permissions and Ownership ─────────────────────────
+    - name: Set ownership for user games directory
+      ansible.builtin.file:
+        path: "{{ real_home }}/Games"
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        recurse: yes
+
+    - name: Set ownership for games symlink
+      ansible.builtin.file:
+        path: /data/games
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        state: link
+
+    - name: Set ownership for data directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        recurse: yes
+      loop:
+        - /data/projects
+        - /data/sync
+        - /data/gdrive
+
+    # ── 7. Install and Maintain System Packages ──────────────────────────────
+    - name: Install system packages via pacman
+      community.general.pacman:
+        name:
+          - base-devel
+          - parted
+          - btrfs-progs
+          - libvirt
+          - qemu-desktop
+          - virt-manager
+          - edk2-ovmf
+          - swtpm
+          - dnsmasq
+          - bridge-utils
+          - rclone
+          - mold
+          - sccache
+          - clang
+          - distrobox
+          - docker
+          - docker-compose
+          - docker-buildx
+          - ansible
+          - vim
+          - hypridle
+        state: present
+        update_cache: true
+
+    - name: Remove unwanted packages (firefox, alacritty)
+      community.general.pacman:
+        name:
+          - firefox
+          - alacritty
+        state: absent
+
+    # ── 8. Enable Services and Post-Install Configuration ────────────────────
+    - name: Enable and start system services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop:
+        - libvirtd
+        - docker
+
+    - name: Set ownership and permissions for libvirt images directory
+      ansible.builtin.file:
+        path: /var/lib/libvirt/images
+        owner: root
+        group: libvirt
+        mode: '0775'
+
+    - name: Ensure docker group exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Add real user to groups
+      ansible.builtin.user:
+        name: "{{ real_user }}"
+        groups: docker,libvirt,kvm
+        append: yes
+
+    - name: Set GNOME color scheme preference
+      ansible.builtin.command: gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+      become: true
+      become_user: "{{ real_user }}"
+      changed_when: false
+      failed_when: false
