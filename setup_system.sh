@@ -112,29 +112,12 @@ chown -R "$REAL_USER:$REAL_USER" \
     /data/gdrive
 # libvirt images dir must be owned by root/libvirt, fixed in step 10
 
-echo "📦 8. Installing system packages..."
-pacman -Syu --needed --noconfirm \
-    base-devel \
-    parted \
-    btrfs-progs \
-    libvirt \
-    qemu-desktop \
-    virt-manager \
-    edk2-ovmf \
-    swtpm \
-    dnsmasq \
-    bridge-utils \
-    rclone \
-    mold \
-    sccache \
-    clang \
-    distrobox \
-    docker \
-    docker-compose \
-    docker-buildx \
-    ansible \
-    vim \
-    hypridle
+echo "📦 8. Installing system packages via Ansible..."
+if ! command -v ansible-playbook &>/dev/null; then
+    echo "   Installing Ansible first via pacman..."
+    pacman -Syu --needed --noconfirm ansible
+fi
+ansible-playbook playbooks/setup_system_packages.yml
 
 # ──────────────────────────────────────────────
 # 9. NCALayer (ЭЦП / digital signature for KZ gov services)
