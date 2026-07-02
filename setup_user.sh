@@ -1,5 +1,14 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
+
+error_handler() {
+    local exit_code=$1
+    local line_no=$2
+    echo "" >&2
+    echo "❌ Error occurred in script at line $line_no (exit code: $exit_code)" >&2
+    echo "   Ansible playbook execution failed. Please check the output above." >&2
+}
+trap 'error_handler $? $LINENO' ERR
 
 if [ "$EUID" -eq 0 ]; then
     echo "❌ This script MUST NOT be run as root. Run it as a normal user."
@@ -7,16 +16,16 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 # ──────────────────────────────────────────────────────────────────────────────
-# TOOLCHAIN STORAGE STRATEGY (XDG-based, nothing pollutes ~/ root)
+# TOOLCHAIN STORAGE STRATEGY (XDG & Dedicated NVMe partitions)
 #
-# ~/.local/share/pnpm/            → pnpm store            (XDG_DATA_HOME)
-# ~/.cache/uv/                    → uv package cache       (XDG_CACHE_HOME/uv)
+# /data/projects/.pnpm-store/     → pnpm store            (NVMe 2 - same FS as projects)
+# /data/projects/.uv-cache/       → uv package cache       (NVMe 2 - Btrfs zstd compression)
 # ~/.local/share/uv/              → uv tools/venvs        (UV_DATA_DIR)
 #
 # Rationale:
 #   - Cargo and Zsh configurations are managed via dotfiles (GNU Stow)
-#   - pnpm store uses XDG_DATA_HOME — no dotfiles in ~ root
-#   - uv follows XDG by default, no config needed
+#   - pnpm store is on the same drive as projects to allow hardlinks (NVMe 2)
+#   - uv cache is on the Btrfs partition to utilize disk compression
 # ──────────────────────────────────────────────────────────────────────────────
 
 echo "📦 Running consolidated user setup playbook..."
@@ -30,9 +39,9 @@ echo "╔═══════════════════════�
 echo "║  ✅ User setup complete!                                           ║"
 echo "║                                                                    ║"
 echo "║  TOOLCHAIN STORAGE LAYOUT:                                         ║"
-echo "║  ~/.local/share/pnpm-store/  → pnpm content store (XDG)          ║"
-echo "║  ~/.cache/uv/       → uv package cache (XDG, auto)               ║"
-echo "║  ~/.local/share/uv/ → uv tools & pythons (XDG, auto)             ║"
+echo "║  /data/projects/.pnpm-store/ → pnpm content store (optimized)     ║"
+echo "║  /data/projects/.uv-cache/   → uv package cache (optimized Btrfs) ║"
+echo "║  ~/.local/share/uv/          → uv tools & pythons (XDG, auto)     ║"
 echo "║  ~/.config/mise/config.toml → Global mise tools configuration      ║"
 echo "║  ~/.zshrc           → Managed via dotfiles (Stow)               ║"
 echo "║                                                                    ║"

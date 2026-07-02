@@ -201,7 +201,14 @@
 
     - name: Create pnpm store directory
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.local/share/pnpm-store"
+        path: "/data/projects/.pnpm-store"
+        state: directory
+        mode: '0755'
+      tags: [mise]
+
+    - name: Create uv cache directory
+      ansible.builtin.file:
+        path: "/data/projects/.uv-cache"
         state: directory
         mode: '0755'
       tags: [mise]

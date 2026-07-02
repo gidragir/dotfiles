@@ -23,15 +23,15 @@ export SCCACHE_DIR="/data/projects/.sccache"
 
 # ── Node / pnpm ──────────────────────────────────────────────────────────────
 # PNPM_HOME: where pnpm stores its global bins and content-addressable store
-export PNPM_HOME="$HOME/.local/share/pnpm-store"
+export PNPM_HOME="/data/projects/.pnpm-store"
 export PATH="$PNPM_HOME:$PATH"
 
 # ── Python / uv ──────────────────────────────────────────────────────────────
 # uv follows XDG automatically:
 #   cache  → ~/.cache/uv
 #   data   → ~/.local/share/uv
-# Uncomment below to redirect uv cache to NVMe 1 if it grows large:
-# export UV_CACHE_DIR="/data/projects/.uv-cache"
+# Redirect uv cache to NVMe 2:
+export UV_CACHE_DIR="/data/projects/.uv-cache"
 
 # ── Editors ──────────────────────────────────────────────────────────────────
 export EDITOR='nvim'

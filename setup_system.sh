@@ -1,5 +1,14 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
+
+error_handler() {
+    local exit_code=$1
+    local line_no=$2
+    echo "" >&2
+    echo "❌ Error occurred in script at line $line_no (exit code: $exit_code)" >&2
+    echo "   Ansible playbook execution failed. Please check the output above." >&2
+}
+trap 'error_handler $? $LINENO' ERR
 
 if [ "$EUID" -ne 0 ]; then
     echo "❌ Please run this script as root (sudo ./setup_system.sh)"

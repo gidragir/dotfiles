@@ -108,10 +108,10 @@
       ansible.builtin.command: "{{ item }}"
       loop:
         - "parted -s /dev/{{ target_disk_name }} mklabel gpt"
-        - "parted -s /dev/{{ target_disk_name }} mkpart DOCKER ext4 0% 25%"
+        - "parted -s /dev/{{ target_disk_name }} mkpart DOCKER xfs 0% 25%"
         - "parted -s /dev/{{ target_disk_name }} mkpart LIBVIRT ext4 25% 50%"
-        - "parted -s /dev/{{ target_disk_name }} mkpart PROJECTS ext4 50% 95%"
-        - "parted -s /dev/{{ target_disk_name }} mkpart SYNC ext4 95% 100%"
+        - "parted -s /dev/{{ target_disk_name }} mkpart PROJECTS btrfs 50% 95%"
+        - "parted -s /dev/{{ target_disk_name }} mkpart SYNC btrfs 95% 100%"
 
     - name: Force kernel to re-read partition table
       ansible.builtin.command: "partprobe /dev/{{ target_disk_name }}"
@@ -294,6 +294,25 @@
           - firefox
           - alacritty
         state: absent
+
+    - name: Ensure /etc/docker directory exists
+      ansible.builtin.file:
+        path: /etc/docker
+        state: directory
+        mode: '0755'
+
+    - name: Configure Docker daemon (overlay2 and storage options)
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        mode: '0644'
+        content: |
+          {
+            "storage-driver": "overlay2",
+            "storage-opts": [
+              "overlay2.size=20G"
+            ],
+            "live-restore": true
+          }
 
     # ── 8. Enable Services and Post-Install Configuration ────────────────────
     - name: Enable and start system services
