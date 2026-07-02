@@ -174,7 +174,7 @@
 
     - name: Install cargo utilities
       ansible.builtin.command:
-        cmd: cargo install {{ item.item }}
+        cmd: cargo binstall -y {{ item.item }}
       loop: "{{ tool_stats.results }}"
       when: not item.stat.exists
       tags: [cargo]
@@ -291,6 +291,12 @@
         scope: user
       tags: [systemd]
 
+    - name: Check if rclone is configured
+      ansible.builtin.stat:
+        path: "{{ ansible_env.HOME }}/.config/rclone/rclone.conf"
+      register: rclone_conf_check
+      tags: [systemd]
+
     - name: Enable rclone services and timers
       ansible.builtin.systemd:
         name: "{{ item }}"
@@ -299,6 +305,7 @@
       loop:
         - rclone-mount.service
         - rclone-sync.timer
+      when: rclone_conf_check.stat.exists
       tags: [systemd]
 
     - name: Enable and start ratbagd system service

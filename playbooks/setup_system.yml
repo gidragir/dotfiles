@@ -84,7 +84,44 @@
         msg: "FATAL ERROR: /dev/{{ target_disk_name }} contains active system partitions (root or boot)!"
       when: active_os_check.rc == 0
 
-    # ── 3. Stop Services and Partition Drive ──────────────────────────────────
+    # ── 3. Install System Packages ───────────────────────────────────────────
+    - name: Install system packages via pacman
+      community.general.pacman:
+        name:
+          - base-devel
+          - parted
+          - btrfs-progs
+          - libvirt
+          - qemu-desktop
+          - virt-manager
+          - edk2-ovmf
+          - swtpm
+          - dnsmasq
+          - bridge-utils
+          - rclone
+          - mold
+          - sccache
+          - clang
+          - distrobox
+          - docker
+          - docker-compose
+          - docker-buildx
+          - ansible
+          - vim
+          - hypridle
+          - cargo-binstall
+        state: present
+        update_cache: true
+
+    - name: Remove unwanted packages (firefox, alacritty)
+      community.general.pacman:
+        name:
+          - firefox
+          - alacritty
+        state: absent
+
+    # ── 4. Stop Services and Partition Drive ──────────────────────────────────
+
     - name: Determine partition prefix for NVMe
       ansible.builtin.set_fact:
         part_prefix: "/dev/{{ target_disk_name }}p"
@@ -104,6 +141,11 @@
         - libvirtd
       failed_when: false
 
+    - name: Check if target disk is already partitioned
+      ansible.builtin.stat:
+        path: "{{ part_prefix }}1"
+      register: target_disk_part1
+
     - name: Partition target drive
       ansible.builtin.command: "{{ item }}"
       loop:
@@ -112,27 +154,61 @@
         - "parted -s /dev/{{ target_disk_name }} mkpart LIBVIRT ext4 25% 50%"
         - "parted -s /dev/{{ target_disk_name }} mkpart PROJECTS btrfs 50% 95%"
         - "parted -s /dev/{{ target_disk_name }} mkpart SYNC btrfs 95% 100%"
+      when: not target_disk_part1.stat.exists
+
 
     - name: Force kernel to re-read partition table
       ansible.builtin.command: "partprobe /dev/{{ target_disk_name }}"
       changed_when: false
+      when: not target_disk_part1.stat.exists
 
     - name: Wait for partition table update
       ansible.builtin.pause:
         seconds: 2
+      when: not target_disk_part1.stat.exists
+
 
     # ── 4. Format Filesystems ─────────────────────────────────────────────────
+    - name: Check if DOCKER partition is formatted
+      ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}1"
+      register: docker_fs_check
+      changed_when: false
+      failed_when: false
+
     - name: Format DOCKER partition as XFS (for overlay2 + prjquota)
       ansible.builtin.command: "mkfs.xfs -f -L docker {{ part_prefix }}1"
+      when: docker_fs_check.stdout == ""
+
+    - name: Check if LIBVIRT partition is formatted
+      ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}2"
+      register: libvirt_fs_check
+      changed_when: false
+      failed_when: false
 
     - name: Format LIBVIRT partition as ext4
       ansible.builtin.command: "mkfs.ext4 -F -L LIBVIRT {{ part_prefix }}2"
+      when: libvirt_fs_check.stdout == ""
+
+    - name: Check if PROJECTS partition is formatted
+      ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}3"
+      register: projects_fs_check
+      changed_when: false
+      failed_when: false
 
     - name: Format PROJECTS partition as btrfs
       ansible.builtin.command: "mkfs.btrfs -f -L PROJECTS {{ part_prefix }}3"
+      when: projects_fs_check.stdout == ""
+
+    - name: Check if SYNC partition is formatted
+      ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}4"
+      register: sync_fs_check
+      changed_when: false
+      failed_when: false
 
     - name: Format SYNC partition as btrfs
       ansible.builtin.command: "mkfs.btrfs -f -L SYNC {{ part_prefix }}4"
+      when: sync_fs_check.stdout == ""
+
 
     # ── 5. Discover User and Configure Mounts ─────────────────────────────────
     - name: Get real user name
@@ -259,41 +335,6 @@
         - /data/projects
         - /data/sync
         - /data/gdrive
-
-    # ── 7. Install and Maintain System Packages ──────────────────────────────
-    - name: Install system packages via pacman
-      community.general.pacman:
-        name:
-          - base-devel
-          - parted
-          - btrfs-progs
-          - libvirt
-          - qemu-desktop
-          - virt-manager
-          - edk2-ovmf
-          - swtpm
-          - dnsmasq
-          - bridge-utils
-          - rclone
-          - mold
-          - sccache
-          - clang
-          - distrobox
-          - docker
-          - docker-compose
-          - docker-buildx
-          - ansible
-          - vim
-          - hypridle
-        state: present
-        update_cache: true
-
-    - name: Remove unwanted packages (firefox, alacritty)
-      community.general.pacman:
-        name:
-          - firefox
-          - alacritty
-        state: absent
 
     - name: Ensure /etc/docker directory exists
       ansible.builtin.file:
