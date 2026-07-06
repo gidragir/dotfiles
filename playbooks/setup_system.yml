@@ -111,6 +111,7 @@
           - base-devel
           - parted
           - btrfs-progs
+          - xfsprogs
           - libvirt
           - qemu-desktop
           - virt-manager
