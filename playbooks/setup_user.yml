@@ -148,8 +148,8 @@
       tags: [stow]
 
     - name: Run GNU Stow to link configurations
-      ansible.builtin.command:
-        cmd: stow -t "{{ ansible_env.HOME }}" */
+      ansible.builtin.shell:
+        cmd: stow -t "{{ ansible_env.HOME }}" $(find . -maxdepth 1 -mindepth 1 -type d ! -name 'playbooks' -exec basename {} \;)
         chdir: /data/projects/dotfiles
       tags: [stow]
 
