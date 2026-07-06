@@ -23,6 +23,7 @@
       community.general.pacman:
         name: rust
         state: absent
+        extra_args: "-dd"
       become: true
       tags: [packages]
 
