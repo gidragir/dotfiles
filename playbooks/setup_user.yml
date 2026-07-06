@@ -22,8 +22,7 @@
 
     - name: Install AUR utilities and applications via paru
       ansible.builtin.command:
-        cmd: "paru -S --needed --noconfirm {{ item }}"
-      loop: "{{ aur_packages }}"
+        cmd: paru -S --needed --noconfirm {{ aur_packages | join(' ') }}
       vars:
         aur_packages:
           - vivaldi
