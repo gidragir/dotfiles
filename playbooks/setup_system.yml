@@ -182,7 +182,7 @@
 
     - name: Format DOCKER partition as XFS (for overlay2 + prjquota)
       ansible.builtin.command: "mkfs.xfs -f -L docker {{ part_prefix }}1"
-      when: docker_fs_check.stdout == ""
+      when: docker_fs_check.stdout != "xfs"
 
     - name: Check if LIBVIRT partition is formatted
       ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}2"
@@ -192,7 +192,7 @@
 
     - name: Format LIBVIRT partition as ext4
       ansible.builtin.command: "mkfs.ext4 -F -L LIBVIRT {{ part_prefix }}2"
-      when: libvirt_fs_check.stdout == ""
+      when: libvirt_fs_check.stdout != "ext4"
 
     - name: Check if PROJECTS partition is formatted
       ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}3"
@@ -202,7 +202,7 @@
 
     - name: Format PROJECTS partition as btrfs
       ansible.builtin.command: "mkfs.btrfs -f -L PROJECTS {{ part_prefix }}3"
-      when: projects_fs_check.stdout == ""
+      when: projects_fs_check.stdout != "btrfs"
 
     - name: Check if SYNC partition is formatted
       ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}4"
@@ -212,7 +212,7 @@
 
     - name: Format SYNC partition as btrfs
       ansible.builtin.command: "mkfs.btrfs -f -L SYNC {{ part_prefix }}4"
-      when: sync_fs_check.stdout == ""
+      when: sync_fs_check.stdout != "btrfs"
 
 
     # ── 5. Discover User and Configure Mounts ─────────────────────────────────
