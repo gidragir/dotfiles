@@ -28,6 +28,9 @@ fi
 #   - uv cache is on the Btrfs partition to utilize disk compression
 # ──────────────────────────────────────────────────────────────────────────────
 
+echo "🔑 Pre-authenticating sudo to allow AUR package installation..."
+sudo -v
+
 echo "📦 Running consolidated user setup playbook..."
 ansible-playbook playbooks/setup_user.yml
 
