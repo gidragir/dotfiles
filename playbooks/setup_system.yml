@@ -216,7 +216,7 @@
         real_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
 
     - name: Get real home directory
-      ansible.builtin.shell: getent passwd "{{ real_user }}" | cut -d: -f6
+      ansible.builtin.shell: 'getent passwd "{{ real_user }}" | cut -d: -f6'
       register: real_home_result
       changed_when: false
 
