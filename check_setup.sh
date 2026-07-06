@@ -118,8 +118,12 @@ check_cmd() {
         local version
         version=$("$cmd" --version 2>/dev/null | head -n 1 || echo "installed")
         pass "Utility $cmd is available ($version)"
+    elif [[ -x "$HOME_DIR/.cargo/bin/$cmd" ]]; then
+        local version
+        version=$("$HOME_DIR/.cargo/bin/$cmd" --version 2>/dev/null | head -n 1 || echo "installed")
+        pass "Utility $cmd is available in ~/.cargo/bin ($version)"
     else
-        fail "Utility $cmd NOT found in PATH!"
+        fail "Utility $cmd NOT found in PATH or ~/.cargo/bin!"
     fi
 }
 
