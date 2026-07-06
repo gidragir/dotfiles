@@ -104,7 +104,7 @@
     - name: Create projects symlink
       ansible.builtin.file:
         src: /data/projects
-        dest: "{{ ansible_env.HOME }}/projects"
+        dest: "{{ ansible_facts.env.HOME }}/projects"
         state: link
         force: yes
       tags: [stow]
@@ -122,8 +122,8 @@
         state: directory
         mode: '0755'
       loop:
-        - "{{ ansible_env.HOME }}/.cargo"
-        - "{{ ansible_env.HOME }}/.config"
+        - "{{ ansible_facts.env.HOME }}/.cargo"
+        - "{{ ansible_facts.env.HOME }}/.config"
       tags: [stow]
 
     - name: Remove existing config files to avoid stow conflicts
@@ -131,25 +131,25 @@
         path: "{{ item }}"
         state: absent
       loop:
-        - "{{ ansible_env.HOME }}/.zshrc"
-        - "{{ ansible_env.HOME }}/.cargo/config.toml"
-        - "{{ ansible_env.HOME }}/.config/ghostty"
-        - "{{ ansible_env.HOME }}/.config/hypr"
-        - "{{ ansible_env.HOME }}/.config/k3d"
-        - "{{ ansible_env.HOME }}/.config/k9s"
-        - "{{ ansible_env.HOME }}/.config/mise"
-        - "{{ ansible_env.HOME }}/.config/niri"
-        - "{{ ansible_env.HOME }}/.config/nvim"
-        - "{{ ansible_env.HOME }}/.config/rofi"
-        - "{{ ansible_env.HOME }}/.config/starship.toml"
-        - "{{ ansible_env.HOME }}/.config/superfile"
-        - "{{ ansible_env.HOME }}/.config/television"
-        - "{{ ansible_env.HOME }}/.config/zellij"
+        - "{{ ansible_facts.env.HOME }}/.zshrc"
+        - "{{ ansible_facts.env.HOME }}/.cargo/config.toml"
+        - "{{ ansible_facts.env.HOME }}/.config/ghostty"
+        - "{{ ansible_facts.env.HOME }}/.config/hypr"
+        - "{{ ansible_facts.env.HOME }}/.config/k3d"
+        - "{{ ansible_facts.env.HOME }}/.config/k9s"
+        - "{{ ansible_facts.env.HOME }}/.config/mise"
+        - "{{ ansible_facts.env.HOME }}/.config/niri"
+        - "{{ ansible_facts.env.HOME }}/.config/nvim"
+        - "{{ ansible_facts.env.HOME }}/.config/rofi"
+        - "{{ ansible_facts.env.HOME }}/.config/starship.toml"
+        - "{{ ansible_facts.env.HOME }}/.config/superfile"
+        - "{{ ansible_facts.env.HOME }}/.config/television"
+        - "{{ ansible_facts.env.HOME }}/.config/zellij"
       tags: [stow]
 
     - name: Run GNU Stow to link configurations
       ansible.builtin.shell:
-        cmd: stow -t "{{ ansible_env.HOME }}" $(find . -maxdepth 1 -mindepth 1 -type d ! -name 'playbooks' -exec basename {} \;)
+        cmd: stow -t "{{ ansible_facts.env.HOME }}" $(find . -maxdepth 1 -mindepth 1 -type d ! -name 'playbooks' -exec basename {} \;)
         chdir: /data/projects/dotfiles
       tags: [stow]
 
@@ -160,7 +160,7 @@
         state: directory
         mode: '0755'
       loop:
-        - "{{ ansible_env.HOME }}/.cargo"
+        - "{{ ansible_facts.env.HOME }}/.cargo"
         - "/data/projects/.cargo-cache/registry"
         - "/data/projects/.cargo-cache/git"
         - "/data/projects/.sccache"
@@ -169,7 +169,7 @@
     - name: Create symlinks for Cargo caches
       ansible.builtin.file:
         src: "/data/projects/.cargo-cache/{{ item }}"
-        dest: "{{ ansible_env.HOME }}/.cargo/{{ item }}"
+        dest: "{{ ansible_facts.env.HOME }}/.cargo/{{ item }}"
         state: link
         force: yes
       loop:
@@ -181,7 +181,7 @@
 
     - name: Check which cargo tools are already installed
       ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.cargo/bin/{{ item }}"
+        path: "{{ ansible_facts.env.HOME }}/.cargo/bin/{{ item }}"
       register: tool_stats
       loop:
         - cargo-ramdisk
@@ -195,6 +195,8 @@
         cmd: cargo binstall -y {{ item.item }}
       loop: "{{ tool_stats.results }}"
       when: not item.stat.exists
+      loop_control:
+        label: "{{ item.item }}"
       tags: [cargo]
 
     # ── 4. Dev Tools via mise & pnpm ──────────────────────────────────────────
@@ -205,14 +207,14 @@
 
     - name: Ensure ~/.local/bin exists
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.local/bin"
+        path: "{{ ansible_facts.env.HOME }}/.local/bin"
         state: directory
         mode: '0755'
       tags: [mise]
 
     - name: Enable pnpm via corepack using mise node
       ansible.builtin.command:
-        cmd: mise exec node -- corepack enable --install-directory "{{ ansible_env.HOME }}/.local/bin" pnpm
+        cmd: mise exec node -- corepack enable --install-directory "{{ ansible_facts.env.HOME }}/.local/bin" pnpm
       register: corepack_pnpm
       changed_when: false
       tags: [mise]
@@ -234,14 +236,14 @@
     # ── 5. Systemd Services, Timers, and System Daemons ───────────────────────
     - name: Ensure systemd user directory exists
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.config/systemd/user"
+        path: "{{ ansible_facts.env.HOME }}/.config/systemd/user"
         state: directory
         mode: '0755'
       tags: [systemd]
 
     - name: Create rclone-mount.service
       ansible.builtin.copy:
-        dest: "{{ ansible_env.HOME }}/.config/systemd/user/rclone-mount.service"
+        dest: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-mount.service"
         mode: '0644'
         content: |
           [Unit]
@@ -266,7 +268,7 @@
 
     - name: Create rclone-sync.service
       ansible.builtin.copy:
-        dest: "{{ ansible_env.HOME }}/.config/systemd/user/rclone-sync.service"
+        dest: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-sync.service"
         mode: '0644'
         content: |
           [Unit]
@@ -282,7 +284,7 @@
 
     - name: Create rclone-sync.timer
       ansible.builtin.copy:
-        dest: "{{ ansible_env.HOME }}/.config/systemd/user/rclone-sync.timer"
+        dest: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-sync.timer"
         mode: '0644'
         content: |
           [Unit]
@@ -298,7 +300,7 @@
 
     - name: Create rclone cache directory
       ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/.cache/rclone"
+        path: "{{ ansible_facts.env.HOME }}/.cache/rclone"
         state: directory
         mode: '0755'
       tags: [systemd]
@@ -311,7 +313,7 @@
 
     - name: Check if rclone is configured
       ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.config/rclone/rclone.conf"
+        path: "{{ ansible_facts.env.HOME }}/.config/rclone/rclone.conf"
       register: rclone_conf_check
       tags: [systemd]
 
