@@ -56,7 +56,6 @@
           - libratbag
           - zellij
           - obsidian
-          - k3d
           - biome
       tags: [packages]
 
@@ -80,6 +79,7 @@
           - superfile
           - carapace-bin
           - mise
+          - k3d
       tags: [packages]
 
     # ── 2. Configure Projects symlink & GNU Stow (Dotfiles) ───────────────────
