@@ -220,6 +220,13 @@
       ansible.builtin.set_fact:
         real_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
 
+    - name: Allow real user to run pacman without password (for AUR helpers)
+      ansible.builtin.copy:
+        content: "{{ real_user }} ALL=(ALL) NOPASSWD: /usr/bin/pacman"
+        dest: "/etc/sudoers.d/10-{{ real_user }}-pacman"
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
     - name: Get real home directory
       ansible.builtin.shell: 'getent passwd "{{ real_user }}" | cut -d: -f6'
       register: real_home_result
