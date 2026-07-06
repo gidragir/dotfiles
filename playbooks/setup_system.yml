@@ -48,18 +48,7 @@
         msg: "Error: No target disk specified."
       when: target_disk_name == ""
 
-    - name: Confirm formatting
-      ansible.builtin.pause:
-        prompt: "WARNING: Drive /dev/{{ target_disk_name }} will be COMPLETELY FORMATTED! This will destroy ALL DATA on it. Are you ABSOLUTELY sure? (y/N)"
-      register: confirm_prompt_result
-      when: confirm_format is not defined
 
-    - name: Fail if confirmation not received
-      ansible.builtin.fail:
-        msg: "Cancelled by user."
-      when:
-        - confirm_format is not defined
-        - confirm_prompt_result.user_input not in ['y', 'Y']
 
     # ── 2. Perform Disk and Active OS Checks ─────────────────────────────────
     - name: Check if target disk exists
@@ -84,6 +73,37 @@
         msg: "FATAL ERROR: /dev/{{ target_disk_name }} contains active system partitions (root or boot)!"
       when: active_os_check.rc == 0
 
+    - name: Determine partition prefix for NVMe
+      ansible.builtin.set_fact:
+        part_prefix: "/dev/{{ target_disk_name }}p"
+      when: "'nvme' in target_disk_name"
+
+    - name: Determine partition prefix for non-NVMe
+      ansible.builtin.set_fact:
+        part_prefix: "/dev/{{ target_disk_name }}"
+      when: "'nvme' not in target_disk_name"
+
+    - name: Check if target disk is already partitioned
+      ansible.builtin.stat:
+        path: "{{ part_prefix }}1"
+      register: target_disk_part1
+
+    - name: Confirm formatting
+      ansible.builtin.pause:
+        prompt: "WARNING: Drive /dev/{{ target_disk_name }} will be COMPLETELY FORMATTED! This will destroy ALL DATA on it. Are you ABSOLUTELY sure? (y/N)"
+      register: confirm_prompt_result
+      when:
+        - confirm_format is not defined
+        - not target_disk_part1.stat.exists
+
+    - name: Fail if confirmation not received
+      ansible.builtin.fail:
+        msg: "Cancelled by user."
+      when:
+        - confirm_format is not defined
+        - not target_disk_part1.stat.exists
+        - confirm_prompt_result.user_input not in ['y', 'Y']
+
     # ── 3. Install System Packages ───────────────────────────────────────────
     - name: Install system packages via pacman
       community.general.pacman:
@@ -97,7 +117,6 @@
           - edk2-ovmf
           - swtpm
           - dnsmasq
-          - bridge-utils
           - rclone
           - mold
           - sccache
@@ -122,16 +141,6 @@
 
     # ── 4. Stop Services and Partition Drive ──────────────────────────────────
 
-    - name: Determine partition prefix for NVMe
-      ansible.builtin.set_fact:
-        part_prefix: "/dev/{{ target_disk_name }}p"
-      when: "'nvme' in target_disk_name"
-
-    - name: Determine partition prefix for non-NVMe
-      ansible.builtin.set_fact:
-        part_prefix: "/dev/{{ target_disk_name }}"
-      when: "'nvme' not in target_disk_name"
-
     - name: Stop docker and libvirtd services
       ansible.builtin.systemd:
         name: "{{ item }}"
@@ -140,11 +149,6 @@
         - docker
         - libvirtd
       failed_when: false
-
-    - name: Check if target disk is already partitioned
-      ansible.builtin.stat:
-        path: "{{ part_prefix }}1"
-      register: target_disk_part1
 
     - name: Partition target drive
       ansible.builtin.command: "{{ item }}"
