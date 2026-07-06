@@ -31,6 +31,9 @@ fi
 echo "🔑 Pre-authenticating sudo to allow AUR package installation..."
 sudo -v
 
+echo "📦 Installing required Ansible Galaxy collections..."
+ansible-galaxy collection install kewlfft.aur
+
 echo "📦 Running consolidated user setup playbook..."
 ansible-playbook playbooks/setup_user.yml
 

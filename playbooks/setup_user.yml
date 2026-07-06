@@ -67,10 +67,9 @@
       tags: [packages]
 
     - name: Install AUR utilities and applications via paru
-      ansible.builtin.command:
-        cmd: paru -S --needed --noconfirm {{ aur_packages | join(' ') }}
-      register: paru_result
-      changed_when: "'there is nothing to do' not in paru_result.stdout"
+      kewlfft.aur.aur:
+        name: "{{ aur_packages }}"
+        use: paru
       vars:
         aur_packages:
           - vivaldi
