@@ -287,7 +287,7 @@
         path: /var/lib/docker
         src: "UUID={{ docker_uuid_result.stdout }}"
         fstype: xfs
-        opts: defaults,noatime,prjquota,logbsize=256k
+        opts: defaults,noatime,pquota
         state: mounted
 
     - name: Mount LIBVIRT partition (ext4)
