@@ -20,39 +20,21 @@
       changed_when: false
       tags: [packages]
 
-    - name: Install AUR utilities and applications via paru
-      ansible.builtin.command:
-        cmd: paru -S --needed --noconfirm {{ aur_packages | join(' ') }}
+    - name: Install official packages via pacman
+      community.general.pacman:
+        name: "{{ pacman_packages }}"
+        state: present
+        extra_args: "--needed"
+      become: true
       vars:
-        aur_packages:
-          - vivaldi
-          - visual-studio-code-bin
+        pacman_packages:
           - rustup
-          - mise
-          - zoxide
-          - television
           - neovim
-          - lefthook
-          - biome
-          - turbo
-          - obsidian
-          - ferdium-bin
-          - tor-browser-bin
-          - starship
-          - openrgb
-          - piper
-          - libratbag
-          - helm
           - jq
           - yq
           - chromium
-          - android-studio
           - stow
           - git
-          - ghostty
-          - warp-terminal
-          - superfile
-          - zellij
           - ripgrep
           - fd
           - bat
@@ -61,15 +43,43 @@
           - lazydocker
           - kubectl
           - kubectx
-          - k3d
           - k9s
           - sops
           - age
           - argocd
           - rofi
+          - zoxide
+          - helm
+          - starship
+          - openrgb
+          - piper
+          - libratbag
+          - zellij
+          - obsidian
+          - k3d
+          - biome
+      tags: [packages]
+
+    - name: Install AUR utilities and applications via paru
+      ansible.builtin.command:
+        cmd: paru -S --needed --noconfirm {{ aur_packages | join(' ') }}
+      register: paru_result
+      changed_when: "'there is nothing to do' not in paru_result.stdout"
+      vars:
+        aur_packages:
+          - vivaldi
+          - visual-studio-code-bin
+          - ferdium-bin
+          - tor-browser-bin
+          - television
+          - lefthook
+          - turbo
+          - android-studio
+          - ghostty
+          - warp-terminal
+          - superfile
           - carapace-bin
-      # Paru checks if packages are already installed and skips them.
-      changed_when: false
+          - mise
       tags: [packages]
 
     # ── 2. Configure Projects symlink & GNU Stow (Dotfiles) ───────────────────
