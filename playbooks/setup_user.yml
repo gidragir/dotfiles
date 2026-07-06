@@ -19,6 +19,12 @@
       register: check_paru
       changed_when: false
       tags: [packages]
+    - name: Remove conflicting rust package before installing rustup
+      community.general.pacman:
+        name: rust
+        state: absent
+      become: true
+      tags: [packages]
 
     - name: Install official packages via pacman
       community.general.pacman:
