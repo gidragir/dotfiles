@@ -66,6 +66,18 @@
           - biome
       tags: [packages]
 
+    - name: Check if rustup is installed
+      ansible.builtin.command: which rustup
+      register: rustup_check
+      ignore_errors: true
+      changed_when: false
+      tags: [cargo, packages]
+
+    - name: Set rustup default stable
+      ansible.builtin.command: rustup default stable
+      when: rustup_check.rc == 0
+      tags: [cargo, packages]
+
     - name: Install AUR utilities and applications via paru
       kewlfft.aur.aur:
         name: "{{ aur_packages }}"
@@ -165,17 +177,7 @@
         - git
       tags: [cargo]
 
-    - name: Check if rustup is installed
-      ansible.builtin.command: which rustup
-      register: rustup_check
-      ignore_errors: true
-      changed_when: false
-      tags: [cargo]
 
-    - name: Set rustup default stable
-      ansible.builtin.command: rustup default stable
-      when: rustup_check.rc == 0
-      tags: [cargo]
 
     - name: Check which cargo tools are already installed
       ansible.builtin.stat:
