@@ -26,7 +26,6 @@
       vars:
         aur_packages:
           - vivaldi
-          - antigravity
           - visual-studio-code-bin
           - rustup
           - mise
