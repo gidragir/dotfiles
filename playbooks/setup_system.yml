@@ -94,15 +94,19 @@
       register: confirm_prompt_result
       when:
         - confirm_format is not defined
-        - not target_disk_part1.stat.exists
 
-    - name: Fail if confirmation not received
+    - name: Determine if formatting should proceed
+      ansible.builtin.set_fact:
+        perform_format: >-
+          {{ (confirm_format is defined and confirm_format | bool) or
+             (confirm_prompt_result.user_input | default('n') | lower == 'y') }}
+
+    - name: Fail if confirmation not received for unpartitioned disk
       ansible.builtin.fail:
-        msg: "Cancelled by user."
+        msg: "Cancelled by user. Unpartitioned disk requires formatting to proceed."
       when:
-        - confirm_format is not defined
         - not target_disk_part1.stat.exists
-        - confirm_prompt_result.user_input not in ['y', 'Y']
+        - not perform_format
 
     # ── 3. Install System Packages ───────────────────────────────────────────
     - name: Install system packages via pacman
@@ -151,6 +155,10 @@
         - libvirtd
       failed_when: false
 
+    - name: Wipe existing filesystem signatures
+      ansible.builtin.command: "wipefs -a /dev/{{ target_disk_name }}"
+      when: perform_format
+
     - name: Partition target drive
       ansible.builtin.command: "{{ item }}"
       loop:
@@ -159,60 +167,36 @@
         - "parted -s /dev/{{ target_disk_name }} mkpart LIBVIRT ext4 25% 50%"
         - "parted -s /dev/{{ target_disk_name }} mkpart PROJECTS btrfs 50% 95%"
         - "parted -s /dev/{{ target_disk_name }} mkpart SYNC btrfs 95% 100%"
-      when: not target_disk_part1.stat.exists
-
+      when: perform_format
+      register: partition_creation
 
     - name: Force kernel to re-read partition table
       ansible.builtin.command: "partprobe /dev/{{ target_disk_name }}"
       changed_when: false
-      when: not target_disk_part1.stat.exists
+      when: perform_format
 
     - name: Wait for partition table update
       ansible.builtin.pause:
         seconds: 2
-      when: not target_disk_part1.stat.exists
+      when: perform_format
 
 
     # ── 4. Format Filesystems ─────────────────────────────────────────────────
-    - name: Check if DOCKER partition is formatted
-      ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}1"
-      register: docker_fs_check
-      changed_when: false
-      failed_when: false
-
     - name: Format DOCKER partition as XFS (for overlay2 + prjquota)
       ansible.builtin.command: "mkfs.xfs -f -L docker {{ part_prefix }}1"
-      when: docker_fs_check.stdout != "xfs"
-
-    - name: Check if LIBVIRT partition is formatted
-      ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}2"
-      register: libvirt_fs_check
-      changed_when: false
-      failed_when: false
+      when: perform_format
 
     - name: Format LIBVIRT partition as ext4
       ansible.builtin.command: "mkfs.ext4 -F -L LIBVIRT {{ part_prefix }}2"
-      when: libvirt_fs_check.stdout != "ext4"
-
-    - name: Check if PROJECTS partition is formatted
-      ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}3"
-      register: projects_fs_check
-      changed_when: false
-      failed_when: false
+      when: perform_format
 
     - name: Format PROJECTS partition as btrfs
       ansible.builtin.command: "mkfs.btrfs -f -L PROJECTS {{ part_prefix }}3"
-      when: projects_fs_check.stdout != "btrfs"
-
-    - name: Check if SYNC partition is formatted
-      ansible.builtin.command: "blkid -s TYPE -o value {{ part_prefix }}4"
-      register: sync_fs_check
-      changed_when: false
-      failed_when: false
+      when: perform_format
 
     - name: Format SYNC partition as btrfs
       ansible.builtin.command: "mkfs.btrfs -f -L SYNC {{ part_prefix }}4"
-      when: sync_fs_check.stdout != "btrfs"
+      when: perform_format
 
 
     # ── 5. Discover User and Configure Mounts ─────────────────────────────────
