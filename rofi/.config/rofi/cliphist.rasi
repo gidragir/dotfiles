@@ -1,6 +1,6 @@
 configuration {
     modi: "dmenu";
-    show-icons: false;
+    show-icons: true;
     display-dmenu: "";
 }
 
@@ -14,7 +14,7 @@ configuration {
 }
 
 window {
-    width: 320px;
+    width: 22em;
     anchor: south east;
     location: south east;
     x-offset: -16px;
@@ -52,14 +52,7 @@ listview {
     padding: 2px 0;
     scrollbar: false;
     background-color: @bg;
-}
-
-element {
-    padding: 8px 12px;
-    border-radius: 6px;
-    spacing: 0;
-    background-color: @bg;
-    text-color: @fg;
+    fixed-height: false;
 }
 
 element selected {
@@ -67,8 +60,22 @@ element selected {
     text-color: @accent;
 }
 
+element {
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: @bg;
+    text-color: @fg;
+    orientation: horizontal;
+}
+
+element-icon {
+    size: 2em;
+    background-color: transparent;
+}
+
 element-text {
     text-color: inherit;
     vertical-align: 0.5;
+    margin: 0px 0px 0px -2em;
     background-color: transparent;
 }

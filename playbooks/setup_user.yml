@@ -64,6 +64,7 @@
           - zellij
           - obsidian
           - biome
+          - imv
       tags: [packages]
 
     - name: Check if rustup is installed

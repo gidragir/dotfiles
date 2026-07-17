@@ -48,4 +48,9 @@
         open-maximized-to-edges true
     }
 
+    window-rule {
+        match app-id="imv"
+        open-floating true
+    }
+
     include optional=true "env/rules.kdl"
