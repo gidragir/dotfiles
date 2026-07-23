@@ -1,0 +1,97 @@
+---
+- name: Deploy KVM/QEMU and libvirt on CachyOS
+  hosts: localhost
+  connection: local
+  become: true
+  vars:
+    kvm_packages:
+      - qemu-full
+      - libvirt
+      - virt-manager
+      - edk2-ovmf
+      - swtpm
+      - dnsmasq
+      - iptables-nft
+
+  tasks:
+    - name: Install virtualization packages
+      community.general.pacman:
+        name: "{{ kvm_packages }}"
+        state: present
+        update_cache: true
+
+    - name: Enable and start libvirtd service
+      ansible.builtin.systemd:
+        name: libvirtd
+        enabled: true
+        state: started
+
+    - name: Add current user to libvirt and kvm groups
+      ansible.builtin.user:
+        name: "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
+        groups: libvirt,kvm
+        append: true
+
+    - name: Ensure default libvirt network is active
+      ansible.builtin.command: virsh net-start default
+      register: net_start
+      failed_when: 
+        - net_start.rc != 0
+        - "'already active' not in net_start.stderr"
+      changed_when: "'already active' not in net_start.stderr"
+
+    - name: Ensure default libvirt network is set to autostart
+      ansible.builtin.command: virsh net-autostart default
+      register: net_autostart
+      changed_when: "'marked as autostarted' in net_autostart.stdout"
+
+    - name: Fix swtpm state directory permissions
+      ansible.builtin.file:
+        path: /var/lib/swtpm-localca
+        owner: tss
+        group: tss
+        state: directory
+        recurse: true
+
+    - name: Allow incoming traffic from virtual bridge (INPUT)
+      ansible.builtin.iptables:
+        chain: INPUT
+        in_interface: virbr0
+        jump: ACCEPT
+        action: insert
+
+    - name: Allow outbound forwarding from virtual bridge (FORWARD)
+      ansible.builtin.iptables:
+        chain: FORWARD
+        in_interface: virbr0
+        jump: ACCEPT
+        action: insert
+
+    - name: Allow inbound forwarding to virtual bridge (FORWARD)
+      ansible.builtin.iptables:
+        chain: FORWARD
+        out_interface: virbr0
+        jump: ACCEPT
+        action: insert
+
+    # Блок проверок установки
+    - name: Check package installation
+      ansible.builtin.command: pacman -Q {{ item }}
+      register: pkg_check
+      changed_when: false
+      failed_when: pkg_check.rc != 0
+      loop: "{{ kvm_packages }}"
+
+    - name: Check libvirtd service status
+      ansible.builtin.command: systemctl is-active libvirtd
+      register: service_check
+      changed_when: false
+      failed_when: service_check.stdout != "active"
+
+    - name: Check user group membership
+      ansible.builtin.command: "groups {{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
+      register: group_check
+      changed_when: false
+      failed_when: 
+        - "'libvirt' not in group_check.stdout"
+        - "'kvm' not in group_check.stdout"

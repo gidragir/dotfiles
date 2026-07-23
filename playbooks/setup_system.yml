@@ -108,41 +108,7 @@
         - not target_disk_part1.stat.exists
         - not perform_format
 
-    # ── 3. Install System Packages ───────────────────────────────────────────
-    - name: Install system packages via pacman
-      community.general.pacman:
-        name:
-          - base-devel
-          - parted
-          - btrfs-progs
-          - xfsprogs
-          - libvirt
-          - qemu-desktop
-          - virt-manager
-          - edk2-ovmf
-          - swtpm
-          - dnsmasq
-          - rclone
-          - mold
-          - sccache
-          - clang
-          - distrobox
-          - docker
-          - docker-compose
-          - docker-buildx
-          - ansible
-          - vim
-          - hypridle
-          - cargo-binstall
-        state: present
-        update_cache: true
 
-    - name: Remove unwanted packages (firefox, alacritty)
-      community.general.pacman:
-        name:
-          - firefox
-          - alacritty
-        state: absent
 
     # ── 4. Stop Services and Partition Drive ──────────────────────────────────
 

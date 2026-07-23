@@ -1,0 +1,93 @@
+---
+# =============================================================================
+# Package Variables Configuration
+# This file serves as the single source of truth for packages to be installed
+# on the hosts.
+# =============================================================================
+
+# System-level packages (installed via pacman, requires sudo)
+system_packages:
+  - base-devel
+  - parted
+  - btrfs-progs
+  - xfsprogs
+  - libvirt
+  - qemu-desktop
+  - virt-manager
+  - edk2-ovmf
+  - swtpm
+  - dnsmasq
+  - rclone
+  - mold
+  - sccache
+  - clang
+  - distrobox
+  - docker
+  - docker-compose
+  - docker-buildx
+  - ansible
+  - vim
+  - hypridle
+  - cargo-binstall
+
+# Packages to be explicitly removed from the system
+unwanted_packages:
+  - firefox
+  - alacritty
+
+# Official pacman packages for the user (installed via pacman, requires sudo)
+user_pacman_packages:
+  - rustup
+  - neovim
+  - jq
+  - yq
+  - chromium
+  - stow
+  - git
+  - ripgrep
+  - fd
+  - bat
+  - eza
+  - lazygit
+  - lazydocker
+  - kubectl
+  - kubectx
+  - k9s
+  - sops
+  - age
+  - argocd
+  - rofi
+  - zoxide
+  - helm
+  - starship
+  - openrgb
+  - piper
+  - libratbag
+  - zellij
+  - obsidian
+  - biome
+  - imv
+
+# AUR packages (installed via paru, MUST run as normal user)
+aur_packages:
+  - vivaldi
+  - visual-studio-code-bin
+  - ferdium-bin
+  - tor-browser-bin
+  - television
+  - lefthook
+  - turbo
+  - android-studio
+  - ghostty
+  - warp-terminal
+  - superfile
+  - carapace-bin
+  - mise
+  - k3d
+
+# Cargo utilities (installed via cargo binstall, MUST run as normal user)
+cargo_packages:
+  - cargo-ramdisk
+  - cargo-nextest
+  - bacon
+  - cargo-machete

@@ -1,0 +1,94 @@
+---
+# =============================================================================
+# Playbook : packages.yml
+# Purpose  : Install system-level and user-level packages (pacman, AUR, cargo).
+# Usage    : ansible-playbook packages.yml
+# =============================================================================
+
+# ── Play 1: System and User Pacman Packages (Requires Root) ──────────────────
+- name: Install System and User Pacman Packages
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+  vars_files:
+    - vars/packages.yml
+
+  tasks:
+    - name: Remove conflicting rust package before installing rustup
+      community.general.pacman:
+        name: rust
+        state: absent
+        extra_args: "-dd"
+      tags: [user, packages]
+
+    - name: Install system packages via pacman
+      community.general.pacman:
+        name: "{{ system_packages }}"
+        state: present
+        update_cache: true
+      tags: [system, packages]
+
+    - name: Remove unwanted packages
+      community.general.pacman:
+        name: "{{ unwanted_packages }}"
+        state: absent
+      tags: [system, packages]
+
+    - name: Install official user packages via pacman
+      community.general.pacman:
+        name: "{{ user_pacman_packages }}"
+        state: present
+        extra_args: "--needed"
+      tags: [user, packages]
+
+
+# ── Play 2: AUR and Cargo Packages (Requires Normal User) ────────────────────
+- name: Install AUR and Cargo Packages
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: true
+  vars_files:
+    - vars/packages.yml
+
+  tasks:
+    - name: Verify paru is installed
+      ansible.builtin.command: which paru
+      register: check_paru
+      changed_when: false
+      tags: [aur, packages]
+
+    - name: Install AUR utilities and applications via paru
+      kewlfft.aur.aur:
+        name: "{{ aur_packages }}"
+        use: paru
+      tags: [aur, packages]
+
+    - name: Check if rustup is installed
+      ansible.builtin.command: which rustup
+      register: rustup_check
+      ignore_errors: true
+      changed_when: false
+      tags: [cargo, packages]
+
+    - name: Set rustup default stable
+      ansible.builtin.command: rustup default stable
+      when: rustup_check.rc == 0
+      tags: [cargo, packages]
+
+    - name: Check which cargo tools are already installed
+      ansible.builtin.stat:
+        path: "{{ ansible_facts.env.HOME }}/.cargo/bin/{{ item }}"
+      register: tool_stats
+      loop: "{{ cargo_packages }}"
+      tags: [cargo, packages]
+
+    - name: Install cargo utilities
+      ansible.builtin.command:
+        cmd: cargo binstall -y {{ item.item }}
+      loop: "{{ tool_stats.results }}"
+      when: not item.stat.exists
+      loop_control:
+        label: "{{ item.item }}"
+      tags: [cargo, packages]

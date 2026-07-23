@@ -25,6 +25,7 @@ if ! command -v ansible-playbook &>/dev/null; then
     pacman -Syu --needed --noconfirm ansible
 fi
 
+ansible-playbook playbooks/packages.yml --tags system
 ansible-playbook playbooks/setup_system.yml
 
 echo ""

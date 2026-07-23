@@ -35,6 +35,7 @@ echo "📦 Installing required Ansible Galaxy collections..."
 ansible-galaxy collection install kewlfft.aur
 
 echo "📦 Running consolidated user setup playbook..."
+ansible-playbook playbooks/packages.yml --tags user,aur,cargo
 ansible-playbook playbooks/setup_user.yml
 
 # ──────────────────────────────────────────────────────────────────────────────
