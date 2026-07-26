@@ -109,3 +109,14 @@ fi
 if (( $+commands[carapace] )); then
   source <(carapace _carapace)
 fi
+
+switch-language-buffer() {
+    local ru="ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮйцукенгшщзхъфывапролджэячсмитьбю"
+    local en='QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>qwertyuiop[]asdfghjkl;'\''zxcvbnm,.'
+    BUFFER=$(sed "y/$ru$en/$en$ru/" <<< "$BUFFER")
+    CURSOR=$#BUFFER
+}
+zle -N switch-language-buffer
+bindkey '^X^L' switch-language-buffer
+
+bindkey ' ' magic-space
