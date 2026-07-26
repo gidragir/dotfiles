@@ -8,6 +8,7 @@
 # System-level packages (installed via pacman, requires sudo)
 system_packages:
   - base-devel
+  - zsh
   - parted
   - btrfs-progs
   - xfsprogs
@@ -29,6 +30,8 @@ system_packages:
   - vim
   - hypridle
   - cargo-binstall
+  - cliphist
+  - wtype
 
 # Packages to be explicitly removed from the system
 unwanted_packages:

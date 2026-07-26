@@ -132,6 +132,14 @@ check_cmd "cargo-nextest"
 check_cmd "bacon"
 check_cmd "cargo-machete"
 
+# Verify default shell
+USER_SHELL=$(getent passwd "${USER:-$(whoami)}" | cut -d: -f7 2>/dev/null || echo "${SHELL:-}")
+if [[ "$USER_SHELL" == *zsh* ]]; then
+    pass "Default user shell is zsh ($USER_SHELL)"
+else
+    fail "Default user shell is '$USER_SHELL' (expected /usr/bin/zsh)"
+fi
+
 # =============================================================================
 header "4. Verify Systemd Services and Timers"
 # =============================================================================

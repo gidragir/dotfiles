@@ -339,9 +339,10 @@
         name: docker
         state: present
 
-    - name: Add real user to groups
+    - name: Set default shell to zsh and add real user to groups
       ansible.builtin.user:
         name: "{{ real_user }}"
+        shell: /usr/bin/zsh
         groups: docker,libvirt,kvm
         append: yes
 

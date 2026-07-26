@@ -5,6 +5,13 @@ typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
 
 source /usr/share/cachyos-zsh-config/cachyos-config.zsh
 
+# Disable Powerlevel10k theme loaded by cachyos-config so Starship controls prompt
+precmd_functions=(${precmd_functions:#_p9k*})
+precmd_functions=(${precmd_functions:#_p10k*})
+chpwd_functions=(${chpwd_functions:#_p9k*})
+chpwd_functions=(${chpwd_functions:#_p10k*})
+unset PROMPT RPROMPT PS1
+
 # ── DEV ENVIRONMENT (added by setup_user.sh) ─────────────────────────────────
 
 # XDG base dirs (explicit, prevents apps from writing to ~/.)
@@ -14,6 +21,7 @@ export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_STATE_HOME="$HOME/.local/state"
 
 # PATH
+export SHELL="/usr/bin/zsh"
 export PATH="$HOME/.local/bin:$PATH"
 
 # ── Rust / Cargo ─────────────────────────────────────────────────────────────
