@@ -26,3 +26,50 @@ bindkey -M viins '^_' undo                   # Ctrl + / или Ctrl + Shift + -
 bindkey -M viins '^Qq' push-line
 bindkey -M viins '\eq' push-line
 bindkey -M vicmd 'q' push-line
+
+# ── ПОЛЕЗНЫЕ ZLE-ВИДЖЕТЫ ──────────────────────────────────────────────────────
+
+# 1. Добавление/удаление sudo в начало строки по Alt+S
+sudo-command-line() {
+    [[ -z $BUFFER ]] && zle up-history
+    if [[ $BUFFER == sudo\ * ]]; then
+        LBUFFER="${LBUFFER#sudo }"
+    else
+        LBUFFER="sudo $LBUFFER"
+    fi
+}
+zle -N sudo-command-line
+bindkey -M viins '\es' sudo-command-line
+bindkey -M vicmd '\es' sudo-command-line
+
+spf() {
+    os=$(uname -s)
+
+    # Linux
+    if [[ "$os" == "Linux" ]]; then
+        export SPF_LAST_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/superfile/lastdir"
+    fi
+
+    # macOS
+    if [[ "$os" == "Darwin" ]]; then
+        export SPF_LAST_DIR="$HOME/Library/Application Support/superfile/lastdir"
+    fi
+
+    command spf "$@"
+
+    [ ! -f "$SPF_LAST_DIR" ] || {
+        . "$SPF_LAST_DIR"
+        rm -f -- "$SPF_LAST_DIR" > /dev/null
+    }
+}
+
+switch-language-buffer() {
+    local ru="ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮйцукенгшщзхъфывапролджэячсмитьбю"
+    local en='QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>qwertyuiop[]asdfghjkl;'\''zxcvbnm,.'
+    BUFFER=$(sed "y/$ru$en/$en$ru/" <<< "$BUFFER")
+    CURSOR=$#BUFFER
+}
+zle -N switch-language-buffer
+bindkey '^X^L' switch-language-buffer
+
+bindkey ' ' magic-space

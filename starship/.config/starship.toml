@@ -6,6 +6,22 @@ palette = "catppuccin_frappe"
 # Insert a blank line between shell prompts
 add_newline = true
 
+# Order of prompt modules
+format = """
+$directory\
+$git_branch\
+$git_status\
+$kubernetes\
+$python\
+$rust\
+$nodejs\
+$golang\
+$package\
+$cmd_duration\
+$status\
+$line_break\
+$character"""
+
 # Character prompt symbols
 [character]
 success_symbol = "[❯](bold green)"
@@ -26,9 +42,34 @@ style = "bold mauve"
 
 [git_status]
 style = "bold red"
+format = '([\[$all_status$ahead_behind\]]($style) )'
+conflicted = "󰞇 "
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇡${ahead_count}⇣${behind_count}"
+untracked = "❓"
+stashed = "📦"
+modified = "📝"
+staged = "➕"
+renamed = "🚚"
+deleted = "🗑️"
+
+[kubernetes]
+symbol = "☸ "
+style = "bold blue"
+format = '[$symbol$context(\($namespace\))]($style) '
+disabled = false
 
 [cmd_duration]
+min_time = 2_000
 style = "bold yellow"
+format = '⏱️ [$duration]($style) '
+
+[status]
+disabled = false
+symbol = "❌ "
+style = "bold red"
+format = '[$symbol$status]($style) '
 
 [package]
 symbol = "󰏗 "

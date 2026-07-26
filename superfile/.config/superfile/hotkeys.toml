@@ -25,6 +25,7 @@ page_down = ['pgdown','']
 page_up = ['pgup','']
 
 #-- File Panel Controls
+split_file_panel = ['b', '']
 close_file_panel = ['w', '']
 create_new_file_panel = ['n', '']
 next_file_panel = ['tab', 'L']
