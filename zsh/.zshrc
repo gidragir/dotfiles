@@ -1,3 +1,7 @@
+export EDITOR='nvim'
+export VISUAL='nvim'
+export PAGER='less'
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
 
