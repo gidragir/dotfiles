@@ -5,8 +5,6 @@ pinned_file="$HOME/.config/cliphist/pinned"
 mkdir -p "$tmp_dir" "$(dirname "$pinned_file")"
 touch "$pinned_file"
 
-fd --type f --changed-before 2h . "$tmp_dir" -X rm 2>/dev/null
-
 trap 'pkill imv 2>/dev/null' EXIT
 
 selected_row=0
@@ -52,7 +50,9 @@ while true; do
             [ ! -f "$img_path" ] && cliphist decode "$id" > "$img_path" 2>/dev/null
             echo -en "${prefix}\0icon\x1f$img_path\n"
         else
-            echo "${prefix}${content}"
+            # Replace newlines with spaces so multiline entries display on a single line in Rofi
+            clean_content=$(echo "$content" | tr '\n' ' ')
+            echo "${prefix}${clean_content}"
         fi
     done | rofi -dmenu -format "i" -selected-row "$selected_row" \
         -kb-custom-1 "Alt+p" \
@@ -64,7 +64,10 @@ while true; do
     exit_code=$?
     
     if [ -z "$out" ]; then
-        pgrep imv >/dev/null && { pkill imv; continue; }
+        if pgrep imv >/dev/null; then
+            pkill imv 2>/dev/null
+            continue
+        fi
         exit 0
     fi
     
@@ -82,8 +85,10 @@ while true; do
             ;;
         10)
             if [[ "${chosen#*$'\t'}" == *"[[ binary data"* ]]; then
+                img_path="$tmp_dir/$id.png"
+                [ ! -f "$img_path" ] && cliphist decode "$id" > "$img_path" 2>/dev/null
                 pkill imv 2>/dev/null
-                imv "$tmp_dir/$id.png" &
+                imv "$img_path" >/dev/null 2>&1 &
             fi
             ;;
         11)

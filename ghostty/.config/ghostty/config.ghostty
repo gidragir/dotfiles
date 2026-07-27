@@ -36,6 +36,7 @@
 # Выровнять размеры всех сплитов
 # keybind = alt+equal=equalize_splits
 
+command = /usr/bin/zsh
 
 background-opacity = 0.85
 background-blur = 10

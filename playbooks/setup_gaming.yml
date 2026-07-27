@@ -1,0 +1,182 @@
+---
+# =============================================================================
+# Playbook : setup_gaming.yml
+# Purpose  : Install Steam, gaming & NVIDIA GPU tools (envycontrol, prime-run, nvidia-utils),
+#            configure gaming paths (/data/games), set global gaming environment variables,
+#            and set default Steam library symlink.
+# Requires : Sudo access for system packages and directory permissions.
+# Usage    : ansible-playbook -K setup_gaming.yml
+#            ansible-playbook -K setup_gaming.yml -e "switch_gpu_to_nvidia=true"
+# =============================================================================
+
+- name: Setup Steam and Gaming Environment on CachyOS
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    switch_gpu_to_nvidia: false
+    gaming_pacman_packages:
+      - cachyos-gaming-meta
+      - linux-firmware
+      - lutris
+      - protontricks
+      - wine-mono
+      - nvidia-prime
+      - nvidia-utils
+      - python-build
+      - python-installer
+      - python-pyproject-hooks
+    gaming_aur_packages:
+      - envycontrol
+
+  tasks:
+    # ── 1. Discover User and Environment ──────────────────────────────────────
+    - name: Discover real non-root user
+      ansible.builtin.set_fact:
+        real_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id'], true) }}"
+
+    - name: Get user passwd info
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ real_user }}"
+
+    - name: Set home directory fact
+      ansible.builtin.set_fact:
+        real_home: "{{ getent_passwd[real_user][4] }}"
+
+    # ── 2. Install Official & AUR Packages ────────────────────────────────────
+    - name: Install official gaming meta-packages and NVIDIA tools via pacman
+      community.general.pacman:
+        name: "{{ gaming_pacman_packages }}"
+        state: present
+        update_cache: true
+      become: true
+
+    - name: Grant temporary NOPASSWD sudo access for AUR helpers (paru)
+      ansible.builtin.copy:
+        content: "{{ real_user }} ALL=(ALL) NOPASSWD: ALL"
+        dest: "/etc/sudoers.d/99-ansible-temp-aur"
+        mode: '0440'
+        validate: 'visudo -cf %s'
+      become: true
+
+    - name: Check if paru is available for AUR packages
+      ansible.builtin.command: which paru
+      register: check_paru
+      failed_when: false
+      changed_when: false
+      become: false
+
+    - name: Install envycontrol via paru (AUR)
+      kewlfft.aur.aur:
+        name: "{{ item }}"
+        use: paru
+      loop: "{{ gaming_aur_packages }}"
+      when: check_paru.rc == 0
+      become: false
+
+    - name: Remove temporary NOPASSWD sudo access
+      ansible.builtin.file:
+        path: "/etc/sudoers.d/99-ansible-temp-aur"
+        state: absent
+      become: true
+
+    # ── 3. Configure Gaming Directories & Symlinks ────────────────────────────
+    - name: Ensure /data parent directory exists
+      ansible.builtin.file:
+        path: /data
+        state: directory
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: '0755'
+      become: true
+
+    - name: Ensure ~/Games and SteamLibrary directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: '0755'
+      loop:
+        - "{{ real_home }}/Games"
+        - "{{ real_home }}/Games/SteamLibrary"
+      become: true
+
+    - name: Ensure /data/games symlink points to ~/Games
+      ansible.builtin.file:
+        src: "{{ real_home }}/Games"
+        dest: /data/games
+        state: link
+        force: yes
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+      become: true
+
+    - name: Ensure Steam config directory exists in user home
+      ansible.builtin.file:
+        path: "{{ real_home }}/.local/share/Steam"
+        state: directory
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: '0755'
+      become: false
+
+    - name: Symlink Steam steamapps directory to /data/games/SteamLibrary
+      ansible.builtin.file:
+        src: "/data/games/SteamLibrary"
+        dest: "{{ real_home }}/.local/share/Steam/steamapps"
+        state: link
+        force: yes
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+      become: false
+
+    # ── 4. Global Gaming Environment Variables ───────────────────────────────
+    - name: Ensure environment.d directory exists
+      ansible.builtin.file:
+        path: "{{ real_home }}/.config/environment.d"
+        state: directory
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: '0755'
+      become: false
+
+    - name: Configure global gaming environment variables (~/.config/environment.d/10-gaming.conf)
+      ansible.builtin.copy:
+        dest: "{{ real_home }}/.config/environment.d/10-gaming.conf"
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: '0644'
+        content: |
+          # Optimized gaming environment variables for Proton & Niri
+          PROTON_USE_NTSYNC=1
+          PROTON_LOCAL_SHADER_CACHE=0
+          PROTON_ENABLE_WAYLAND=0
+          PROTON_ENABLE_HDR=0
+      become: false
+
+    # ── 5. Optional GPU Switch ───────────────────────────────────────────────
+    - name: Switch GPU mode to NVIDIA via envycontrol (if enabled)
+      ansible.builtin.command: envycontrol -s nvidia --force-comp
+      when: switch_gpu_to_nvidia | bool
+      become: true
+      changed_when: true
+
+    # ── 6. Post-Install Instructions & Info ───────────────────────────────────
+    - name: Display post-installation instructions
+      ansible.builtin.debug:
+        msg:
+          - "=========================================================="
+          - "🎮 Steam & Gaming Setup Complete!"
+          - "=========================================================="
+          - "1. Packages: Installed gaming meta-packages, nvidia-prime, nvidia-utils, envycontrol."
+          - "2. Environment: Configured global variables in '~/.config/environment.d/10-gaming.conf'"
+          - "   (PROTON_USE_NTSYNC=1, PROTON_LOCAL_SHADER_CACHE=0, PROTON_ENABLE_WAYLAND=0, PROTON_ENABLE_HDR=0)"
+          - "3. Default Library: '~/.local/share/Steam/steamapps' is now symlinked to '/data/games/SteamLibrary'."
+          - "   All Steam games will automatically install to your /data partition!"
+          - "4. GPU / Optimus:"
+          - "   - Run Steam on NVIDIA on-demand: 'prime-run steam'"
+          - "   - Switch GPU globally: 'sudo envycontrol -s nvidia --force-comp' (or run playbook with -e 'switch_gpu_to_nvidia=true')"
+          - "=========================================================="

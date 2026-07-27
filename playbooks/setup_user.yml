@@ -64,7 +64,7 @@
 
     - name: Run GNU Stow to link configurations
       ansible.builtin.shell:
-        cmd: stow -t "{{ ansible_facts.env.HOME }}" $(find . -maxdepth 1 -mindepth 1 -type d ! -name 'playbooks' -exec basename {} \;)
+        cmd: stow -t "{{ ansible_facts.env.HOME }}" $(find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' ! -name 'playbooks' -exec basename {} \;)
         chdir: /data/projects/dotfiles
       tags: [stow]
 

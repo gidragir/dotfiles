@@ -1,41 +1,14 @@
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
 
 source /usr/share/cachyos-zsh-config/cachyos-config.zsh
 
-# ── DEV ENVIRONMENT (added by setup_user.sh) ─────────────────────────────────
-
-# XDG base dirs (explicit, prevents apps from writing to ~/.)
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_DATA_HOME="$HOME/.local/share"
-export XDG_CACHE_HOME="$HOME/.cache"
-export XDG_STATE_HOME="$HOME/.local/state"
-
-# PATH
-export PATH="$HOME/.local/bin:$PATH"
-
-# ── Rust / Cargo ─────────────────────────────────────────────────────────────
-# Toolchain (rustup, cargo binary) stays in ~/.cargo (default CARGO_HOME)
-# Registry/git caches are redirected to NVMe 1 via ~/.cargo/config.toml [env]
-export SCCACHE_DIR="/data/projects/.sccache"
-
-# ── Node / pnpm ──────────────────────────────────────────────────────────────
-# PNPM_HOME: where pnpm stores its global bins and content-addressable store
-export PNPM_HOME="/data/projects/.pnpm-store"
-export PATH="$PNPM_HOME:$PATH"
-
-# ── Python / uv ──────────────────────────────────────────────────────────────
-# uv follows XDG automatically:
-#   cache  → ~/.cache/uv
-#   data   → ~/.local/share/uv
-# Redirect uv cache to NVMe 2:
-export UV_CACHE_DIR="/data/projects/.uv-cache"
-
-# ── Editors ──────────────────────────────────────────────────────────────────
-export EDITOR='nvim'
-export VISUAL='nvim'
+# Disable Powerlevel10k theme loaded by cachyos-config so Starship controls prompt
+precmd_functions=(${precmd_functions:#_p9k*})
+precmd_functions=(${precmd_functions:#_p10k*})
+chpwd_functions=(${chpwd_functions:#_p9k*})
+chpwd_functions=(${chpwd_functions:#_p10k*})
+unset PROMPT RPROMPT PS1
 
 # ── Vi-mode (Neovim muscle memory in terminal) ────────────────────────────────
 bindkey -v
@@ -45,7 +18,20 @@ autoload -Uz edit-command-line
 zle -N edit-command-line
 bindkey -M vicmd 'v' edit-command-line
 
-# ── Sandbox: test Wayland GUI tools without polluting main session ─────────────
+# ── Interactive Tool Initializations ──────────────────────────────────────────
+eval "$(mise activate zsh)"
+eval "$(zoxide init zsh)"
+eval "$(starship init zsh)"
+
+# ── External Bindings and Aliases ────────────────────────────────────────────
+source "$HOME/.zsh/binds/main.zsh"
+source "$HOME/.zsh/alias/core.zsh"
+source "$HOME/.zsh/alias/git.zsh"
+source "$HOME/.zsh/alias/ansible.zsh"
+source "$HOME/.zsh/alias/k8s.zsh"
+
+# ── Custom Functions & Helpers ────────────────────────────────────────────────
+# Sandbox: test Wayland GUI tools without polluting main session
 alias niri-sandbox='WAYLAND_DISPLAY=wayland-sandbox niri --session'
 
 # Distrobox: quickly spin up a throwaway container for CLI tool testing
@@ -55,25 +41,6 @@ sandbox-box() {
     distrobox enter sandbox
 }
 alias sandbox-rm='distrobox rm sandbox --yes'
-
-# ── Tool initializations (at end to avoid overriding above) ──────────────────
-eval "$(mise activate zsh)"
-eval "$(zoxide init zsh)"
-
-# Starship prompt (must be last)
-eval "$(starship init zsh)"
-
-# ─────────────────────────────────────────────────────────────────────────────
-source "$HOME/.zsh/binds/main.zsh"
-source "$HOME/.zsh/alias/core.zsh"
-source "$HOME/.zsh/alias/git.zsh"
-source "$HOME/.zsh/alias/ansible.zsh"
-source "$HOME/.zsh/alias/k8s.zsh"
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-#[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-export KUBECONFIG=$HOME/.kube/config
-export PATH="$HOME/projects/dotfiles/zsh/.zsh/scripts:$PATH"
 
 spf_tv_search() {
     local target
@@ -87,10 +54,9 @@ spf_tv_search() {
         fi
     fi
 }
-
 alias spft=spf_tv_search
 
-
+# ── Completions ───────────────────────────────────────────────────────────────
 autoload -Uz compinit
 if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.m+1) ]]; then
   compinit
@@ -101,3 +67,15 @@ fi
 if (( $+commands[carapace] )); then
   source <(carapace _carapace)
 fi
+
+# ── ZLE & Keybindings ─────────────────────────────────────────────────────────
+switch-language-buffer() {
+    local ru="ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮйцукенгшщзхъфывапролджэячсмитьбю"
+    local en='QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>qwertyuiop[]asdfghjkl;'\''zxcvbnm,.'
+    BUFFER=$(sed "y/$ru$en/$en$ru/" <<< "$BUFFER")
+    CURSOR=$#BUFFER
+}
+zle -N switch-language-buffer
+bindkey '^X^L' switch-language-buffer
+
+bindkey ' ' magic-space
