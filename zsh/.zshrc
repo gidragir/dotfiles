@@ -83,3 +83,11 @@ zle -N switch-language-buffer
 bindkey '^X^L' switch-language-buffer
 
 bindkey ' ' magic-space
+
+function _ls_current_dir() {
+    echo ""                      # Перевод строки, чтобы ls выводился с новой строчки
+    ls -lA                       # Команда ls (можно заменить на eza/exa/lsd, если используете их)
+    zle reset-prompt             # Перерисовывает текущую строку ввода (ваша напечатанная cd ~/ останется наместе)
+}
+zle -N _ls_current_dir
+bindkey '^L' _ls_current_dir

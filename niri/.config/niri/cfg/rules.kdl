@@ -66,13 +66,4 @@
         open-floating true
     }
 
-    window-rule {
-        match app-id=""
-        open-floating true
-    }
-    window-rule {
-        match title=""
-        open-floating true
-    }
-
     include optional=true "env/rules.kdl"
