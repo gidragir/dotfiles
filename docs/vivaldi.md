@@ -1,0 +1,1 @@
+vivaldi://flags/#enable-native-notifications

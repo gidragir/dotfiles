@@ -1,3 +1,7 @@
+export EDITOR='nvim'
+export VISUAL='nvim'
+export PAGER='less'
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
 
@@ -67,3 +71,23 @@ fi
 if (( $+commands[carapace] )); then
   source <(carapace _carapace)
 fi
+
+# ── ZLE & Keybindings ─────────────────────────────────────────────────────────
+switch-language-buffer() {
+    local ru="ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮйцукенгшщзхъфывапролджэячсмитьбю"
+    local en='QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>qwertyuiop[]asdfghjkl;'\''zxcvbnm,.'
+    BUFFER=$(sed "y/$ru$en/$en$ru/" <<< "$BUFFER")
+    CURSOR=$#BUFFER
+}
+zle -N switch-language-buffer
+bindkey '^X^L' switch-language-buffer
+
+bindkey ' ' magic-space
+
+function _ls_current_dir() {
+    echo ""                      # Перевод строки, чтобы ls выводился с новой строчки
+    ls -lA                       # Команда ls (можно заменить на eza/exa/lsd, если используете их)
+    zle reset-prompt             # Перерисовывает текущую строку ввода (ваша напечатанная cd ~/ останется наместе)
+}
+zle -N _ls_current_dir
+bindkey '^L' _ls_current_dir

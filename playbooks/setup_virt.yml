@@ -11,7 +11,7 @@
       - edk2-ovmf
       - swtpm
       - dnsmasq
-      - iptables-nft
+      - ufw
 
   tasks:
     - name: Install virtualization packages
@@ -53,26 +53,49 @@
         state: directory
         recurse: true
 
-    - name: Allow incoming traffic from virtual bridge (INPUT)
-      ansible.builtin.iptables:
-        chain: INPUT
-        in_interface: virbr0
-        jump: ACCEPT
-        action: insert
+    # Безопасная настройка общей папки Virtio-FS
+    - name: Create virtshare group for secure folder sharing
+      ansible.builtin.group:
+        name: virtshare
+        state: present
 
-    - name: Allow outbound forwarding from virtual bridge (FORWARD)
-      ansible.builtin.iptables:
-        chain: FORWARD
-        in_interface: virbr0
-        jump: ACCEPT
-        action: insert
+    - name: Add current user and QEMU service account to virtshare group
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups: virtshare
+        append: true
+      loop:
+        - "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
+        - nobody  # Стандартный сервисный аккаунт для выполнения QEMU в Arch/CachyOS
 
-    - name: Allow inbound forwarding to virtual bridge (FORWARD)
-      ansible.builtin.iptables:
-        chain: FORWARD
-        out_interface: virbr0
-        jump: ACCEPT
-        action: insert
+    - name: Create secure shared directory for Virtio-FS
+      ansible.builtin.file:
+        path: /srv/Shared
+        state: directory
+        owner: root
+        group: virtshare
+        mode: '2770' # Права 770 + SGID (новые файлы наследуют группу virtshare)
+
+    # Персистентные правила UFW вместо iptables
+    - name: Allow incoming traffic from virtual bridge (UFW INPUT)
+      community.general.ufw:
+        rule: allow
+        direction: in
+        interface: virbr0
+
+    - name: Allow outbound forwarding from virtual bridge (UFW ROUTE OUT)
+      community.general.ufw:
+        rule: allow
+        route: true
+        direction: out
+        interface: virbr0
+
+    - name: Allow inbound forwarding to virtual bridge (UFW ROUTE IN)
+      community.general.ufw:
+        rule: allow
+        route: true
+        direction: in
+        interface: virbr0
 
     # Блок проверок установки
     - name: Check package installation
@@ -95,3 +118,4 @@
       failed_when: 
         - "'libvirt' not in group_check.stdout"
         - "'kvm' not in group_check.stdout"
+        - "'virtshare' not in group_check.stdout"
