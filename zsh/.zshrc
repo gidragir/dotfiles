@@ -34,32 +34,6 @@ source "$HOME/.zsh/alias/git.zsh"
 source "$HOME/.zsh/alias/ansible.zsh"
 source "$HOME/.zsh/alias/k8s.zsh"
 
-# ── Custom Functions & Helpers ────────────────────────────────────────────────
-# Sandbox: test Wayland GUI tools without polluting main session
-alias niri-sandbox='WAYLAND_DISPLAY=wayland-sandbox niri --session'
-
-# Distrobox: quickly spin up a throwaway container for CLI tool testing
-sandbox-box() {
-    local image="${1:-archlinux}"
-    distrobox create --name sandbox --image "$image" --yes 2>/dev/null || true
-    distrobox enter sandbox
-}
-alias sandbox-rm='distrobox rm sandbox --yes'
-
-spf_tv_search() {
-    local target
-    target=$(tv files)
-    
-    if [[ -n "$target" ]]; then
-        if [[ -d "$target" ]]; then
-            spf "$target"
-        else
-            spf "$(dirname "$target")"
-        fi
-    fi
-}
-alias spft=spf_tv_search
-
 # ── Completions ───────────────────────────────────────────────────────────────
 autoload -Uz compinit
 if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.m+1) ]]; then
@@ -71,23 +45,3 @@ fi
 if (( $+commands[carapace] )); then
   source <(carapace _carapace)
 fi
-
-# ── ZLE & Keybindings ─────────────────────────────────────────────────────────
-switch-language-buffer() {
-    local ru="ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮйцукенгшщзхъфывапролджэячсмитьбю"
-    local en='QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>qwertyuiop[]asdfghjkl;'\''zxcvbnm,.'
-    BUFFER=$(sed "y/$ru$en/$en$ru/" <<< "$BUFFER")
-    CURSOR=$#BUFFER
-}
-zle -N switch-language-buffer
-bindkey '^X^L' switch-language-buffer
-
-bindkey ' ' magic-space
-
-function _ls_current_dir() {
-    echo ""                      # Перевод строки, чтобы ls выводился с новой строчки
-    ls -lA                       # Команда ls (можно заменить на eza/exa/lsd, если используете их)
-    zle reset-prompt             # Перерисовывает текущую строку ввода (ваша напечатанная cd ~/ останется наместе)
-}
-zle -N _ls_current_dir
-bindkey '^L' _ls_current_dir
