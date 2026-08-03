@@ -21,3 +21,4 @@ path=(
 export SCCACHE_DIR="/data/projects/.sccache"
 export UV_CACHE_DIR="/data/projects/.uv-cache"
 export KUBECONFIG="$HOME/.kube/config"
+export FZF_BASE="/usr/share/fzf"

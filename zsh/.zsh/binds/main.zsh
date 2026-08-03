@@ -74,10 +74,37 @@ bindkey '^X^L' switch-language-buffer
 
 bindkey ' ' magic-space
 
+# Быстрый просмотр текущей директории по Ctrl+L (с сохранением введенной команды)
 function _ls_current_dir() {
-    echo ""                      # Перевод строки, чтобы ls выводился с новой строчки
-    ls -lA                       # Команда ls (можно заменить на eza/exa/lsd, если используете их)
-    zle reset-prompt             # Перерисовывает текущую строку ввода (ваша напечатанная cd ~/ останется наместе)
+    echo ""
+    eza -la --icons 2>/dev/null || ls -lA
+    zle reset-prompt
 }
 zle -N _ls_current_dir
 bindkey '^L' _ls_current_dir
+
+# ── HISTORY SUBSTRING SEARCH BINDINGS ─────────────────────────────────────────
+if type history-substring-search-up >/dev/null 2>&1; then
+    bindkey '^[[A' history-substring-search-up
+    bindkey '^[[B' history-substring-search-down
+    bindkey '^[OA' history-substring-search-up
+    bindkey '^[OB' history-substring-search-down
+    bindkey -M vicmd 'k' history-substring-search-up
+    bindkey -M vicmd 'j' history-substring-search-down
+fi
+
+# ── VI-MODE CURSOR SHAPE INDICATOR ────────────────────────────────────────────
+# Динамическая смена формы курсора (Beam '|' в Insert, Block '█' в Normal mode)
+function zle-keymap-select {
+    if [[ ${KEYMAP} == vicmd ]] || [[ $1 == 'block' ]]; then
+        echo -ne '\e[2 q' # Block cursor
+    elif [[ ${KEYMAP} == main ]] || [[ ${KEYMAP} == viins ]] || [[ $1 == 'beam' ]]; then
+        echo -ne '\e[6 q' # Beam cursor
+    fi
+}
+zle -N zle-keymap-select
+
+function zle-line-init {
+    zle-keymap-select 'beam'
+}
+zle -N zle-line-init
