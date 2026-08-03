@@ -48,6 +48,7 @@
       loop:
         - "{{ ansible_facts.env.HOME }}/.zshrc"
         - "{{ ansible_facts.env.HOME }}/.cargo/config.toml"
+        - "{{ ansible_facts.env.HOME }}/.config/atuin"
         - "{{ ansible_facts.env.HOME }}/.config/ghostty"
         - "{{ ansible_facts.env.HOME }}/.config/hypr"
         - "{{ ansible_facts.env.HOME }}/.config/k3d"
@@ -67,6 +68,13 @@
         cmd: stow -t "{{ ansible_facts.env.HOME }}" $(find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' ! -name 'playbooks' -exec basename {} \;)
         chdir: /data/projects/dotfiles
       tags: [stow]
+
+    - name: Clone fzf-tab zsh plugin repository
+      ansible.builtin.git:
+        repo: https://github.com/Aloxaf/fzf-tab
+        dest: "{{ ansible_facts.env.HOME }}/.zsh/plugins/fzf-tab"
+        update: yes
+      tags: [zsh, plugins]
 
     # ── 3. Rust & Cargo (Optimized Layout) ────────────────────────────────────
     - name: Create Cargo cache directories

@@ -63,6 +63,7 @@ user_pacman_packages:
   - zoxide
   - helm
   - starship
+  - atuin
   - openrgb
   - piper
   - libratbag

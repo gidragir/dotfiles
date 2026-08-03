@@ -93,14 +93,18 @@ if type history-substring-search-up >/dev/null 2>&1; then
     bindkey -M vicmd 'j' history-substring-search-down
 fi
 
-# ── VI-MODE CURSOR SHAPE INDICATOR ────────────────────────────────────────────
-# Динамическая смена формы курсора (Beam '|' в Insert, Block '█' в Normal mode)
+# ── VI-MODE CURSOR SHAPE & STARSHIP PROMPT INDICATOR ──────────────────────────
+# Ускоряем отклик клавиши Escape (10ms вместо стандартных 400ms)
+export KEYTIMEOUT=1
+
+# Динамическая смена формы курсора (Beam '|' в Insert, Block '█' в Normal mode) + обновление промпта Starship
 function zle-keymap-select {
     if [[ ${KEYMAP} == vicmd ]] || [[ $1 == 'block' ]]; then
         echo -ne '\e[2 q' # Block cursor
     elif [[ ${KEYMAP} == main ]] || [[ ${KEYMAP} == viins ]] || [[ $1 == 'beam' ]]; then
         echo -ne '\e[6 q' # Beam cursor
     fi
+    zle reset-prompt
 }
 zle -N zle-keymap-select
 
@@ -108,3 +112,8 @@ function zle-line-init {
     zle-keymap-select 'beam'
 }
 zle -N zle-line-init
+
+function zle-line-finish {
+    echo -ne '\e[6 q' # Сброс в beam при выполнении команды
+}
+zle -N zle-line-finish

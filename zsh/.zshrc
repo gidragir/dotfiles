@@ -32,12 +32,59 @@ eval "$(mise activate zsh)"
 eval "$(zoxide init zsh)"
 eval "$(starship init zsh)"
 
+# Smart Shell History (Atuin)
+if (( $+commands[atuin] )); then
+  eval "$(atuin init zsh)"
+fi
+
+# ── Completions & Colors ───────────────────────────────────────────────────────
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.m+1) ]]; then
+  compinit
+else
+  compinit -C
+fi
+
+# Highlight completion menu items with LS_COLORS & silence raw stderr messages
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' menu select
+zstyle ':completion:*:warnings' format ''
+zstyle ':completion:*:errors' format ''
+zstyle ':completion:*:messages' format ''
+
+if (( $+commands[carapace] )); then
+  source <(carapace _carapace)
+fi
+
+# ── Next-Gen Completion: fzf-tab ─────────────────────────────────────────────
+if [[ -f "$HOME/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh" ]]; then
+  source "$HOME/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh"
+
+  # Compact inline menu (prevents full-screen takeover and terminal output clearing)
+  zstyle ':fzf-tab:*' fzf-flags '--height=40%' '--layout=reverse' '--border'
+  zstyle ':fzf-tab:*' show-system-error false
+
+  # Rich Live Previews for fzf-tab (safe execution with error suppression)
+  zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath 2>/dev/null || ls -1 --color=always $realpath 2>/dev/null'
+  zstyle ':fzf-tab:complete:systemctl-*:*' fzf-preview 'SYSTEMD_COLORS=1 systemctl status $word 2>/dev/null'
+  zstyle ':fzf-tab:complete:kill:*' fzf-preview 'ps -p $word -o pid,user,%cpu,%mem,cmd 2>/dev/null'
+  zstyle ':fzf-tab:complete:(export|unset):*' fzf-preview 'printenv $word 2>/dev/null'
+  zstyle ':fzf-tab:complete:git-(add|diff|restore):*' fzf-preview 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git diff --color=always $word 2>/dev/null'
+
+  # Fix for screen clearing/shifting bug caused by leaking stderr (e.g. git add . outside repo)
+  function _fzf_tab_complete_silent() {
+    fzf-tab-complete "$@" 2>/dev/null
+  }
+  zle -N _fzf_tab_complete_silent
+  bindkey '^I' _fzf_tab_complete_silent
+fi
+
 # ── CachyOS / Zsh Plugins ────────────────────────────────────────────────────
 # Fish-like autosuggestions
 if [[ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
   source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
   ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-  bindkey '^F' autosuggest-accept
 fi
 
 # Syntax highlighting (must be loaded before history-substring-search)
@@ -61,15 +108,3 @@ source "$HOME/.zsh/alias/core.zsh"
 source "$HOME/.zsh/alias/git.zsh"
 source "$HOME/.zsh/alias/ansible.zsh"
 source "$HOME/.zsh/alias/k8s.zsh"
-
-# ── Completions ───────────────────────────────────────────────────────────────
-autoload -Uz compinit
-if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.m+1) ]]; then
-  compinit
-else
-  compinit -C
-fi
-
-if (( $+commands[carapace] )); then
-  source <(carapace _carapace)
-fi
