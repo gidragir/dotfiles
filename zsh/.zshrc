@@ -8,6 +8,7 @@ export LESS_TERMCAP_me="$(tput sgr0 2> /dev/null)"
 
 # ── History Configuration ───────────────────────────────────────────────────
 HISTFILE="${XDG_STATE_HOME:-$HOME/.local/state}/zsh/history"
+[[ -d "${HISTFILE:h}" ]] || mkdir -p "${HISTFILE:h}"
 HISTSIZE=50000
 SAVEHIST=50000
 
@@ -16,6 +17,7 @@ setopt HIST_IGNORE_SPACE       # Don't record commands starting with space
 setopt HIST_SAVE_NO_DUPS       # Don't write duplicates to history file
 setopt HIST_REDUCE_BLANKS      # Remove extra blanks from history items
 setopt SHARE_HISTORY           # Share history between all active shells instantly
+setopt EXTENDED_HISTORY        # Save execution timestamps to history file
 
 export HISTORY_IGNORE="(\&|[bf]g|c|clear|history|exit|q|pwd|* --help)"
 
@@ -84,7 +86,16 @@ fi
 if [[ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
   source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
   ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
-  ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+
+  if (( $+commands[atuin] )); then
+    _zsh_autosuggest_strategy_atuin() {
+      [[ -z "$2" ]] && return
+      typeset -g "$1"="$(atuin search --cmd-only --limit 1 --search-mode prefix -- "$2" 2>/dev/null)"
+    }
+    ZSH_AUTOSUGGEST_STRATEGY=(atuin history completion)
+  else
+    ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+  fi
 fi
 
 # Syntax highlighting (must be loaded before history-substring-search)

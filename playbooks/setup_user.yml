@@ -39,6 +39,7 @@
       loop:
         - "{{ ansible_facts.env.HOME }}/.cargo"
         - "{{ ansible_facts.env.HOME }}/.config"
+        - "{{ ansible_facts.env.HOME }}/.local/state/zsh"
       tags: [stow]
 
     - name: Remove existing config files to avoid stow conflicts
