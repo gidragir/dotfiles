@@ -58,6 +58,7 @@
         - "{{ ansible_facts.env.HOME }}/.config/niri"
         - "{{ ansible_facts.env.HOME }}/.config/nvim"
         - "{{ ansible_facts.env.HOME }}/.config/rofi"
+        - "{{ ansible_facts.env.HOME }}/.config/sheldon"
         - "{{ ansible_facts.env.HOME }}/.config/starship.toml"
         - "{{ ansible_facts.env.HOME }}/.config/superfile"
         - "{{ ansible_facts.env.HOME }}/.config/television"
@@ -69,13 +70,6 @@
         cmd: stow -t "{{ ansible_facts.env.HOME }}" $(find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' ! -name 'playbooks' -exec basename {} \;)
         chdir: /data/projects/dotfiles
       tags: [stow]
-
-    - name: Clone fzf-tab zsh plugin repository
-      ansible.builtin.git:
-        repo: https://github.com/Aloxaf/fzf-tab
-        dest: "{{ ansible_facts.env.HOME }}/.zsh/plugins/fzf-tab"
-        update: yes
-      tags: [zsh, plugins]
 
     # ── 3. Rust & Cargo (Optimized Layout) ────────────────────────────────────
     - name: Create Cargo cache directories

@@ -131,14 +131,10 @@ check_cmd "cargo-ramdisk"
 check_cmd "cargo-nextest"
 check_cmd "bacon"
 check_cmd "cargo-machete"
-check_cmd "atuin"
+check_cmd "sheldon"
 
-# Verify zsh plugins
-if [[ -f "$HOME_DIR/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh" ]]; then
-    pass "Zsh plugin fzf-tab is installed"
-else
-    fail "Zsh plugin fzf-tab NOT found in ~/.zsh/plugins/fzf-tab!"
-fi
+# Verify zsh plugin manager & config
+check_symlink "$HOME_DIR/.config/sheldon/plugins.toml" "$HOME_DIR/projects/dotfiles/sheldon/.config/sheldon/plugins.toml"
 
 # Verify default shell
 USER_SHELL=$(getent passwd "${USER:-$(whoami)}" | cut -d: -f7 2>/dev/null || echo "${SHELL:-}")

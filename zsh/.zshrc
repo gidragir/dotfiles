@@ -58,10 +58,13 @@ if (( $+commands[carapace] )); then
   source <(carapace _carapace)
 fi
 
-# ── Next-Gen Completion: fzf-tab ─────────────────────────────────────────────
-if [[ -f "$HOME/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh" ]]; then
-  source "$HOME/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh"
+# ── Zsh Plugin Manager: Sheldon ──────────────────────────────────────────────
+if (( $+commands[sheldon] )); then
+  eval "$(sheldon source)"
+fi
 
+# fzf-tab options & live previews
+if (( $+functions[fzf-tab-complete] )); then
   # Compact inline menu (prevents full-screen takeover and terminal output clearing)
   zstyle ':fzf-tab:*' fzf-flags '--height=40%' '--layout=reverse' '--border'
   zstyle ':fzf-tab:*' show-system-error false
@@ -81,10 +84,8 @@ if [[ -f "$HOME/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh" ]]; then
   bindkey '^I' _fzf_tab_complete_silent
 fi
 
-# ── CachyOS / Zsh Plugins ────────────────────────────────────────────────────
-# Fish-like autosuggestions
-if [[ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
-  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+# Zsh Autosuggestions Strategy
+if (( $+functions[_zsh_autosuggest_bind_widgets] )); then
   ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
 
   if (( $+commands[atuin] )); then

@@ -1,0 +1,11 @@
+# ~/.config/sheldon/plugins.toml
+# Sheldon plugin manager configuration for Zsh
+
+shell = "zsh"
+
+[plugins.fzf-tab]
+github = "Aloxaf/fzf-tab"
+
+[plugins.zsh-autosuggestions]
+github = "zsh-users/zsh-autosuggestions"
+use = ["{{ name }}.zsh"]
