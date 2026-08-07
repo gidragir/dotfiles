@@ -3,9 +3,31 @@
 
 shell = "zsh"
 
+# 1. Additional Completions (loaded before compinit / fzf-tab)
+[plugins.zsh-completions]
+github = "zsh-users/zsh-completions"
+
+# 2. Interactive fzf completion menu
 [plugins.fzf-tab]
 github = "Aloxaf/fzf-tab"
 
+# 3. Fish-like inline autosuggestions
 [plugins.zsh-autosuggestions]
 github = "zsh-users/zsh-autosuggestions"
 use = ["{{ name }}.zsh"]
+
+# 4. Automatic quote and bracket pairing (complements Vi-mode)
+[plugins.zsh-autopair]
+github = "hlissner/zsh-autopair"
+
+# 5. Alias reminder notification
+[plugins.zsh-you-should-use]
+github = "MichaelAquilina/zsh-you-should-use"
+
+# 6. History Substring Search (activates keybindings in binds/main.zsh)
+[plugins.zsh-history-substring-search]
+github = "zsh-users/zsh-history-substring-search"
+
+# 7. Fast Syntax Highlighting (must be loaded last)
+[plugins.fast-syntax-highlighting]
+github = "zdharma-continuum/fast-syntax-highlighting"
