@@ -10,12 +10,15 @@ bindkey -M viins '^E' end-of-line            # Ctrl + E — в конец стр
 bindkey -M viins '^F' forward-char           # Ctrl + F — на один символ вперед
 bindkey -M viins '^B' backward-char          # Ctrl + B — на один символ назад
 
-# Корректное удаление в режиме вставки
-bindkey -M viins '^W' backward-kill-word     # Ctrl + W — удалить слово назад (по пробелам)
-bindkey -M viins '^U' backward-kill-line     # Ctrl + U — удалить всё от курсора до начала строки
-bindkey -M viins '^K' kill-line              # Ctrl + K — удалить всё от курсора до конца строки
-bindkey -M viins '^H' backward-delete-char   # Backspace (исправление возможных багов терминала)
-bindkey -M viins '^?' backward-delete-char
+# Корректное удаление и спец-клавиши в режиме вставки (viins)
+bindkey -M viins '^[[3~' delete-char             # Delete (символ под курсором)
+bindkey -M viins '^[3;5~' delete-char
+bindkey -M viins '^H' backward-delete-char       # Backspace
+bindkey -M viins '^?' backward-delete-char       # Backspace
+bindkey -M viins '^[[H' beginning-of-line       # Home
+bindkey -M viins '^[[F' end-of-line             # End
+bindkey -M viins '^[[1~' beginning-of-line
+bindkey -M viins '^[[4~' end-of-line
 
 # Быстрый Undo (отмена) в режиме вставки
 bindkey -M viins '^_' undo                   # Ctrl + / или Ctrl + Shift + -
