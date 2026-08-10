@@ -26,7 +26,26 @@ fi
 #   - Cargo and Zsh configurations are managed via dotfiles (GNU Stow)
 #   - pnpm store is on the same drive as projects to allow hardlinks (NVMe 2)
 #   - uv cache is on the Btrfs partition to utilize disk compression
-# ──────────────────────────────────────────────────────────────────────────────
+TARGET_DIR="${HOME}/projects/dotfiles"
+
+# Locate dotfiles directory or clone if executed via curl
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd 2>/dev/null || echo "")"
+if [ -n "$SCRIPT_DIR" ] && [ -d "${SCRIPT_DIR}/playbooks" ]; then
+    cd "$SCRIPT_DIR"
+elif [ -d "./playbooks" ]; then
+    :
+else
+    echo "📦 Playbooks directory not found locally. Preparing repository at $TARGET_DIR..."
+    if ! command -v git &>/dev/null; then
+        echo "❌ git is required. Please install git first."
+        exit 1
+    fi
+    if [ ! -d "$TARGET_DIR" ]; then
+        mkdir -p "$(dirname "$TARGET_DIR")"
+        git clone https://github.com/gidragir/dotfiles.git "$TARGET_DIR"
+    fi
+    cd "$TARGET_DIR"
+fi
 
 echo "🔑 Pre-authenticating sudo to allow AUR package installation..."
 sudo -v
