@@ -76,17 +76,22 @@ if (( $+functions[fzf-tab-complete] )); then
   zstyle ':fzf-tab:complete:(export|unset):*' fzf-preview 'printenv $word 2>/dev/null'
   zstyle ':fzf-tab:complete:git-(add|diff|restore):*' fzf-preview 'git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git diff --color=always $word 2>/dev/null'
 
-  # Fix for screen clearing/shifting bug caused by leaking stderr (e.g. git add . outside repo)
+  # Fix for screen clearing/shifting bug caused by leaking stderr & clear autosuggestions before completion
   function _fzf_tab_complete_silent() {
+    if (( $+functions[_zsh_autosuggest_clear] )); then
+      _zsh_autosuggest_clear
+    fi
     fzf-tab-complete "$@" 2>/dev/null
   }
   zle -N _fzf_tab_complete_silent
   bindkey '^I' _fzf_tab_complete_silent
+  zstyle ':fzf-tab:*' continuous-trigger ''
 fi
 
 # Zsh Autosuggestions Strategy
 if (( $+functions[_zsh_autosuggest_bind_widgets] )); then
   ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
+  ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(_fzf_tab_complete_silent)
 
   if (( $+commands[atuin] )); then
     _zsh_autosuggest_strategy_atuin() {
