@@ -80,7 +80,7 @@ while true; do
     case $exit_code in
         0)
             cliphist decode <<< "$chosen" | wl-copy
-            sleep 0.1 && wtype -M ctrl v
+            sleep 0.1 && wtype -M ctrl -M shift v
             exit 0
             ;;
         10)
