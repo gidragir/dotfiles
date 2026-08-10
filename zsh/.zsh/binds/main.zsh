@@ -1,17 +1,17 @@
-# ── ИСПРАВЛЕНИЕ ДЛЯ VI-MODE И ЕГО АДАПТАЦИЯ ───────────────────────────────────
+# ── VI-MODE FIXES & ADAPTATIONS ───────────────────────────────────────────────
 
-# Возврат Alt + . (вставка последнего аргумента из истории) в режиме вставки
+# Restore Alt + . (insert last history argument) in insert mode
 bindkey -M viins '^[^.' insert-last-word
 bindkey -M viins '\e.' insert-last-word
 
-# Эмуляция Emacs-навигации в режиме вставки (чтобы не нажимать Esc ради начала/конца строки)
-bindkey -M viins '^A' beginning-of-line      # Ctrl + A — в начало строки
-bindkey -M viins '^E' end-of-line            # Ctrl + E — в конец строки
-bindkey -M viins '^F' forward-char           # Ctrl + F — на один символ вперед
-bindkey -M viins '^B' backward-char          # Ctrl + B — на один символ назад
+# Emulate Emacs navigation in insert mode (avoiding Esc for start/end of line)
+bindkey -M viins '^A' beginning-of-line      # Ctrl + A — beginning of line
+bindkey -M viins '^E' end-of-line            # Ctrl + E — end of line
+bindkey -M viins '^F' forward-char           # Ctrl + F — forward one character
+bindkey -M viins '^B' backward-char          # Ctrl + B — backward one character
 
-# Корректное удаление и спец-клавиши в режиме вставки (viins)
-bindkey -M viins '^[[3~' delete-char             # Delete (символ под курсором)
+# Correct deletion and special keys in insert mode (viins)
+bindkey -M viins '^[[3~' delete-char             # Delete (character under cursor)
 bindkey -M viins '^[3;5~' delete-char
 bindkey -M viins '^H' backward-delete-char       # Backspace
 bindkey -M viins '^?' backward-delete-char       # Backspace
@@ -20,19 +20,19 @@ bindkey -M viins '^[[F' end-of-line             # End
 bindkey -M viins '^[[1~' beginning-of-line
 bindkey -M viins '^[[4~' end-of-line
 
-# Быстрый Undo (отмена) в режиме вставки
-bindkey -M viins '^_' undo                   # Ctrl + / или Ctrl + Shift + -
+# Fast Undo in insert mode
+bindkey -M viins '^_' undo                   # Ctrl + / or Ctrl + Shift + -
 
-# Буферизация строки (Alt + Q)
-# Очищает текущую недописанную строку, позволяя выполнить что-то другое (например, ls).
-# После выполнения чужой команды недописанная строка автоматически возвращается на место.
+# Line buffering (Alt + Q)
+# Clears current unfinished line, allowing you to run another command (e.g. ls).
+# The unfinished line is automatically restored after the command executes.
 bindkey -M viins '^Qq' push-line
 bindkey -M viins '\eq' push-line
 bindkey -M vicmd 'q' push-line
 
-# ── ПОЛЕЗНЫЕ ZLE-ВИДЖЕТЫ ──────────────────────────────────────────────────────
+# ── USEFUL ZLE WIDGETS ────────────────────────────────────────────────────────
 
-# 1. Добавление/удаление sudo в начало строки по Alt+S
+# 1. Toggle sudo at start of line via Alt+S (EN: \es \eS, RU: \eы \eЫ)
 sudo-command-line() {
     [[ -z $BUFFER ]] && zle up-history
     if [[ $BUFFER == sudo\ * ]]; then
@@ -42,8 +42,10 @@ sudo-command-line() {
     fi
 }
 zle -N sudo-command-line
-bindkey -M viins '\es' sudo-command-line
-bindkey -M vicmd '\es' sudo-command-line
+for key in '\es' '\eS' '\eы' '\eЫ'; do
+    bindkey -M viins "$key" sudo-command-line 2>/dev/null
+    bindkey -M vicmd "$key" sudo-command-line 2>/dev/null
+done
 
 spf() {
     os=$(uname -s)
@@ -77,14 +79,15 @@ bindkey '^X^L' switch-language-buffer
 
 bindkey ' ' magic-space
 
-# Быстрый просмотр текущей директории по Ctrl+L (с сохранением введенной команды)
-function _ls_current_dir() {
-    echo ""
-    eza -la --icons 2>/dev/null || ls -lA
-    zle reset-prompt
-}
-zle -N _ls_current_dir
-bindkey '^L' _ls_current_dir
+# Interactive file & directory selection via fzf-file-widget (ESC to cancel)
+# Works with Ctrl+K, Ctrl+T, Ctrl+X Ctrl+D, F2, and Alt+R / Alt+D (EN & RU layouts)
+if type fzf-file-widget >/dev/null 2>&1; then
+    for key in '^K' '^T' '^X^D' '^[[12~' '^[OQ' '\er' '\eR' '\eк' '\eК' '\ed' '\eD' '\eв' '\eВ' '\el' '\eL' '\eд' '\eД'; do
+        bindkey "$key" fzf-file-widget 2>/dev/null
+        bindkey -M viins "$key" fzf-file-widget 2>/dev/null
+        bindkey -M vicmd "$key" fzf-file-widget 2>/dev/null
+    done
+fi
 
 # ── HISTORY SUBSTRING SEARCH BINDINGS ─────────────────────────────────────────
 if type history-substring-search-up >/dev/null 2>&1; then
@@ -97,10 +100,10 @@ if type history-substring-search-up >/dev/null 2>&1; then
 fi
 
 # ── VI-MODE CURSOR SHAPE & STARSHIP PROMPT INDICATOR ──────────────────────────
-# Ускоряем отклик клавиши Escape (10ms вместо стандартных 400ms)
+# Fast Escape response (10ms instead of default 400ms)
 export KEYTIMEOUT=1
 
-# Динамическая смена формы курсора (Beam '|' в Insert, Block '█' в Normal mode) + обновление промпта Starship
+# Dynamic cursor shape (Beam '|' in Insert, Block '█' in Normal mode) + Starship prompt refresh
 function zle-keymap-select {
     if [[ ${KEYMAP} == vicmd ]] || [[ $1 == 'block' ]]; then
         echo -ne '\e[2 q' # Block cursor
@@ -117,6 +120,6 @@ function zle-line-init {
 zle -N zle-line-init
 
 function zle-line-finish {
-    echo -ne '\e[6 q' # Сброс в beam при выполнении команды
+    echo -ne '\e[6 q' # Reset to beam cursor upon command execution
 }
 zle -N zle-line-finish

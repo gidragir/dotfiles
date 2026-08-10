@@ -58,6 +58,13 @@ if (( $+commands[carapace] )); then
   source <(carapace _carapace)
 fi
 
+# ── FZF Keybindings & Interactive File Picker ─────────────────────────────────
+if [[ -f /usr/share/fzf/key-bindings.zsh ]]; then
+  source /usr/share/fzf/key-bindings.zsh
+  export FZF_CTRL_T_COMMAND="fd --hidden --follow --exclude .git 2>/dev/null || find . -mindepth 1"
+  export FZF_CTRL_T_OPTS="--height 40% --layout=reverse --border --prompt='📁 Files > ' --preview 'eza --tree --level=2 --icons --color=always {} 2>/dev/null || bat --color=always --line-range :40 {} 2>/dev/null || cat {}'"
+fi
+
 # ── Zsh Plugin Manager: Sheldon ──────────────────────────────────────────────
 if (( $+commands[sheldon] )); then
   eval "$(sheldon source)"
