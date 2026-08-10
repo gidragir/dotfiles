@@ -1,244 +1,163 @@
-# 🚀 CachyOS Niri: Ultimate Developer Setup
+# 🚀 CachyOS Niri: Ultimate Developer Setup & Dotfiles
 
-Scripts and Ansible playbooks for automatic configuration of a clean **CachyOS (Niri)** installation. Transforms a bare system into an ideal development environment for Rust, TypeScript, and Python — with Neovim/Zsh workflow, dotfiles via GNU Stow, native Docker, QEMU/KVM virtualization, and optimized dual-NVMe partitioning.
+Automated setup scripts and Ansible playbooks for configuring a **CachyOS (Niri)** installation. Transforms a bare system into an optimized development environment for Rust, TypeScript, Python, Kubernetes, and DevOps — with a Zsh + Neovim workflow, dotfiles management via GNU Stow, native Docker, QEMU/KVM virtualization, and an optimized dual-NVMe storage layout.
+
+---
 
 ## ⚡ Quick Start
 
-### 1. System Setup (root required)
+All installation scripts support **both direct execution via `curl`** and local execution in a cloned repository. When executed via `curl`, the scripts automatically check for local playbooks and clone the repository to `~/projects/dotfiles` if necessary.
 
-Partitions the target NVMe drive, installs system-level packages via Pacman, configures mounts, and sets up Docker & libvirt services.  
-**The script will ask for confirmation before formatting anything.**
+### 1. System Setup (sudo required)
+
+Formats the target NVMe drive, installs system packages via Pacman, configures the `/data` mount points (Btrfs, XFS, ext4), and sets up Docker and libvirt user groups and services.
 
 ```bash
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/setup_system.sh)"
 ```
 
-After completion, **log out and back in** (or reboot) to apply new group memberships (`docker`, `libvirt`, `kvm`).
+> ⚠️ **IMPORTANT**: After the script finishes, **log out and back in** (or reboot) to apply new group memberships (`docker`, `libvirt`, `kvm`).
 
-### 2. User Setup
+### 2. User Setup (run as normal user)
 
-Configures the dev environment, shell, tools via [mise](https://mise.jdx.sh/), AUR packages via `paru`, Cargo tools, dotfiles via Stow, and background sync services. Run **as a normal user**.
+Configures the user environment: development runtimes via [mise](https://mise.jdx.sh/), AUR packages via `paru`, Cargo tools, dotfiles via GNU Stow, and background `rclone` sync timers.
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/setup_user.sh)"
 ```
 
-### 3. Dedicated Playbooks
+---
 
-You can run individual Ansible playbooks anytime for specific components:
+## 🛠 Utility & Specialized Playbooks (`playbooks/`)
 
-- **Gaming & Steam Setup:**
-  ```bash
-  ansible-playbook -K playbooks/setup_gaming.yml
-  # Optional GPU switch to NVIDIA during setup:
-  ansible-playbook -K playbooks/setup_gaming.yml -e "switch_gpu_to_nvidia=true"
-  ```
-- **KVM/QEMU Virtualization Setup:**
-  ```bash
-  ansible-playbook -K playbooks/setup_virt.yml
-  ```
-- **Package Maintenance:**
-  ```bash
-  # Install/update system-level packages:
-  ansible-playbook playbooks/packages.yml --tags system
-  # Install/update user pacman, AUR, and cargo packages:
-  ansible-playbook playbooks/packages.yml --tags user,aur,cargo
-  ```
+The [`playbooks/`](file:///home/alatau/projects/dotfiles/playbooks) directory contains modular Ansible playbooks for selective execution and maintenance:
+
+### 1. 🦀 Rust Development Stack (`playbooks/setup_rust.yml`)
+Installs and isolates an optimized Rust toolchain:
+- `rustup` (activates `stable` channel)
+- Fast linker: `mold` + `clang`
+- Compilation cache: `sccache` (cache stored on NVMe 1 at `/data/projects/.sccache`)
+- Fast binary installer: `cargo-binstall`
+- Developer utilities: `cargo-nextest`, `bacon`, `cargo-machete`, `cargo-ramdisk`
+
+```bash
+ansible-playbook playbooks/setup_rust.yml
+```
+
+### 2. 🎮 Gaming Environment & Steam (`playbooks/setup_gaming.yml`)
+Configures CachyOS for gaming and graphics drivers:
+- Packages: `cachyos-gaming-meta`, `lutris`, `protontricks`, `wine-mono`, `nvidia-prime`, `nvidia-utils`, `envycontrol` (AUR)
+- Automatic Steam Library integration: links `~/.local/share/Steam/steamapps` to `/data/games/SteamLibrary` on main storage
+- Proton/Wayland optimizations in `~/.config/environment.d/10-gaming.conf` (`PROTON_USE_NTSYNC=1`, `PROTON_ENABLE_WAYLAND=0`)
+- GPU switching (Optimus/Prime):
+
+```bash
+# Basic gaming stack installation:
+ansible-playbook -K playbooks/setup_gaming.yml
+
+# Force switch GPU globally to NVIDIA via envycontrol:
+ansible-playbook -K playbooks/setup_gaming.yml -e "switch_gpu_to_nvidia=true"
+```
+
+### 3. 🖥 QEMU/KVM Virtualization & Libvirt (`playbooks/setup_virt.yml`)
+Deploys a complete KVM virtualization stack:
+- Packages: `qemu-full`, `libvirt`, `virt-manager`, `edk2-ovmf` (UEFI), `swtpm` (TPM 2.0 emulator), `dnsmasq`, `ufw`
+- Enables `virbr0` bridge and sets up UFW routing rules
+- Fixes `swtpm` directory permissions
+- Configures secure Virtio-FS shared folder `/srv/Shared` with `virtshare` group for host/VM file sharing
+
+```bash
+ansible-playbook -K playbooks/setup_virt.yml
+```
+
+### 4. 📦 Package Management (`playbooks/packages.yml`)
+Selective package installation and updates:
+```bash
+# System packages (run as root):
+ansible-playbook playbooks/packages.yml --tags system
+
+# User pacman, AUR, and cargo packages:
+ansible-playbook playbooks/packages.yml --tags user,aur,cargo
+```
 
 ---
 
-## 💽 Disk Layout (2× NVMe 1 TB)
+## 💻 Terminal & Zsh Integration (`zsh/`)
 
-### NVMe 0 — System (installed by CachyOS installer)
+The terminal environment is built on Zsh in [`zsh/`](file:///home/alatau/projects/dotfiles/zsh) with deep tool integration:
+
+### 1. Vi-mode & Dynamic Cursor
+- Full Vi keymap enabled (`bindkey -v`)
+- **Dynamic Cursor Shape** (`zle-keymap-select`): Beam `|` in Insert mode, Block `█` in Normal mode
+- **Fast Escape response** (`KEYTIMEOUT=1`, 10 ms delay)
+- **Neovim command editing**: Press `v` in Normal mode to edit the current command buffer in Neovim (LazyVim) via `edit-command-line`
+
+### 2. Starship Prompt & Atuin Smart History
+- **Starship Prompt** natively displays the current Vi mode: `❯` (green — Insert), `[N]` (yellow — Normal), `[V]` (cyan — Visual)
+- **Atuin**: Shell history search replaces standard `Ctrl+R` with context and execution time tracking
+- Integrated with `zsh-autosuggestions` (`_zsh_autosuggest_strategy_atuin`) for history-driven completion suggestions
+
+### 3. Interactive fzf-tab & Live Previews
+`fzf-tab` replaces standard Zsh completion menus with contextual fuzzy search (`--height=40%`) and **live previews**:
+- `cd [Tab]`: Directory contents preview via `eza`
+- `systemctl [Tab]`: Service status via `systemctl status` with syntax highlighting
+- `kill [Tab]`: Process details (PID, CPU, MEM, CMD) via `ps`
+- `export` / `unset [Tab]`: Environment variable values preview
+- `git add` / `diff` / `restore [Tab]`: Interactive `git diff` preview for selected files
+
+### 4. Keybindings & ZLE Widgets (`zsh/.zsh/binds/main.zsh`)
+- `Alt + S`: Fast `sudo` prefix toggle at start of line (`sudo-command-line`, supports EN and RU layouts)
+- `Ctrl + K` / `Ctrl + T` / `F2` / `Alt + R`: Native `fzf` file and directory selector widget with live `eza`/`bat` preview (inserts selected path into command line; `ESC` cancels cleanly without cluttering terminal output)
+- `Ctrl + X Ctrl + L`: Automatic Russian ↔ English layout fix on current command buffer (`switch-language-buffer`)
+- `Alt + Q` (or `q` in vicmd): Line buffering (`push-line`) — saves current unfinished command line, clears input to run another command (e.g. `ls`), then restores the unfinished line
+- `Alt + .`: Insert last argument of previous command in insert mode (viins)
+- `Ctrl + A` / `Ctrl + E`: Navigate to start/end of line in insert mode without switching to Normal mode
+
+### 5. Aliases & Shell Utilities (`zsh/.zsh/alias/`)
+- **Modern Unix Replacements**: `ll` (`eza -l`), `la` (`eza -la`), `tree` (`eza --tree`)
+- **Superfile File Manager (`spf`)**: `spf()` wrapper that automatically `cd`s into the last visited directory upon exit
+- **Television + Superfile (`spft`)**: Fuzzy search files/folders via `tv` (Television) and immediately open in Superfile
+- **Sandboxes & Containers**:
+  - `niri-sandbox`: Runs a nested Wayland compositor session for safely testing bars, applets, and compositor configs
+  - `sandbox-box [distro]`: Spawns a throwaway Distrobox container for testing CLI tools
+  - `sandbox-rm`: Quickly removes the sandbox container
+- **Kubernetes / k3d Utilities**:
+  - `k3d-create [name]`: Bootstraps a local k3d cluster with port forwarding and local Nexus Registry mapping
+  - `k8s-install-argocd`: Automated installation and wait helper for ArgoCD
+- **Universal Archive Extractor (`extract` / `x`)**: Unpacks `.tar.gz`, `.zip`, `.7z`, `.tar.zst`, `.rar`, and other archive formats with a single command
+
+---
+
+## 💽 Disk Layout (Dual NVMe 1 TB)
+
+### NVMe 0 — System (installed via CachyOS installer)
 
 | Partition | Size | Purpose |
 |-----------|------|---------|
 | `/boot/efi` | 1 GB | EFI, FAT32 |
 | `/` | ~100 GB | System root |
-| `swap` | 8 GB | Suspend support |
-| `/home` | ~891 GB | User data, toolchains, configs, and games (`~/Games`) |
+| `swap` | 8 GB | Swap / hibernation support |
+| `/home` | ~891 GB | User data, configs, toolchains, games (`~/Games`) |
 
-### NVMe 1 — Data (`setup_system.sh` / `setup_system.yml` partitions this automatically)
+### NVMe 1 — Data (`setup_system.sh` partitions automatically)
 
-| LABEL | Mount Point | Size | Filesystem | Mount Options | Purpose |
-|-------|-------------|------|------------|---------------|---------|
-| `DOCKER` | `/var/lib/docker` | ~250 GB (0–25%) | `xfs` | `defaults,noatime,pquota` | Native Docker data root (with prjquota) |
-| `LIBVIRT` | `/var/lib/libvirt/images` | ~250 GB (25–50%) | `ext4` | `defaults,noatime` | QEMU/KVM virtual machine disk images |
-| `PROJECTS` | `/data/projects` → `~/projects` | ~450 GB (50–95%) | `btrfs` | `defaults,noatime,compress=zstd:3,discard=async` | Code + pnpm store, uv cache, cargo cache & sccache |
-| `SYNC` | `/data/sync` | ~50 GB (95–100%) | `btrfs` | `defaults,noatime,compress=zstd:3,discard=async` | Obsidian vault, Zotero library |
-
-> [!NOTE]
-> **Unified Games Folder**: All game clients (Steam, Lutris, Heroic/Epic Games Store) are configured to install games to `~/Games` (located on the large NVMe 0 drive). The system script automatically creates a symlink at `/data/games` pointing to `~/Games` for a clean, unified path.
+| Label | Mount Point | FS | Mount Options | Purpose |
+|-------|-------------|------|------------|---------|
+| `DOCKER` | `/var/lib/docker` | `xfs` | `defaults,noatime,prjquota` | Native Docker data root (with project disk quotas) |
+| `LIBVIRT` | `/var/lib/libvirt/images` | `ext4` | `defaults,noatime` | QEMU/KVM virtual machine disk images |
+| `PROJECTS` | `/data/projects` → `~/projects` | `btrfs` | `compress=zstd:3,discard=async` | Source code + `.pnpm-store`, `.uv-cache`, `.sccache` |
+| `SYNC` | `/data/sync` | `btrfs` | `compress=zstd:3,discard=async` | Obsidian vaults, Zotero library |
 
 ---
 
-## 🛠 Architecture and Tools
+## ⚙️ Configuration Management (GNU Stow)
 
-### 1. Terminal and Shell (Zsh + Neovim workflow)
-
-- **Vi-mode:** Full `vi` keybindings in Zsh. Text deleted via `dw`, `dd` etc. does **not** pollute the Wayland clipboard (`cliphist` / `wtype` integration).
-- **Starship Prompt:** Mode-aware prompt — `❯` (green, Insert), `[N]` (yellow, Normal), `[V]` (cyan, Visual).
-- **LazyVim integration:** Press `v` in Normal mode to open the current command buffer in Neovim for advanced editing.
-- **Terminals:** Ghostty and Warp — both handle Cyrillic paste natively with no extra configuration needed.
-- **Multiplexer & File Manager:** `zellij` terminal multiplexer, `superfile` terminal file manager, `carapace-bin` for shell autocompletions.
-
-### 2. Development Stack
-
-**Rust**
-- `rustup` — toolchain management (default `stable`), installed to `~/.cargo`
-- `mold` — fast linker (~2–5× faster than `ld` at link step)
-- `sccache` — compilation cache shared across projects, stored on NVMe 1: `/data/projects/.sccache`
-- `cargo-ramdisk` — mounts `target/` into `/dev/shm` (RAM) for maximum build speed on heavy projects
-- `cargo` utilities: `cargo-nextest`, `bacon`, `cargo-machete` installed via `cargo-binstall`
-- Crate registry & git caches redirected to `/data/projects/.cargo-cache/` (`registry` and `git`)
-
-**TypeScript / JavaScript**
-- `nodejs` — LTS managed via `mise` (configured in `~/.config/mise/config.toml`)
-- `bun` — installed and managed via `mise`
-- `pnpm` — managed via `corepack` (enabled via Node.js from `mise`), shims installed to `~/.local/bin`
-- `pnpm store` at `/data/projects/.pnpm-store` — located on the same Btrfs volume as projects to allow fast hardlinks
-
-**Python**
-- `uv` — installed and managed via `mise`
-- `Python` — versioning and project environments managed entirely via `uv` (no global system python mutation)
-- `uv cache` redirected to `/data/projects/.uv-cache` (Btrfs `zstd:3` compression); tools follow XDG standard at `~/.local/share/uv`
-
-**CLI & DevOps Utilities**
-- `zoxide` — smart `cd` with frecency ranking
-- `mise` — tool and runtime version manager
-- `television` — blazing fast fuzzy search
-- `ripgrep` (`rg`), `fd`, `bat`, `eza` — modern Rust replacements for standard Unix tools
-- `lazygit`, `lazydocker` — terminal UI for git and docker
-- `superfile` — modern terminal file manager
-- `zellij` — terminal workspace multiplexer
-- `sops`, `age` — GitOps secrets management
-- `kubectl`, `kubectx`, `k9s`, `k3d`, `helm`, `argocd` — Kubernetes development suite
-- `lefthook` — Git hooks manager
-- `biome` — linter and formatter for JS/TS
-- `turbo` — Turborepo for monorepos
-- `jq`, `yq` — JSON/YAML processing
-
-**GUI Applications & Editors**
-- **IDEs / Editors:** Neovim (LazyVim), Visual Studio Code (`visual-studio-code-bin`), Android Studio
-- **Browsers:** Vivaldi, Chromium, Tor Browser
-- **Communication & Productivity:** Ferdium, Obsidian, Zotero
-- **Utilities & Peripherals:** IMV (image viewer), Rofi (launcher), OpenRGB, Piper + ratbagd (ASUS mouse/macro control)
-
-### 3. Containers and Virtualization
-
-**Native Docker**
-- Installed natively via Pacman (`docker`, `docker-compose`, `docker-buildx`) and configured on a dedicated `XFS` partition mounted at `/var/lib/docker` (using `overlay2` storage driver with `prjquota` enabled).
-- Fully native, avoiding Docker Desktop VM overhead.
-- Storage configuration (`overlay2.size=20G`, `live-restore: true`) managed via Ansible in `playbooks/setup_system.yml`.
-
-**Kubernetes & Local Registry (k3d)**
-- **k3d** runs k3s in lightweight docker containers.
-- **Local Nexus Registry**: Fully configured via `k3d/.config/k3d/registries.yaml`. Requests to `nexus.local:8082` are routed transparently to the host via host-gateway, allowing image pulls without editing k8s deployment YAMLs.
-- `k3d-create [name]` — custom Zsh function to bootstrap a local cluster mapped to your host's Nexus.
-- `k8s-install-argocd` — installs and waits for ArgoCD on the active cluster.
-
-**Sandbox environments**
-- `niri-sandbox` alias — nested Wayland compositor session for testing bars, applets, and compositor settings. Close the window → everything gone, no cleanup needed.
-- `sandbox-box <distro>` — throwaway Distrobox container for CLI tool testing (`sandbox-rm` to destroy it).
-- **Distrobox** — lightweight containers with full Wayland and audio passthrough.
-
-**Libvirt / QEMU/KVM**
-- Full virtual machines managed via `libvirt`, `qemu-desktop`, `virt-manager`, `edk2-ovmf`, `swtpm`, and `dnsmasq`.
-- VM disk images stored on NVMe 1 at `/var/lib/libvirt/images` (`ext4` partition).
-- Automated via `playbooks/setup_virt.yml` — configures `virbr0` iptables firewall forwarding rules and fixes `swtpm` permissions.
-
----
-
-## 🎮 Gaming & Steam Setup (`setup_gaming.yml`)
-
-The setup includes an automated gaming playbook ([playbooks/setup_gaming.yml](file:///data/projects/dotfiles/playbooks/setup_gaming.yml)):
-
-### 1. Installed Packages
-- `cachyos-gaming-meta`, `lutris`, `protontricks`, `wine-mono`
-- `nvidia-prime`, `nvidia-utils`, `envycontrol` (AUR)
-
-### 2. Automatic Steam Library Integration
-- `~/.local/share/Steam/steamapps` is automatically symlinked to `/data/games/SteamLibrary` (on `~/Games`).
-- All Steam games install straight to your main NVMe 0 gaming storage without manual path configuration.
-
-### 3. Proton & Wayland Optimizations
-Configured globally in `~/.config/environment.d/10-gaming.conf`:
-- `PROTON_USE_NTSYNC=1` — NTSYNC support for lower CPU overhead
-- `PROTON_LOCAL_SHADER_CACHE=0` — prevents duplicate shader caching
-- `PROTON_ENABLE_WAYLAND=0` — ensures maximum stability with XWayland
-- `PROTON_ENABLE_HDR=0`
-
-### 4. GPU / Optimus Switching
-- Run individual apps/Steam on NVIDIA GPU:
-  ```bash
-  prime-run steam
-  ```
-- Switch GPU globally to NVIDIA via `envycontrol`:
-  ```bash
-  sudo envycontrol -s nvidia --force-comp
-  # Or via playbook:
-  ansible-playbook -K playbooks/setup_gaming.yml -e "switch_gpu_to_nvidia=true"
-  ```
-
----
-
-## 🖥 Windows VM (QEMU/KVM) Setup
-
-To deploy a Windows 11 VM with UEFI, Secure Boot, TPM 2.0, and VirtIO drivers (disk/network performance):
-
-### 1. Run Virtualization Playbook
-```bash
-ansible-playbook -K playbooks/setup_virt.yml
-```
-
-### 2. Download VirtIO Drivers
-```bash
-sudo wget https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso \
-  -O /var/lib/libvirt/images/virtio-win.iso
-```
-
-### 3. Copy the Windows 11 ISO to VM Storage
-```bash
-sudo cp /path/to/windows11.iso /var/lib/libvirt/images/win11.iso
-```
-
-### 4. Create the VM via CLI
-```bash
-sudo virt-install \
-  --name win11 \
-  --ram 8192 \
-  --vcpus 4 \
-  --cpu host-passthrough \
-  --os-variant win11 \
-  --disk path=/var/lib/libvirt/images/win11.qcow2,size=100,bus=virtio,format=qcow2,sparse=true \
-  --disk path=/var/lib/libvirt/images/win11.iso,device=cdrom \
-  --disk path=/var/lib/libvirt/images/virtio-win.iso,device=cdrom \
-  --network network=default,model=virtio \
-  --boot uefi,firmware.feature.name=secure-boot \
-  --tpm backend.type=emulator,backend.version=2.0,model=tpm-tis \
-  --graphics spice,listen=127.0.0.1 \
-  --video qxl \
-  --channel spicevmc \
-  --noautoconsole
-```
-
-### 5. Install and Configure
-1. Open **`virt-manager`** from your launcher.
-2. Open the `win11` console and start the VM.
-3. When Windows asks "Where do you want to install Windows?" and shows no disks, click **Load driver** -> **Browse** -> Select the `virtio-win` CD-ROM drive -> `amd64` -> `w11` to load the SCSI controller driver.
-4. After Windows boots, open the VirtIO CD-ROM drive in Windows Explorer and run `virtio-win-gt-x64.msi` to install all missing guest tools (network, display, clipboard sharing).
-
----
-
-## ⚙ Config Management (GNU Stow)
-
-Dotfiles live in `/data/projects/dotfiles` (on NVMe 1, symlinked to `~/projects/dotfiles`).
-
-Structure mirrors `$HOME`:
+All configuration files are managed in `/data/projects/dotfiles` (symlinked to `~/projects/dotfiles`).
+The repository layout mirrors `$HOME`:
 
 ```
 dotfiles/
-├── zsh/                      -> ~/.zshrc
+├── zsh/                      -> ~/.zshrc, ~/.zshenv, ~/.zsh/
 ├── nvim/.config/nvim/        -> ~/.config/nvim
 ├── starship/.config/         -> ~/.config/starship.toml
 ├── niri/.config/niri/        -> ~/.config/niri
@@ -255,9 +174,7 @@ dotfiles/
 └── git/                      -> ~/.gitconfig
 ```
 
-The [setup_user.yml](file:///data/projects/dotfiles/playbooks/setup_user.yml) playbook automatically removes conflicting default files and runs GNU Stow across all configuration modules.
-
-To add any new app configuration to Stow:
+To add a new application configuration to Stow:
 ```bash
 mv ~/.config/myapp ~/projects/dotfiles/myapp/.config/
 cd ~/projects/dotfiles && stow myapp
@@ -265,45 +182,38 @@ cd ~/projects/dotfiles && stow myapp
 
 ---
 
-## ☁ Synchronization (Rclone)
+## 🔍 Audit & Diagnostic Scripts
 
-Two automated `systemd` user services configured by [setup_user.yml](file:///data/projects/dotfiles/playbooks/setup_user.yml):
+The repository includes built-in diagnostic scripts to verify system setup:
 
-- **`rclone-mount.service`** — mounts Google Drive as FUSE filesystem at `/data/gdrive` with up to 10 GB local VFS cache. Obsidian and Zotero work against **local copies** in `/data/sync`, not the mount directly.
-- **`rclone-sync.timer`** — syncs `/data/sync` → `gdrive:MySyncBackup` once per hour (5 min after boot, then every hour). Logs to `~/.cache/rclone/`.
+1. **[`check.sh`](file:///home/alatau/projects/dotfiles/check.sh)**:
+   Docker storage verification. Validates `/var/lib/docker` mount point, XFS `ftype=1` flag, `prjquota` mount options, `/etc/fstab` entries, parses `/etc/docker/daemon.json`, and performs a test container execution.
+   ```bash
+   sudo bash check.sh
+   ```
+
+2. **[`check_setup.sh`](file:///home/alatau/projects/dotfiles/check_setup.sh)**:
+   Comprehensive environment check-list. Verifies mount points (`/data/projects`, `/data/sync`, `/var/lib/docker`, `/var/lib/libvirt/images`), cache directories (`.pnpm-store`, `.uv-cache`, `.sccache`), Cargo symlinks, CLI tools availability, and `rclone` background timers status.
+   ```bash
+   bash check_setup.sh
+   ```
+
+3. **[`patrition_delete.sh`](file:///home/alatau/projects/dotfiles/patrition_delete.sh)**:
+   Standalone utility for destructive disk wiping of `/dev/nvme1n1` (`wipefs`, `sgdisk --zap-all`, `dd zero`). 
+   > ⚠️ **WARNING**: Use only when completely re-partitioning the second NVMe drive!
 
 ---
 
-## 🏁 Post-Installation Steps
+## 🧹 Repository Hygiene (Items NOT to commit to Dotfiles)
 
-1. **Configure Rclone remote:**
-   ```bash
-   rclone config
-   # Create remote named 'gdrive', type 'drive' (Google Drive), complete browser auth
-   ```
+Audit findings for maintaining a clean public dotfiles repository:
 
-2. **Start Cloud Services:**
-   ```bash
-   systemctl --user start rclone-mount.service
-   systemctl --user start rclone-sync.timer
-   ```
-
-3. **Restart Terminal / Shell Session:**  
-   Open a new terminal window to apply shell config, `zoxide`, `mise`, `carapace`, Starship prompt, and path exports.
-
-4. **Point Apps to `/data/sync`:**  
-   Open Obsidian and Zotero and set their data paths to `/data/sync/Obsidian` and `/data/sync/Zotero`.
-
----
-
-## 🗂 Toolchain Storage Reference
-
-| Tool | Binary / Toolchain Path | Cache / Data Storage Path | Notes |
-|------|-------------------------|--------------------------|-------|
-| **Rust** | `~/.cargo/bin` (NVMe 0) | `/data/projects/.cargo-cache/` (NVMe 1) | `registry` and `git` caches symlinked to NVMe 1 |
-| **sccache** | System binary | `/data/projects/.sccache/` (NVMe 1) | Shared C/C++/Rust compilation cache |
-| **pnpm** | `~/.local/bin/pnpm` | `/data/projects/.pnpm-store/` (NVMe 1) | Same Btrfs volume as projects to allow fast hardlinking |
-| **uv / Python** | `~/.local/share/uv/` | `/data/projects/.uv-cache/` (NVMe 1) | Btrfs `zstd:3` compressed cache; managed via `mise` |
-| **Docker** | System binaries | `/var/lib/docker/` (XFS, NVMe 1) | Native Docker with `overlay2` & `prjquota` |
-| **Libvirt VMs** | System binaries | `/var/lib/libvirt/images/` (ext4, NVMe 1) | QEMU/KVM disk images |
-| **Games / Steam** | Steam client (`~/.local/share/Steam`) | `/data/games/` → `~/Games` (NVMe 0) | Symlinked `steamapps` -> `/data/games/SteamLibrary` |
+1. **Cargo Runtime Artifacts & Caching (`cargo/.cargo/`)**:
+   - `cargo/.cargo/.global-cache` (binary cache file ~80 KB)
+   - `cargo/.cargo/.package-cache` and `.package-cache-mutate`
+   - Local binaries in `cargo/.cargo/bin/`, `registry/`, `git/`, `binstall/`
+   - *Solution*: All runtime artifacts and binary caches are ignored in [.gitignore](file:///home/alatau/projects/dotfiles/.gitignore).
+2. **Ansible Galaxy Cache (`.ansible/`)**:
+   - The `.ansible/` directory contains downloaded Ansible Galaxy roles and collections (e.g. `kewlfft.aur`). Excluded in [.gitignore](file:///home/alatau/projects/dotfiles/.gitignore).
+3. **Sensitive Files (Secrets & Credentials)**:
+   - SSH keys (`id_rsa`, `id_ed25519`), API tokens, private `rclone.conf` configs, and Atuin/Zsh history files must not be committed. History files are stored in `XDG_STATE_HOME` (`~/.local/state/zsh/history`), and secrets should be managed via `sops` / `age`.

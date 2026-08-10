@@ -53,7 +53,7 @@
         state: directory
         recurse: true
 
-    # Безопасная настройка общей папки Virtio-FS
+    # Safe setup for Virtio-FS shared folder
     - name: Create virtshare group for secure folder sharing
       ansible.builtin.group:
         name: virtshare
@@ -66,7 +66,7 @@
         append: true
       loop:
         - "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
-        - nobody  # Стандартный сервисный аккаунт для выполнения QEMU в Arch/CachyOS
+        - nobody  # Standard service account for QEMU in Arch/CachyOS
 
     - name: Create secure shared directory for Virtio-FS
       ansible.builtin.file:
@@ -74,9 +74,9 @@
         state: directory
         owner: root
         group: virtshare
-        mode: '2770' # Права 770 + SGID (новые файлы наследуют группу virtshare)
+        mode: '2770' # Mode 770 + SGID (new files inherit virtshare group)
 
-    # Персистентные правила UFW вместо iptables
+    # Persistent UFW rules instead of iptables
     - name: Allow incoming traffic from virtual bridge (UFW INPUT)
       community.general.ufw:
         rule: allow
@@ -97,7 +97,7 @@
         direction: in
         interface: virbr0
 
-    # Блок проверок установки
+    # Verification tasks
     - name: Check package installation
       ansible.builtin.command: pacman -Q {{ item }}
       register: pkg_check
