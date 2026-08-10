@@ -1,1 +1,11 @@
 .DS_Store
+
+# Cargo runtime files & binaries
+cargo/.cargo/bin/
+cargo/.cargo/binstall/
+cargo/.cargo/binstall.toml
+cargo/.cargo/.crates.toml
+cargo/.cargo/.crates2.json
+cargo/.cargo/registry/
+cargo/.cargo/git/
+
