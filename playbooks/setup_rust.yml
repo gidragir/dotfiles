@@ -1,0 +1,85 @@
+---
+# =============================================================================
+# Playbook : setup_rust.yml
+# Purpose  : Standalone & optimized Rust toolchain setup for CachyOS / Arch Linux.
+# Usage    : ansible-playbook setup_rust.yml (or with --ask-become-pass)
+# =============================================================================
+
+# ── Play 1: System-level dependencies & packages (Requires Sudo) ─────────────
+- name: Install System Dependencies for Optimized Rust
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Remove conflicting rust package before installing rustup
+      community.general.pacman:
+        name: rust
+        state: absent
+        extra_args: "-dd"
+
+    - name: Install Rust system toolchain packages (rustup, mold, sccache, clang, cargo-binstall)
+      community.general.pacman:
+        name:
+          - rustup
+          - mold
+          - sccache
+          - clang
+          - cargo-binstall
+        state: present
+        extra_args: "--needed"
+
+
+# ── Play 2: User-level Rust toolchain, Cargo tools and config ────────────────
+- name: Configure Rust, Toolchain, Cargo Caches and Cargo Config
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: true
+
+  tasks:
+    - name: Initialize rustup default stable toolchain
+      ansible.builtin.command: rustup default stable
+      changed_when: false
+
+    - name: Ensure ~/.cargo and ~/.cargo/bin exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ ansible_facts.env.HOME }}/.cargo"
+        - "{{ ansible_facts.env.HOME }}/.cargo/bin"
+
+    - name: Configure Cargo config.toml for max performance (mold linker + sccache wrapper)
+      ansible.builtin.copy:
+        dest: "{{ ansible_facts.env.HOME }}/.cargo/config.toml"
+        mode: '0644'
+        content: |
+          [target.x86_64-unknown-linux-gnu]
+          linker = "clang"
+          rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+
+          [build]
+          rustc-wrapper = "sccache"
+
+    - name: Check installed Cargo binaries
+      ansible.builtin.stat:
+        path: "{{ ansible_facts.env.HOME }}/.cargo/bin/{{ item }}"
+      register: cargo_tool_stats
+      loop:
+        - cargo-nextest
+        - bacon
+        - cargo-machete
+        - cargo-ramdisk
+
+    - name: Install high-performance Cargo tools via cargo-binstall
+      ansible.builtin.command:
+        cmd: cargo binstall -y {{ item.item }}
+      loop: "{{ cargo_tool_stats.results }}"
+      when: not item.stat.exists
+      changed_when: true
+      loop_control:
+        label: "{{ item.item }}"
+

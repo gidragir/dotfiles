@@ -1,0 +1,5 @@
+[v1]
+"cargo-nextest 0.9.143 (registry+https://github.com/rust-lang/crates.io-index)" = ["cargo-nextest"]
+"bacon 3.24.0 (registry+https://github.com/rust-lang/crates.io-index)" = ["bacon"]
+"cargo-machete 0.9.2 (registry+https://github.com/rust-lang/crates.io-index)" = ["cargo-machete"]
+"cargo-ramdisk 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = ["cargo-ramdisk"]
