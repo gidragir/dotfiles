@@ -62,6 +62,7 @@
         - "{{ ansible_facts.env.HOME }}/.config/starship.toml"
         - "{{ ansible_facts.env.HOME }}/.config/superfile"
         - "{{ ansible_facts.env.HOME }}/.config/television"
+        - "{{ ansible_facts.env.HOME }}/.config/vivaldi-stable.conf"
         - "{{ ansible_facts.env.HOME }}/.config/zellij"
       tags: [stow]
 

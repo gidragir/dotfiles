@@ -169,6 +169,7 @@ dotfiles/
 ├── rofi/.config/rofi/        -> ~/.config/rofi
 ├── superfile/.config/        -> ~/.config/superfile
 ├── television/.config/       -> ~/.config/television
+├── vivaldi/.config/          -> ~/.config/vivaldi-stable.conf
 ├── zellij/.config/zellij/    -> ~/.config/zellij
 ├── cargo/.cargo/             -> ~/.cargo/config.toml
 └── git/                      -> ~/.gitconfig
