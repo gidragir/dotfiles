@@ -24,3 +24,7 @@ export KUBECONFIG="$HOME/.kube/config"
 export FZF_BASE="/usr/share/fzf"
 export EDITOR="nvim"
 export VISUAL="nvim"
+
+# ── Local Secrets & Environment (Git-Ignored) ──────────────────────────────────
+[[ -f "$HOME/.zshenv.local" ]] && source "$HOME/.zshenv.local"
+[[ -f "${0:A:h}/.zshenv.local" ]] && source "${0:A:h}/.zshenv.local"

@@ -24,6 +24,7 @@ alias apt-get="man pacman"
 # ── Utilities ─────────────────────────────────────────────────────────────────
 alias please="sudo"
 alias tb="nc termbin.com 9999"
+alias dotfiles-sync="ansible-playbook /data/projects/dotfiles/playbooks/setup_user.yml --tags stow"
 
 # Extract archives easily (oh-my-zsh extract plugin functionality)
 extract() {

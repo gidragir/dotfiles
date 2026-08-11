@@ -1,0 +1,456 @@
+---
+# =============================================================================
+# Playbook : setup_cooler_control.yml
+# Purpose  : Install CoolerControl on CachyOS/Arch Linux and configure Quiet,
+#            Gaming and Work fan curves (Profiles + Functions).
+#
+# IMPORTANT — read before running (CoolerControl v4, Aug 2026):
+#   1. CoolerControl now requires authentication for almost all API endpoints.
+#      Open http://127.0.0.1:11987 (or the desktop app) ONCE, set the admin
+#      password, then Access Protection -> Access Tokens -> Create Token
+#      (Write access). Save the raw token to the path in `cc_token_file`
+#      below with `chmod 600`. This step cannot be scripted — token creation
+#      is UI-only by design.
+#   2. Modes (the Quiet/Gaming/Work "one-click switch") are, as of this
+#      writing, in the middle of an upstream restructuring and the daemon
+#      docs explicitly recommend against hand-editing modes.json. This
+#      playbook therefore configures everything that IS stable and
+#      documented (Profiles, Functions, per-channel Profile assignment) and
+#      leaves the final "Create Mode from these settings" click to you in
+#      the Web UI — it takes about a minute, see the pause step near the end.
+#
+# Usage    : ansible-playbook -K playbooks/setup_cooler_control.yml
+# =============================================================================
+
+- name: Setup CoolerControl with Quiet, Gaming, and Work Modes
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    cooler_packages:
+      - coolercontrold-bin
+      - coolercontrol-bin
+    # Base URL of the daemon's API. The default install only serves plain
+    # HTTP on loopback (https://docs.coolercontrol.org/daemon/headless.html).
+    # Keep https+ -k here only if you deliberately enabled TLS; otherwise
+    # switch to http and drop -k from the generated aliases.
+    cc_base_url: "https://127.0.0.1:11987"
+    # Path to a previously-created Access Token (see note #1 above).
+    # Defaults to the path your existing, working cooler.zsh already reads.
+    cc_token_file: "{{ real_home }}/.config/coolercontrol/token"
+    cc_zsh_alias_path: "{{ real_home }}/projects/dotfiles/zsh/.zsh/alias/cooler.zsh"
+    # Set to false if you'd rather manage cctv installation yourself.
+    cc_install_cctv: true
+
+  tasks:
+    # ── 1. Discover User Environment ─────────────────────────────────────────
+    - name: Discover real non-root user
+      ansible.builtin.set_fact:
+        real_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id'], true) }}"
+
+    - name: Get user passwd info
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ real_user }}"
+
+    - name: Set home directory fact
+      ansible.builtin.set_fact:
+        real_home: "{{ ansible_facts['getent_passwd'][real_user][4] }}"
+
+    # ── 2. Install CoolerControl Packages ────────────────────────────────────
+    - name: Check if coolercontrold is installed
+      ansible.builtin.command: which coolercontrold
+      register: check_coolercontrol
+      failed_when: false
+      changed_when: false
+
+    - name: Grant temporary NOPASSWD sudo access for AUR helper (paru)
+      ansible.builtin.copy:
+        content: "{{ real_user }} ALL=(ALL) NOPASSWD: ALL"
+        dest: "/etc/sudoers.d/99-ansible-temp-aur"
+        mode: "0440"
+        validate: "visudo -cf %s"
+      become: true
+      when: check_coolercontrol.rc != 0
+
+    - name: Install CoolerControl via AUR using paru
+      kewlfft.aur.aur:
+        name: "{{ cooler_packages }}"
+        use: paru
+      become: false
+      when: check_coolercontrol.rc != 0
+
+    - name: Remove temporary sudoers rule
+      ansible.builtin.file:
+        path: "/etc/sudoers.d/99-ansible-temp-aur"
+        state: absent
+      become: true
+      when: check_coolercontrol.rc != 0
+
+    - name: Ensure /etc/coolercontrol directory exists
+      ansible.builtin.file:
+        path: /etc/coolercontrol
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      become: true
+
+    # ── 3. Start the daemon FIRST ────────────────────────────────────────────
+    # ROOT CAUSE of "no temp_source / no fan profiles": the previous version
+    # of this playbook grepped /etc/coolercontrol/config.toml for device
+    # UIDs *before* coolercontrold had ever run. That file (and the device
+    # entries in it) is only created/populated by the daemon itself, once it
+    # has started and auto-detected hardware via its built-in Super-I/O
+    # detection (it87 / nct6775 / w83627hf). So the UID facts were always
+    # empty strings, the `{% if %}` blocks in modes.json were skipped, and
+    # no profile/temp_source ever got written for any fan. Starting the
+    # daemon before discovery fixes this at the root.
+    - name: Enable and start coolercontrold service
+      ansible.builtin.systemd:
+        name: coolercontrold.service
+        enabled: true
+        state: started
+      become: true
+
+    - name: Wait for coolercontrold API to accept connections
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 11987
+        timeout: 60
+
+    # Hardware detection happens right after the port opens; give it a few
+    # retries rather than a fixed sleep so slow Super-I/O detection doesn't
+    # race us.
+    - name: Wait until config.toml contains a CPU device entry
+      ansible.builtin.shell: |
+        grep -i -E '^\s*[a-f0-9]{64}\s*=\s*".*(Core|Ryzen|Intel|AMD|CPU).*"' /etc/coolercontrol/config.toml 2>/dev/null
+      register: cpu_probe
+      until: cpu_probe.rc == 0
+      retries: 10
+      delay: 3
+      changed_when: false
+      failed_when: false
+      become: true
+
+    # ── 4. Discover CPU and Motherboard device UIDs ──────────────────────────
+    - name: Extract CPU device UID from config.toml
+      ansible.builtin.shell: |
+        grep -i -E '^\s*[a-f0-9]{64}\s*=\s*".*(Core|Ryzen|Intel|AMD|CPU).*"' /etc/coolercontrol/config.toml 2>/dev/null | head -n 1 | cut -d '=' -f 1 | tr -d ' \n\r' || echo ""
+      register: cpu_device_uid_raw
+      changed_when: false
+      failed_when: false
+      become: true
+
+    - name: Extract Motherboard chip device UID from config.toml
+      ansible.builtin.shell: |
+        grep -i -E '^\s*[a-f0-9]{64}\s*=\s*".*(nct|it8|it87|axp|asus).*"' /etc/coolercontrol/config.toml 2>/dev/null | head -n 1 | cut -d '=' -f 1 | tr -d ' \n\r' || echo ""
+      register: mobo_device_uid_raw
+      changed_when: false
+      failed_when: false
+      become: true
+
+    - name: Set device UID facts
+      ansible.builtin.set_fact:
+        cpu_device_uid: "{{ cpu_device_uid_raw.stdout | trim }}"
+        mobo_device_uid: "{{ mobo_device_uid_raw.stdout | trim }}"
+
+    - name: Warn if motherboard device UID was not found
+      ansible.builtin.debug:
+        msg: >-
+          No motherboard Super-I/O device UID was detected in config.toml.
+          Fan-channel profile assignment will be skipped. Check
+          `journalctl -u coolercontrold` and `sensors` output, and confirm
+          the ASUS Super-I/O chip (nct6798 or similar) is exposed via hwmon.
+      when: mobo_device_uid == ""
+
+    # ── 5. Stop the daemon before hand-editing config.toml ───────────────────
+    # Per CoolerControl's own docs: "Manual edits are generally not
+    # recommended... If you do edit it, stop the daemon, update the file,
+    # then start the daemon again." Editing config.toml while the daemon is
+    # live risks it overwriting our changes mid-write.
+    - name: Stop coolercontrold before editing config.toml
+      ansible.builtin.systemd:
+        name: coolercontrold.service
+        state: stopped
+      become: true
+
+    - name: Ensure default device-settings header in config.toml
+      ansible.builtin.lineinfile:
+        path: /etc/coolercontrol/config.toml
+        insertafter: '^\s*\[device-settings\]'
+        line: "[device-settings.{{ mobo_device_uid }}]"
+        state: present
+      become: true
+      when: mobo_device_uid != ""
+
+    - name: Ensure settings header for motherboard device in config.toml
+      ansible.builtin.lineinfile:
+        path: /etc/coolercontrol/config.toml
+        insertafter: '^\s*\[settings\]'
+        line: "[settings.{{ mobo_device_uid }}]"
+        state: present
+      become: true
+      when: mobo_device_uid != ""
+
+    - name: Ensure speed profiles are enabled for motherboard device in config.toml
+      ansible.builtin.lineinfile:
+        path: /etc/coolercontrol/config.toml
+        regexp: '^\s*speed_profiles\s*='
+        insertafter: '^\s*\[settings\.{{ mobo_device_uid }}\]'
+        line: 'speed_profiles = true'
+        state: present
+      become: true
+      when: mobo_device_uid != ""
+
+    - name: Ensure fan channels are mapped in config.toml
+      ansible.builtin.lineinfile:
+        path: /etc/coolercontrol/config.toml
+        regexp: '^\s*{{ item }}\s*='
+        insertafter: '^\s*\[device-settings\.{{ mobo_device_uid }}\]'
+        line: '{{ item }} = { profile_uid = "11111111-quiet-4000-8000-000000000001" }'
+        state: present
+      loop:
+        - fan1
+        - fan2
+        - fan4
+        - fan5
+        - fan6
+      become: true
+      when: mobo_device_uid != ""
+
+    - name: Ensure standard profiles and functions in config.toml
+      ansible.builtin.blockinfile:
+        path: /etc/coolercontrol/config.toml
+        create: true
+        owner: root
+        group: root
+        mode: "0644"
+        marker: "# {mark} ANSIBLE MANAGED COOLERCONTROL PROFILES AND FUNCTIONS"
+        block: |
+          # ── Profiles (Quiet, Gaming, Work) ──────────────────────────────────────────
+          [[profiles]]
+          uid = "11111111-quiet-4000-8000-000000000001"
+          name = "Quiet"
+          p_type = "Graph"
+          speed_profile = [[0.0, 15], [60.0, 15], [75.0, 30], [85.0, 55], [95.0, 100]]
+          {% if cpu_device_uid != "" %}
+          temp_source = { temp_name = "temp1", device_uid = "{{ cpu_device_uid }}" }
+          {% endif %}
+          temp_min = 0.0
+          temp_max = 95.0
+          function_uid = "11111111-quiet-4000-8000-000000000002"
+          offset_profile = []
+
+          [[profiles]]
+          uid = "22222222-game-4000-8000-000000000001"
+          name = "Gaming"
+          p_type = "Graph"
+          speed_profile = [[0.0, 40], [50.0, 50], [65.0, 75], [80.0, 90], [90.0, 100]]
+          {% if cpu_device_uid != "" %}
+          temp_source = { temp_name = "temp1", device_uid = "{{ cpu_device_uid }}" }
+          {% endif %}
+          temp_min = 0.0
+          temp_max = 95.0
+          function_uid = "22222222-game-4000-8000-000000000002"
+          offset_profile = []
+
+          [[profiles]]
+          uid = "33333333-work-4000-8000-000000000001"
+          name = "Work"
+          p_type = "Graph"
+          speed_profile = [[0.0, 30], [50.0, 35], [65.0, 55], [80.0, 80], [92.0, 100]]
+          {% if cpu_device_uid != "" %}
+          temp_source = { temp_name = "temp1", device_uid = "{{ cpu_device_uid }}" }
+          {% endif %}
+          temp_min = 0.0
+          temp_max = 95.0
+          function_uid = "33333333-work-4000-8000-000000000002"
+          offset_profile = []
+
+          # ── Functions (Hysteresis & Delay per mode) ──────────────────────────────────
+          [[functions]]
+          uid = "11111111-quiet-4000-8000-000000000002"
+          name = "Quiet Function"
+          f_type = "Standard"
+          duty_minimum = 0
+          duty_maximum = 0
+          step_size_min_decreasing = 0
+          step_size_max_decreasing = 0
+          response_delay = 5
+          deviance = 4.0
+          only_downward = false
+          threshold_hopping = true
+          bypass_min_at_extremes = false
+
+          [[functions]]
+          uid = "22222222-game-4000-8000-000000000002"
+          name = "Gaming Function"
+          f_type = "Standard"
+          duty_minimum = 0
+          duty_maximum = 0
+          step_size_min_decreasing = 0
+          step_size_max_decreasing = 0
+          response_delay = 1
+          deviance = 2.0
+          only_downward = false
+          threshold_hopping = true
+          bypass_min_at_extremes = false
+
+          [[functions]]
+          uid = "33333333-work-4000-8000-000000000002"
+          name = "Work Function"
+          f_type = "Standard"
+          duty_minimum = 0
+          duty_maximum = 0
+          step_size_min_decreasing = 0
+          step_size_max_decreasing = 0
+          response_delay = 2
+          deviance = 3.0
+          only_downward = false
+          threshold_hopping = true
+          bypass_min_at_extremes = false
+      become: true
+
+    - name: Start coolercontrold again after config.toml edits
+      ansible.builtin.systemd:
+        name: coolercontrold.service
+        state: started
+      become: true
+
+    - name: Wait for coolercontrold API to accept connections again
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 11987
+        timeout: 60
+
+    # ── 6. Modes: one manual step, by upstream design ────────────────────────
+    # modes.json is explicitly called out in CoolerControl's own docs as
+    # being restructured right now, and manual edits to daemon config are
+    # discouraged in general — the daemon/UI validate and normalise things
+    # that a hand-built JSON file will not. Everything that feeds a Mode
+    # (Profiles, Functions, and now each fan channel's default profile_uid)
+    # is already in place, so creating the three Modes from the UI is just:
+    #   Web UI / desktop app -> for each of Quiet/Gaming/Work: select that
+    #   Profile on each fan channel -> "Create Mode from these settings" ->
+    #   name it Quiet / Gaming / Work.
+    # See: https://docs.coolercontrol.org/config-advanced/modes.html
+    - name: Pause for one-time manual Mode creation in the CoolerControl UI
+      ansible.builtin.pause:
+        prompt: |
+
+          Profiles and Functions are configured. Modes must be created once
+          by hand (see comment above this task for why). Open
+          {{ cc_base_url }} or the desktop app, assign the Quiet / Gaming /
+          Work profile to every fan channel in turn, and click "Create Mode
+          from these settings" for each. Then create a Write-access Access
+          Token under Access Protection (if you have not already) and save
+          it to {{ cc_token_file }} with `chmod 600`.
+
+          Press Enter once done to continue and generate the shell aliases.
+
+    # ── 7. Optional: install the official cctv CLI ───────────────────────────
+    # cctv can activate a Mode by NAME (`cctv --activate-mode Quiet`), which
+    # sidesteps having to know/hardcode the random UUID the UI assigns each
+    # Mode. There is no distro package yet; upstream ships a prebuilt binary
+    # via GitLab generic packages. See https://gitlab.com/coolercontrol/cctv
+    - name: Check if cctv is already installed
+      ansible.builtin.command: which cctv
+      register: check_cctv
+      failed_when: false
+      changed_when: false
+      when: cc_install_cctv
+
+    - name: Fetch latest cctv release tag
+      ansible.builtin.uri:
+        url: https://gitlab.com/api/v4/projects/69657520/releases/permalink/latest
+        return_content: true
+      register: cctv_release
+      when: cc_install_cctv and check_cctv.rc != 0
+      failed_when: false
+
+    - name: Download and install cctv binary
+      ansible.builtin.get_url:
+        url: "https://gitlab.com/api/v4/projects/69657520/packages/generic/releases/{{ (cctv_release.json.tag_name | default('')) | regex_replace('^v', '') }}/cctv"
+        dest: /usr/local/bin/cctv
+        mode: "0755"
+      become: true
+      when:
+        - cc_install_cctv
+        - check_cctv.rc != 0
+        - cctv_release is defined
+        - cctv_release.json is defined
+        - cctv_release.json.tag_name is defined
+      failed_when: false
+
+    # ── 8. Zsh Shell Aliases ───────────────────────────────────────────────
+    # Fixes vs. the previous version:
+    #  - CoolerControl v4 requires `Authorization: Bearer <token>` on almost
+    #    every endpoint; the old aliases sent no auth header at all, so every
+    #    request got a 401.
+    #  - The old `2>/dev/null || echo "Quiet mode active"` pattern printed
+    #    "active" on *any* curl failure (auth error, daemon down, wrong
+    #    endpoint) — it masked the very failure it should have surfaced.
+    #  - The old endpoint `/api/modes/active/{uid}` predates the current
+    #    API; the current one is `POST /modes/{uid}/activate`.
+    #  - Since Modes are now created by hand (see pause step above), we
+    #    switch by NAME via cctv where available, so no UID needs to be
+    #    hardcoded here at all. A token+curl fallback is included and
+    #    commented, for when cctv isn't installed — fill in the UIDs from
+    #    `curl -s -H "Authorization: Bearer $(cat {{ cc_token_file }})" {{ cc_base_url }}/modes -k`
+    #    once you've created the Modes in the UI.
+    - name: Create Zsh aliases file for CoolerControl
+      ansible.builtin.copy:
+        dest: "{{ cc_zsh_alias_path }}"
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: "0644"
+        content: |
+          # ── CoolerControl Shortcuts ──────────────────────────────────────────────────
+          # Автоматическое переключение режимов через REST API с динамическим поиском UID
+          COOLER_TOKEN_FILE="{{ cc_token_file }}"
+          COOLER_BASE_URL="{{ cc_base_url }}"
+
+          _cooler_activate() {
+            local mode_name="$1"
+            local token
+            token="$(cat "$COOLER_TOKEN_FILE" 2>/dev/null)"
+            if [[ -z "$token" ]]; then
+              echo "❌ Токен CoolerControl не найден в $COOLER_TOKEN_FILE" >&2
+              return 1
+            fi
+
+            # Получаем UID режима по его имени из API
+            local mode_uid
+            if command -v jq >/dev/null 2>&1; then
+              mode_uid="$(curl -k -s -H "Authorization: Bearer ${token}" "${COOLER_BASE_URL}/modes" \
+                | jq -r ".modes[] | select(.name==\"${mode_name}\") | .uid" 2>/dev/null)"
+            else
+              mode_uid="$(curl -k -s -H "Authorization: Bearer ${token}" "${COOLER_BASE_URL}/modes" \
+                | grep -o "{\"uid\":\"[^\"]*\",\"name\":\"${mode_name}\"" | cut -d'"' -f4)"
+            fi
+
+            if [[ -z "$mode_uid" || "$mode_uid" == "null" ]]; then
+              echo "❌ Режим '${mode_name}' не найден в CoolerControl UI" >&2
+              return 1
+            fi
+
+            local http_code
+            http_code="$(curl -k -s -o /dev/null -w '%{http_code}' -X POST \
+              -H "Authorization: Bearer ${token}" \
+              "${COOLER_BASE_URL}/modes-active/${mode_uid}")"
+
+            if [[ "$http_code" == "200" ]]; then
+              echo "► CoolerControl: переключено на режим '${mode_name}'"
+            else
+              echo "❌ Не удалось активировать режим '${mode_name}' (HTTP ${http_code})" >&2
+              return 1
+            fi
+          }
+
+          alias cooler-quiet='_cooler_activate Quiet'
+          alias cooler-gaming='_cooler_activate Gaming'
+          alias cooler-work='_cooler_activate Work'
+          alias cooler-status='systemctl status coolercontrold.service'
+      become: true

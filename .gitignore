@@ -13,3 +13,8 @@ cargo/.cargo/.package-cache*
 
 # Local Ansible Galaxy collections and roles cache
 .ansible/
+
+# Local secret files & Machine-specific envs
+token
+*.local
+.zshenv.local

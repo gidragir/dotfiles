@@ -129,6 +129,7 @@ fi
 # ── External Bindings and Aliases ────────────────────────────────────────────
 source "$HOME/.zsh/binds/main.zsh"
 source "$HOME/.zsh/alias/core.zsh"
+source "$HOME/.zsh/alias/cooler.zsh"
 source "$HOME/.zsh/alias/git.zsh"
 source "$HOME/.zsh/alias/ansible.zsh"
 source "$HOME/.zsh/alias/k8s.zsh"

@@ -17,6 +17,7 @@ binds {
     Mod+V { spawn "bash" "-c" "~/.zsh/scripts/clipboard-picker.sh"; }
     Mod+Z { spawn "bash" "-c" "zoxide query -l | rofi -dmenu -p 'Zoxide' -theme ~/.config/rofi/main.rasi -i | xargs -I {} code '{}'";}
     Mod+X { spawn "bash" "-c" "ls ~/workspaces | rofi -dmenu -p 'Workspace' -theme ~/.config/rofi/main.rasi -i | xargs -I {} code ~/workspaces/{}"; }
+    Mod+F1 hotkey-overlay-title="CoolerControl: Toggle Mode" { spawn-sh "cooler-toggle"; }
 
     // Mod+Shift+ESCAPE                     { show-hotkey-overlay; }
 
