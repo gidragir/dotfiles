@@ -38,6 +38,25 @@ unwanted_packages:
   - firefox
   - alacritty
 
+# Essential CLI tools for shell environment (pacman / AUR)
+cli_essential_packages:
+  - sheldon
+  - starship
+  - zoxide
+  - atuin
+  - eza
+  - bat
+  - ripgrep
+  - fd
+  - lazygit
+  - stow
+  - jq
+  - yq
+  - fzf
+  - imv
+  - carapace-bin
+  - television
+
 # Official pacman packages for the user (installed via pacman, requires sudo)
 user_pacman_packages:
   - rustup
@@ -71,6 +90,7 @@ user_pacman_packages:
   - obsidian
   - biome
   - imv
+  - sheldon
 
 # AUR packages (installed via paru, MUST run as normal user)
 aur_packages:

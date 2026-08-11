@@ -9,7 +9,6 @@
 - name: Install System and User Pacman Packages
   hosts: localhost
   connection: local
-  become: true
   gather_facts: true
   vars_files:
     - vars/packages.yml
@@ -20,6 +19,7 @@
         name: rust
         state: absent
         extra_args: "-dd"
+      become: true
       tags: [user, packages]
 
     - name: Install system packages via pacman
@@ -27,12 +27,14 @@
         name: "{{ system_packages }}"
         state: present
         update_cache: true
+      become: true
       tags: [system, packages]
 
     - name: Remove unwanted packages
       community.general.pacman:
         name: "{{ unwanted_packages }}"
         state: absent
+      become: true
       tags: [system, packages]
 
     - name: Install official user packages via pacman
@@ -40,6 +42,7 @@
         name: "{{ user_pacman_packages }}"
         state: present
         extra_args: "--needed"
+      become: true
       tags: [user, packages]
 
 
@@ -58,6 +61,12 @@
       register: check_paru
       changed_when: false
       tags: [aur, packages]
+
+    - name: Install essential CLI tools via paru (handles pacman and AUR)
+      kewlfft.aur.aur:
+        name: "{{ cli_essential_packages }}"
+        use: paru
+      tags: [cli, packages]
 
     - name: Install AUR utilities and applications via paru
       kewlfft.aur.aur:
