@@ -1,19 +1,27 @@
 # 🌐 Vivaldi Browser Configuration
 
-## Native Desktop Notifications
+## Flags Configuration File: `~/.config/vivaldi-stable.conf`
 
-Vivaldi reads persistent user flags from `~/.config/vivaldi-stable.conf`. This file is managed in dotfiles via GNU Stow (`vivaldi/.config/vivaldi-stable.conf`) and persists across system-wide browser updates.
+Vivaldi reads persistent user command-line flags from `~/.config/vivaldi-stable.conf`. This file is managed in dotfiles via GNU Stow (`vivaldi/.config/vivaldi-stable.conf`) and persists across system-wide browser updates.
 
-### Configuration File: `~/.config/vivaldi-stable.conf`
+### Syntax Warning
+The `.conf` file is parsed directly by the `/usr/bin/vivaldi-stable` launcher script.
+- Do **NOT** use quotes (`"..."`) or variable assignments (`VIVALDI_USER_FLAGS=...`).
+- Flags must be written directly (one flag per line or space-separated).
+
+### Wayland & Native Integration (Niri / CachyOS)
+
+To ensure native Wayland rendering and correct DBus notification integration under **Niri** (CachyOS Desktop Environment), use:
 
 ```bash
-VIVALDI_USER_FLAGS="--enable-native-notifications"
+--enable-features=UseOzonePlatform
+--ozone-platform=wayland
 ```
 
-### Direct URL Flag Verification
+## Desktop Notifications (DBus)
 
-You can also check or toggle native notification settings directly in the browser by visiting:
+Vivaldi automatically routes browser notifications to the system notification daemon via DBus (`org.freedesktop.Notifications`) when running in a Wayland session.
 
-```
-vivaldi://flags/#enable-native-notifications
-```
+- **No browser toggle required**: There is no manual notification style toggle inside Vivaldi settings on Linux.
+- **System Notification Daemon**: In CachyOS Niri, notifications are handled by **Quickshell**. Ensure the notification daemon is running so Vivaldi routes popups to the system rather than spawning separate browser windows as fallbacks.
+- **Verification**: You can test system notifications via terminal using `notify-send "Test" "Hello"` or by visiting web notification test sites.
