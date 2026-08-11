@@ -92,7 +92,8 @@ if (( $+functions[fzf-tab-complete] )); then
   }
   zle -N _fzf_tab_complete_silent
   bindkey '^I' _fzf_tab_complete_silent
-  zstyle ':fzf-tab:*' continuous-trigger ''
+  # Continuous trigger for deep path completion (press '/' or Tab to enter directories)
+  zstyle ':fzf-tab:*' continuous-trigger '/'
 fi
 
 # Zsh Autosuggestions Strategy
