@@ -21,6 +21,9 @@ setopt EXTENDED_HISTORY        # Save execution timestamps to history file
 
 export HISTORY_IGNORE="(\&|[bf]g|c|clear|history|exit|q|pwd|* --help)"
 
+# Disable terminal flow control (XON/XOFF) so Ctrl+Q and Ctrl+S reach Zsh
+stty -ixon 2>/dev/null
+
 # ── Vi-mode (Neovim muscle memory in terminal) ────────────────────────────────
 bindkey -v
 
@@ -33,11 +36,6 @@ bindkey -M vicmd 'v' edit-command-line
 eval "$(mise activate zsh)"
 eval "$(zoxide init zsh)"
 eval "$(starship init zsh)"
-
-# Smart Shell History (Atuin)
-if (( $+commands[atuin] )); then
-  eval "$(atuin init zsh)"
-fi
 
 # ── Completions & Colors ───────────────────────────────────────────────────────
 autoload -Uz compinit
@@ -57,6 +55,8 @@ zstyle ':completion:*:messages' format ''
 if (( $+commands[carapace] )); then
   source <(carapace _carapace)
 fi
+
+
 
 # ── FZF Keybindings & Interactive File Picker ─────────────────────────────────
 if [[ -f /usr/share/fzf/key-bindings.zsh ]]; then
@@ -129,6 +129,17 @@ fi
 
 # ── External Bindings and Aliases ────────────────────────────────────────────
 source "$HOME/.zsh/binds/main.zsh"
+
+# Television Smart Autocomplete (tv) - takes precedence for Ctrl+T
+if (( $+commands[tv] )); then
+  eval "$(tv init zsh)"
+fi
+
+# Smart Shell History (Atuin) - loaded after tv so Atuin retains Ctrl+R
+if (( $+commands[atuin] )); then
+  eval "$(atuin init zsh)"
+fi
+
 source "$HOME/.zsh/alias/core.zsh"
 source "$HOME/.zsh/alias/cooler.zsh"
 source "$HOME/.zsh/alias/git.zsh"

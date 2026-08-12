@@ -101,19 +101,22 @@ show_channel_descriptions = true
 sort_alphabetically = true
 # disabled = false
 
-# Theme color overrides
-# ---------------------
-# You can override specific colors from the selected theme by adding them here.
-# This allows you to customize the appearance without creating a full theme file.
-# Colors can be specified as ANSI color names (e.g., "red", "bright-blue") or
-# as hex values (e.g., "#ff0000", "#1e1e2e").
-#
-# Example overrides:
-# [ui.theme_overrides]
-# background = "#000000"
-# text_fg = "#ffffff"
-# selection_bg = "#444444"
-# match_fg = "#ff0000"
+# Theme color overrides (Catppuccin Frappé)
+# ----------------------------------------
+[ui.theme_overrides]
+background = "#303446"
+text_fg = "#c6d0f5"
+input_prompt_fg = "#ca9ee6"
+input_text_fg = "#c6d0f5"
+selection_bg = "#414559"
+selection_fg = "#ca9ee6"
+match_fg = "#e78284"
+border_fg = "#737994"
+border_active_fg = "#ca9ee6"
+header_fg = "#8caaee"
+status_bar_bg = "#292c3c"
+status_bar_fg = "#b5bfe2"
+
 
 # Keybindings and Events
 # ----------------------------------------------------------------------------
@@ -148,6 +151,8 @@ enter = "confirm_selection"
 # --------------------
 pagedown = "scroll_preview_half_page_down"
 pageup = "scroll_preview_half_page_up"
+ctrl-d = "scroll_preview_half_page_down"
+ctrl-u = "scroll_preview_half_page_up"
 ctrl-f = "cycle_previews"
 
 # Data operations
@@ -158,7 +163,7 @@ ctrl-s = "cycle_sources"
 
 # UI Features
 # ----------
-ctrl-t = "toggle_remote_control"
+ctrl-q = "toggle_remote_control"
 ctrl-x = "toggle_action_picker"
 ctrl-o = "toggle_preview"
 ctrl-h = "toggle_help"
@@ -169,7 +174,6 @@ ctrl-l = "toggle_layout"
 # ----------------------------------------
 backspace = "delete_prev_char"
 ctrl-w = "delete_prev_word"
-ctrl-u = "delete_line"
 delete = "delete_next_char"
 left = "go_to_prev_char"
 right = "go_to_next_char"
@@ -208,7 +212,8 @@ fallback_channel = "files"
 # ```
 "alias" = ["alias", "unalias"]
 "env" = ["export", "unset"]
-"dirs" = ["cd", "ls", "rmdir", "z"]
+"dirs" = ["cd", "ls", "rmdir"]
+"zoxide" = ["z"]
 "files" = [
   "cat",
   "less",
@@ -242,14 +247,37 @@ fallback_channel = "files"
   "git push",
 ]
 "git-log" = ["git log", "git show"]
-"docker-images" = ["docker run"]
+"git-stash" = ["git stash apply", "git stash drop", "git stash pop"]
+"git-worktrees" = ["git worktree"]
+"git-reflog" = ["git reflog"]
 "git-repos" = ["nvim", "code", "hx", "git clone"]
+
+# DevOps: Docker & Kubernetes
+"docker-images" = ["docker run", "docker rmi"]
+"docker-containers" = ["docker exec", "docker logs", "docker stop", "docker restart", "docker rm"]
+"docker-compose" = ["docker compose", "docker-compose"]
+"k8s-contexts" = ["kubectl config use-context", "kubectx"]
+"k8s-pods" = ["kubectl logs", "kubectl exec", "kubectl describe pod", "kubectl delete pod"]
+"k8s-deployments" = ["kubectl rollout", "kubectl scale"]
+
+# Linux & Infrastructure
+"ssh-hosts" = ["ssh", "scp", "sftp"]
+"systemd-units" = ["systemctl", "systemctl status", "systemctl restart", "systemctl stop", "systemctl start"]
+"ports" = ["lsof -i", "ss", "netstat"]
+"procs" = ["kill", "pkill"]
+
+# Developer & Build Tools
+"make-targets" = ["make"]
+"npm-scripts" = ["npm run", "pnpm run", "yarn run", "bun run"]
+"tldr" = ["tldr"]
+"man-pages" = ["man"]
+
 
 
 [shell_integration.keybindings]
 # controls which key binding should trigger tv
 # for shell autocomplete
-"smart_autocomplete" = "ctrl-t"
+"smart_autocomplete" = "ctrl-q"
 # controls which keybinding should trigger tv
 # for command history
 "command_history" = "ctrl-r"

@@ -232,3 +232,18 @@
         state: started
       become: true
       tags: [systemd]
+
+    # ── 6. Default MIME Associations (Text & Markdown → Neovim) ─────────────
+    - name: Set Neovim as default application for text and markdown files
+      ansible.builtin.ini_file:
+        path: "{{ ansible_facts.env.HOME }}/.config/mimeapps.list"
+        section: Default Applications
+        option: "{{ item }}"
+        value: nvim.desktop
+        mode: '0644'
+      loop:
+        - text/markdown
+        - text/plain
+        - text/x-markdown
+      tags: [mime]
+

@@ -176,7 +176,7 @@ keybinds clear-defaults=true {
         bind "Alt p" { TogglePaneInGroup; }
         bind "Alt Shift p" { ToggleGroupMarking; }
         bind "Alt e" { EditScrollback; SwitchToMode "normal"; }
-        bind "Ctrl q" { Quit; }
+        bind "Ctrl Shift q" { Quit; }
     }
     shared_except "locked" "move" {
         bind "Ctrl h" { SwitchToMode "move"; }

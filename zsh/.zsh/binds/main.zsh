@@ -26,7 +26,6 @@ bindkey -M viins '^_' undo                   # Ctrl + / or Ctrl + Shift + -
 # Line buffering (Alt + Q)
 # Clears current unfinished line, allowing you to run another command (e.g. ls).
 # The unfinished line is automatically restored after the command executes.
-bindkey -M viins '^Qq' push-line
 bindkey -M viins '\eq' push-line
 bindkey -M vicmd 'q' push-line
 
