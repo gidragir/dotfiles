@@ -165,14 +165,13 @@ check_user_service() {
     fi
 }
 
-check_user_service "rclone-mount.service"
-check_user_service "rclone-sync.timer"
+check_user_service "rclone-obsidian-sync.timer"
 
 # Verify timer activity
-if systemctl --user is-active --quiet rclone-sync.timer 2>/dev/null; then
-    pass "Timer rclone-sync.timer is active"
+if systemctl --user is-active --quiet rclone-obsidian-sync.timer 2>/dev/null; then
+    pass "Timer rclone-obsidian-sync.timer is active"
 else
-    warn "Timer rclone-sync.timer is not active (rclone may not be configured yet)"
+    warn "Timer rclone-obsidian-sync.timer is not active (rclone may not be configured yet)"
 fi
 
 # =============================================================================
