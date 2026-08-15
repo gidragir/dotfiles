@@ -5,7 +5,7 @@
     // spawn-at-startup "hypridle"
     // spawn-at-startup "ferdium"
 
-    spawn-at-startup "obsidian"
+    // spawn-at-startup "obsidian"
 
     spawn-at-startup "vivaldi"
     
