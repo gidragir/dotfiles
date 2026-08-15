@@ -1,0 +1,21 @@
+[metadata]
+name = "gh-repos"
+requirements = ["gh"]
+description = """
+A channel to select and clone GitHub repositories using `gh cli`.
+"""
+
+[source]
+command = "gh repo list -L 100 --json nameWithOwner,description --template '{{range .}}{{printf \"%s\\t%s\\n\" .nameWithOwner .description}}{{end}}'"
+output = "{split:\t:0}"
+
+[preview]
+command = "gh repo view '{split:\t:0}'"
+
+[keybindings]
+enter = "actions:clone"
+
+[actions.clone]
+description = "Clone selected repository"
+command = "gh repo clone {}"
+mode = "execute"

@@ -250,7 +250,8 @@ fallback_channel = "files"
 "git-stash" = ["git stash apply", "git stash drop", "git stash pop"]
 "git-worktrees" = ["git worktree"]
 "git-reflog" = ["git reflog"]
-"git-repos" = ["nvim", "code", "hx", "git clone"]
+"git-repos" = ["nvim", "code", "hx"]
+"gh-repos" = ["gh repo clone"]
 
 # DevOps: Docker & Kubernetes
 "docker-images" = ["docker run", "docker rmi"]
