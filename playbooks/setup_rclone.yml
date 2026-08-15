@@ -1,0 +1,94 @@
+---
+# =============================================================================
+# Playbook : setup_rclone.yml
+# Purpose  : Standalone setup for Rclone Obsidian bisync systemd service & timer.
+# Usage    : ansible-playbook playbooks/setup_rclone.yml
+# =============================================================================
+
+# ── Play 1: Ensure system dependencies ───────────────────────────────────────
+- name: Ensure Rclone system package is installed
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  tasks:
+    - name: Install rclone via pacman if missing
+      community.general.pacman:
+        name: rclone
+        state: present
+        extra_args: "--needed"
+      become: true
+
+# ── Play 2: Configure Rclone Obsidian bisync systemd unit and timer ──────────
+- name: Configure Rclone Obsidian Bisync Service and Timer
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: true
+
+  tasks:
+    - name: Ensure /data/obsidian directory exists
+      ansible.builtin.file:
+        path: /data/obsidian
+        state: directory
+        mode: '0755'
+
+    - name: Ensure systemd user directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts.env.HOME }}/.config/systemd/user"
+        state: directory
+        mode: '0755'
+
+    - name: Create rclone-obsidian-sync.service
+      ansible.builtin.copy:
+        dest: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.service"
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Rclone – Bisync Obsidian Vault with Google Drive
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/rclone bisync /data/obsidian gdrive:Obsidian \
+              --fast-list \
+              --log-level INFO \
+              --log-file=%h/.cache/rclone/obsidian-sync.log
+
+    - name: Create rclone-obsidian-sync.timer
+      ansible.builtin.copy:
+        dest: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.timer"
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Run rclone bisync for Obsidian every 15 minutes
+
+          [Timer]
+          OnBootSec=2m
+          OnUnitActiveSec=15m
+
+          [Install]
+          WantedBy=timers.target
+
+    - name: Ensure rclone cache directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts.env.HOME }}/.cache/rclone"
+        state: directory
+        mode: '0755'
+
+    - name: Reload systemd user daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+        scope: user
+
+    - name: Check if rclone config exists
+      ansible.builtin.stat:
+        path: "{{ ansible_facts.env.HOME }}/.config/rclone/rclone.conf"
+      register: rclone_conf_check
+
+    - name: Enable and start rclone-obsidian-sync.timer
+      ansible.builtin.systemd:
+        name: rclone-obsidian-sync.timer
+        enabled: yes
+        state: started
+        scope: user
+      when: rclone_conf_check.stat.exists
