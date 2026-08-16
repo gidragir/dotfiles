@@ -7,7 +7,7 @@
 
     // spawn-at-startup "obsidian"
 
-    spawn-at-startup "vivaldi"
+    spawn-at-startup "sh" "-c" "env > /tmp/vivaldi-env.log; exec vivaldi"
     
 
     spawn-at-startup "wl-paste" "--type" "text" "--watch" "cliphist" "store"

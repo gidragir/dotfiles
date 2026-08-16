@@ -66,4 +66,11 @@
         open-floating true
     }
 
+    window-rule {
+        match app-id="^$" title="^$"
+        open-floating true
+        open-focused false
+        default-floating-position x=8 y=8 relative-to="bottom-right"
+    }
+
     include optional=true "env/rules.kdl"
