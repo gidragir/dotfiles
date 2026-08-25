@@ -1,0 +1,257 @@
+---
+# =============================================================================
+# Playbook : setup_wallpaper_engine.yml
+# Purpose  : Install linux-wallpaperengine from AUR, set up runner script,
+#            create configuration and systemd user service for CachyOS / Niri.
+# Usage    : ansible-playbook setup_wallpaper_engine.yml
+#            ansible-playbook -K setup_wallpaper_engine.yml (if sudo needed for AUR temp access)
+# =============================================================================
+
+- name: Setup Wallpaper Engine for CachyOS & Niri (Wayland)
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    wallpaper_engine_aur_packages:
+      - linux-wallpaperengine-git
+
+  tasks:
+    # ── 1. Discover User and Environment ──────────────────────────────────────
+    - name: Discover real non-root user
+      ansible.builtin.set_fact:
+        real_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id'], true) }}"
+
+    - name: Get user passwd info
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ real_user }}"
+
+    - name: Set home directory fact
+      ansible.builtin.set_fact:
+        real_home: "{{ ansible_facts['getent_passwd'][real_user][4] }}"
+
+    # ── 2. Install linux-wallpaperengine from AUR ─────────────────────────────
+    - name: Check if paru is available for AUR packages
+      ansible.builtin.command: which paru
+      register: check_paru
+      failed_when: false
+      changed_when: false
+      become: false
+
+    - name: Install linux-wallpaperengine-git via paru (AUR)
+      kewlfft.aur.aur:
+        name: "{{ item }}"
+        use: paru
+      loop: "{{ wallpaper_engine_aur_packages }}"
+      when: check_paru.rc == 0
+      become: false
+
+    # ── 3. Configure Directories & Default Settings ───────────────────────────
+    - name: Ensure configuration and user local directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: '0755'
+      loop:
+        - "{{ real_home }}/.config/wallpaper-engine"
+        - "{{ real_home }}/.local/bin"
+        - "{{ real_home }}/.local/share/Steam/steamapps/workshop/content/431960"
+        - "{{ real_home }}/.config/systemd/user"
+      become: false
+
+    - name: Create default wallpaper-engine configuration file
+      ansible.builtin.copy:
+        dest: "{{ real_home }}/.config/wallpaper-engine/config.json"
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: '0644'
+        force: no
+        content: |
+          {
+            "assets_dir": "{{ real_home }}/.local/share/Steam/steamapps/common/wallpaper_engine/assets",
+            "default_wallpaper_id": "",
+            "fps": 60,
+            "volume": 0,
+            "silent": true,
+            "clamped": true
+          }
+      become: false
+
+    # ── 4. Create Wallpaper Runner Script ─────────────────────────────────────
+    - name: Create wallpaper-engine-runner script
+      ansible.builtin.copy:
+        dest: "{{ real_home }}/.local/bin/wallpaper-engine-runner"
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: '0755'
+        content: |
+          {% raw %}#!/usr/bin/env bash
+          # Wallpaper Engine Runner for Niri / Wayland
+          set -euo pipefail
+
+          CONFIG_FILE="${HOME}/.config/wallpaper-engine/config.json"
+          WORKSHOP_DIR="${HOME}/.local/share/Steam/steamapps/workshop/content/431960"
+
+          # Find Wallpaper Engine assets directory
+          DEFAULT_ASSETS="${HOME}/Games/SteamLibrary/common/wallpaper_engine/assets"
+          if [ ! -d "$DEFAULT_ASSETS" ]; then
+              DEFAULT_ASSETS="${HOME}/.local/share/Steam/steamapps/common/wallpaper_engine/assets"
+          fi
+
+          ASSETS_DIR="$DEFAULT_ASSETS"
+          WALLPAPER_ID=""
+          FPS=60
+          EXTRA_ARGS=()
+
+          if [ -f "$CONFIG_FILE" ] && command -v jq &>/dev/null; then
+              ASSETS_DIR=$(jq -r '.assets_dir // "'"$DEFAULT_ASSETS"'"' "$CONFIG_FILE")
+              WALLPAPER_ID=$(jq -r '.default_wallpaper_id // ""' "$CONFIG_FILE")
+              FPS=$(jq -r '.fps // 60' "$CONFIG_FILE")
+              SILENT=$(jq -r '.silent // true' "$CONFIG_FILE")
+              if [ "$SILENT" = "true" ]; then
+                  EXTRA_ARGS+=("--silent")
+              fi
+          fi
+
+          # Allow overriding wallpaper ID via command argument (handles full paths and preview files from Waypaper)
+          if [ $# -gt 0 ]; then
+              ARG_PATH="$1"
+              shift
+              if [ -f "$ARG_PATH" ]; then
+                  NEW_ID=$(basename "$(dirname "$ARG_PATH")")
+              else
+                  NEW_ID=$(basename "$ARG_PATH")
+              fi
+
+              # Save selected wallpaper ID to config.json and restart background service
+              if [ -n "$NEW_ID" ] && [ -d "$WORKSHOP_DIR/$NEW_ID" ]; then
+                  if command -v jq &>/dev/null && [ -f "$CONFIG_FILE" ]; then
+                      jq --arg id "$NEW_ID" '.default_wallpaper_id = $id' "$CONFIG_FILE" > /tmp/w_cfg.json && mv /tmp/w_cfg.json "$CONFIG_FILE" || true
+                  fi
+                  echo "🔄 Changing wallpaper ID to $NEW_ID..."
+                  systemctl --user restart wallpaper-engine.service
+                  exit 0
+              fi
+          fi
+
+          if [ -z "$WALLPAPER_ID" ] || [ "$WALLPAPER_ID" = "{wallpaper}" ] || [ ! -d "$WORKSHOP_DIR/$WALLPAPER_ID" ]; then
+              # Find first available workshop item if invalid or unspecified ID
+              FIRST_ITEM=$(find "$WORKSHOP_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | head -n 1 || echo "")
+              if [ -n "$FIRST_ITEM" ]; then
+                  WALLPAPER_ID=$(basename "$FIRST_ITEM")
+                  echo "ℹ️ No valid wallpaper ID configured. Using found item: $WALLPAPER_ID"
+              else
+                  echo "❌ No wallpaper ID provided and no workshop wallpapers found in $WORKSHOP_DIR."
+                  echo "   Please download wallpapers via Steam Wallpaper Engine (App 431960) or place wallpaper folders into:"
+                  echo "   $WORKSHOP_DIR"
+                  echo "   Usage: wallpaper-engine-runner <wallpaper_id_or_folder_name>"
+                  exit 1
+              fi
+          fi
+
+          # Detect active Niri monitor outputs to attach wallpapers to desktop layer shell
+          SCREEN_ARGS=()
+          if command -v niri &>/dev/null; then
+              while read -r output; do
+                  if [ -n "$output" ]; then
+                      SCREEN_ARGS+=("--screen-root" "$output")
+                  fi
+              done < <(niri msg outputs 2>/dev/null | grep '^Output "' | sed -E 's/.*\((.*)\)/\1/')
+          fi
+
+          if [ ${#SCREEN_ARGS[@]} -eq 0 ]; then
+              SCREEN_ARGS=("--layer" "background")
+          else
+              SCREEN_ARGS+=("--layer" "background")
+          fi
+
+          echo "🚀 Starting linux-wallpaperengine on outputs (${SCREEN_ARGS[*]}) for wallpaper ID: $WALLPAPER_ID..."
+          exec linux-wallpaperengine \
+              --assets-dir "$ASSETS_DIR" \
+              --fps "$FPS" \
+              --fullscreen-pause-only-active \
+              "${SCREEN_ARGS[@]}" \
+              "${EXTRA_ARGS[@]}" \
+              "$@" \
+              "$WALLPAPER_ID"
+          {% endraw %}
+      become: false
+
+    # ── 5. Configure Waypaper Integration ─────────────────────────────────────
+    - name: Ensure ~/.config/waypaper directory exists
+      ansible.builtin.file:
+        path: "{{ real_home }}/.config/waypaper"
+        state: directory
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: '0755'
+      become: false
+
+    - name: Configure Waypaper post_command and wallpaperengine_folder
+      ansible.builtin.ini_file:
+        path: "{{ real_home }}/.config/waypaper/config.ini"
+        section: Settings
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        mode: '0644'
+      loop:
+        - { option: "backend", value: "custom" }
+        - { option: "post_command", value: "{{ real_home }}/.local/bin/wallpaper-engine-runner $wallpaper" }
+        - { option: "wallpaperengine_folder", value: "{{ real_home }}/.local/share/Steam/steamapps/workshop/content/431960" }
+        - { option: "folder", value: "{{ real_home }}/.local/share/Steam/steamapps/workshop/content/431960" }
+        - { option: "subfolders", value: "True" }
+      become: false
+      ignore_errors: true
+
+    # ── 6. Create Systemd User Service ────────────────────────────────────────
+    - name: Create wallpaper-engine systemd user service
+      ansible.builtin.copy:
+        dest: "{{ real_home }}/.config/systemd/user/wallpaper-engine.service"
+        owner: "{{ real_user }}"
+        group: "{{ real_user }}"
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Wallpaper Engine for Niri / Wayland
+          After=graphical-session.target
+          PartOf=graphical-session.target
+
+          [Service]
+          Type=simple
+          ExecStart=%h/.local/bin/wallpaper-engine-runner
+          Restart=on-failure
+          RestartSec=3
+
+          [Install]
+          WantedBy=graphical-session.target
+      become: false
+
+    - name: Reload systemd user daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+        scope: user
+      become: false
+      ignore_errors: true
+
+    # ── 6. Summary & Usage Instructions ───────────────────────────────────────
+    - name: Display post-installation instructions
+      ansible.builtin.debug:
+        msg:
+          - "========================================================================="
+          - "🖼️  Wallpaper Engine Setup Complete!"
+          - "========================================================================="
+          - "1. Package: 'linux-wallpaperengine' (AUR) installed."
+          - "2. Workshop Directory:"
+          - "   ~/.local/share/Steam/steamapps/workshop/content/431960"
+          - "3. Configuration & Scripts:"
+          - "   - Config: ~/.config/wallpaper-engine/config.json"
+          - "   - Runner script: ~/.local/bin/wallpaper-engine-runner"
+          - "4. How to Run / Manage:"
+          - "   - Test run manually: wallpaper-engine-runner <wallpaper_id>"
+          - "   - Start user service: systemctl --user start wallpaper-engine.service"
+          - "   - Enable at boot/login: systemctl --user enable wallpaper-engine.service"
+          - "========================================================================="
+      become: false
