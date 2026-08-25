@@ -19,7 +19,7 @@ setopt HIST_REDUCE_BLANKS      # Remove extra blanks from history items
 setopt SHARE_HISTORY           # Share history between all active shells instantly
 setopt EXTENDED_HISTORY        # Save execution timestamps to history file
 
-export HISTORY_IGNORE="(\&|[bf]g|c|clear|history|exit|q|pwd|* --help)"
+export HISTORY_IGNORE="(\&|[bf]g|c|clear|history|exit|q|pwd|* --help|*WSL_DISTRO_NAME*|ps -p * -o comm=*)"
 
 # Disable terminal flow control (XON/XOFF) so Ctrl+Q and Ctrl+S reach Zsh
 stty -ixon 2>/dev/null
