@@ -78,13 +78,15 @@ check_symlink() {
     local link_path="$1"
     local target_path="$2"
 
-    if [[ -L "$link_path" ]]; then
-        local real_target
-        real_target=$(readlink -f "$link_path" 2>/dev/null || echo "")
-        if [[ "$real_target" == "$target_path" ]]; then
+    local real_link real_target
+    real_link=$(readlink -f "$link_path" 2>/dev/null || echo "")
+    real_target=$(readlink -f "$target_path" 2>/dev/null || echo "")
+
+    if [[ -L "$link_path" || -L "$(dirname "$link_path")" ]]; then
+        if [[ -n "$real_link" && "$real_link" == "$real_target" ]]; then
             pass "Symlink $link_path points to $target_path"
         else
-            fail "Symlink $link_path points to '$real_target' (expected $target_path)"
+            fail "Symlink $link_path points to '$real_link' (expected $target_path)"
         fi
     else
         fail "Path $link_path is not a symlink!"
