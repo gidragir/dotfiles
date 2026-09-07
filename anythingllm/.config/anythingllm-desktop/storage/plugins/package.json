@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0"
   }
 }
