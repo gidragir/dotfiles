@@ -135,6 +135,10 @@ The terminal environment is built on Zsh in [`zsh/`](file:///home/alatau/project
   - `k3d-create [name]`: Bootstraps a local k3d cluster with port forwarding and local Nexus Registry mapping
   - `k8s-install-argocd`: Automated installation and wait helper for ArgoCD
 - **Universal Archive Extractor (`extract` / `x`)**: Unpacks `.tar.gz`, `.zip`, `.7z`, `.tar.zst`, `.rar`, and other archive formats with a single command
+- **Automation Scripts & Window Helpers (`zsh/.zsh/scripts/`)**:
+  - `anythingllm-assistant-toggle.sh`: Умный перенос и фокус плавающего окна AnythingLLM Assistant на активный воркспейс/монитор в Niri (`Mod+A`)
+  - `clipboard-picker.sh`: Меню истории буфера обмена через rofi (`Mod+V`)
+  - `cooler-toggle`: Быстрое переключение профилей охлаждения CoolerControl (`Mod+F1`)
 
 ---
 
@@ -182,6 +186,7 @@ dotfiles/
 ├── vivaldi/.config/          -> ~/.config/vivaldi-stable.conf
 ├── zellij/.config/zellij/    -> ~/.config/zellij
 ├── cargo/.cargo/             -> ~/.cargo/config.toml
+├── anythingllm/.config/      -> ~/.config/anythingllm-desktop, ~/.local/share/applications
 └── git/                      -> ~/.gitconfig
 ```
 
