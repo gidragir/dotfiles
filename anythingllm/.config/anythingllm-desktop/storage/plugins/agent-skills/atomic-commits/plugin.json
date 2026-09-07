@@ -1,0 +1,32 @@
+{
+  "active": true,
+  "hubId": "atomic-commits",
+  "name": "Git Atomic Commits",
+  "schema": "skill-1.0.0",
+  "version": "1.0.0",
+  "description": "Inspects git status and diff on the host repository, groups changes into logical atomic units, and generates Conventional Commits with git add and git commit commands.",
+  "author": "gidragir",
+  "author_url": "https://github.com/gidragir/dotfiles",
+  "license": "MIT",
+  "setup_args": {},
+  "examples": [
+    {
+      "prompt": "Create atomic commits for my changes in /data/projects/dotfiles",
+      "call": "{\"repo_path\": \"/data/projects/dotfiles\"}"
+    },
+    {
+      "prompt": "Inspect git status and generate commit commands",
+      "call": "{\"repo_path\": \"/data/projects/dotfiles\"}"
+    }
+  ],
+  "entrypoint": {
+    "file": "handler.js",
+    "params": {
+      "repo_path": {
+        "description": "Absolute path to the Git repository directory (defaults to /data/projects/dotfiles)",
+        "type": "string"
+      }
+    }
+  },
+  "imported": true
+}
