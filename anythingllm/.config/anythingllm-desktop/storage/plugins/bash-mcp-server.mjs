@@ -10,7 +10,7 @@ import { exec } from "child_process";
 const server = new Server(
   {
     name: "host-cli-server",
-    version: "1.1.0",
+    version: "1.2.0",
   },
   {
     capabilities: {
@@ -54,14 +54,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "git_status",
         description:
-          "Runs 'git status' on the target git repository to inspect modified, deleted, or untracked files.",
+          "Runs git status on a repository to list modified, untracked, and deleted files. Use whenever inspecting git changes.",
         inputSchema: {
           type: "object",
           properties: {
             repo_path: {
               type: "string",
               description:
-                "Directory of the git repository (default: /data/projects/dotfiles)",
+                "Directory of the target git repository (defaults to /data/projects/dotfiles)",
             },
           },
         },
@@ -69,18 +69,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "git_diff",
         description:
-          "Runs 'git diff' to inspect uncommitted code or config changes.",
+          "Runs git diff on a repository to inspect exact line-by-line file changes. Supports staged and unstaged diffs.",
         inputSchema: {
           type: "object",
           properties: {
             repo_path: {
               type: "string",
               description:
-                "Directory of the git repository (default: /data/projects/dotfiles)",
+                "Directory of the target git repository (defaults to /data/projects/dotfiles)",
             },
             staged: {
               type: "boolean",
-              description: "If true, shows diff of staged changes (--cached)",
+              description: "Shows diff of staged changes when true (--cached)",
             },
           },
         },
@@ -88,18 +88,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "execute_command",
         description:
-          "Executes any CLI shell command (git, zsh, docker, etc.) directly on the host system.",
+          "Executes any terminal shell command on the CachyOS Linux host via zsh. Supports full system PATH, mise runtimes, cargo, docker, and pacman.",
         inputSchema: {
           type: "object",
           properties: {
             command: {
               type: "string",
-              description: "The CLI command to execute on the host",
+              description: "The CLI command string to execute",
             },
             cwd: {
               type: "string",
               description:
-                "Working directory (defaults to /data/projects/dotfiles)",
+                "Working directory for execution (defaults to /data/projects/dotfiles)",
             },
           },
           required: ["command"],
