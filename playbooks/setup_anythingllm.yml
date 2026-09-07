@@ -1,0 +1,86 @@
+---
+# =============================================================================
+# Playbook : setup_anythingllm.yml
+# Purpose  : Modular setup for AnythingLLM Desktop: stow packages, agent skills,
+#            prompts, and system settings (including allowed filesystem folders).
+# Usage    : ansible-playbook playbooks/setup_anythingllm.yml
+# =============================================================================
+
+- name: Configure AnythingLLM Desktop, Agent Skills, and System Settings
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: true
+
+  vars:
+    dotfiles_dir: "{{ playbook_dir }}/.."
+    plugins_dir: "{{ dotfiles_dir }}/anythingllm/.config/anythingllm-desktop/storage/plugins"
+    anythingllm_db: "{{ ansible_facts.env.HOME }}/.config/anythingllm-desktop/storage/anythingllm.db"
+
+  tasks:
+    - name: Ensure target config directory structure exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts.env.HOME }}/.config/anythingllm-desktop"
+        state: directory
+        mode: '0755'
+      tags: [anythingllm, stow]
+
+    - name: Remove conflicting default files before stowing anythingllm
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      when: not (item is link)
+      loop:
+        - "{{ ansible_facts.env.HOME }}/.config/anythingllm-desktop/config.json"
+        - "{{ ansible_facts.env.HOME }}/.config/anythingllm-desktop/prompts"
+      tags: [anythingllm, stow]
+
+    - name: Stow anythingllm configuration package
+      ansible.builtin.command:
+        cmd: "stow -R -t {{ ansible_facts.env.HOME }} anythingllm"
+        chdir: "{{ dotfiles_dir }}"
+      tags: [anythingllm, stow]
+
+    - name: Ensure Bun runtime is available via mise
+      ansible.builtin.command:
+        cmd: mise install bun
+      changed_when: false
+      tags: [anythingllm, deps]
+
+    - name: Install AnythingLLM plugin dependencies via Bun
+      ansible.builtin.command:
+        cmd: mise exec bun -- bun install
+        chdir: "{{ plugins_dir }}"
+      changed_when: false
+      tags: [anythingllm, deps]
+
+    - name: Build AnythingLLM agent skills
+      ansible.builtin.command:
+        cmd: mise exec bun -- bun run build
+        chdir: "{{ plugins_dir }}"
+      changed_when: false
+      tags: [anythingllm, build]
+
+    - name: Check if AnythingLLM SQLite database exists
+      ansible.builtin.stat:
+        path: "{{ anythingllm_db }}"
+      register: db_stat
+      tags: [anythingllm, sync]
+
+    - name: Synchronize AnythingLLM system settings, allowed folders, and workspace prompts
+      ansible.builtin.command:
+        cmd: mise exec bun -- bun run sync-prompts.ts
+        chdir: "{{ plugins_dir }}"
+      when: db_stat.stat.exists
+      changed_when: true
+      tags: [anythingllm, sync]
+
+    - name: Inform user if AnythingLLM database is not yet initialized
+      ansible.builtin.debug:
+        msg: >-
+          AnythingLLM database was not found at {{ anythingllm_db }}.
+          Launch AnythingLLM once to initialize its SQLite database,
+          then run 'ansible-playbook playbooks/setup_anythingllm.yml'
+          or './scripts/anythingllm-sync.sh' to sync settings.
+      when: not db_stat.stat.exists
+      tags: [anythingllm, sync]
