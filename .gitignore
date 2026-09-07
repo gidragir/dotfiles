@@ -18,3 +18,8 @@ cargo/.cargo/.package-cache*
 token
 *.local
 .zshenv.local
+
+# AnythingLLM runtime & dependencies
+anythingllm/**/node_modules/
+anythingllm/**/*.db*
+anythingllm/**/*.log

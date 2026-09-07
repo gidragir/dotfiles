@@ -19,29 +19,68 @@ if (!fs.existsSync(DB_PATH)) {
 
 const db = new Database(DB_PATH);
 
-function updateWorkspacePrompt(workspaceIdentifier: string | number, filename: string) {
-  const promptPath = path.join(PROMPTS_DIR, filename);
-  if (!fs.existsSync(promptPath)) {
-    console.log(`[sync-prompts] Warning: Prompt file ${promptPath} not found.`);
-    return;
-  }
-  const content = fs.readFileSync(promptPath, "utf8").trim();
-  let query;
-  if (typeof workspaceIdentifier === "number") {
-    query = db.query("UPDATE workspaces SET openAiPrompt = ? WHERE id = ?");
-  } else {
-    query = db.query("UPDATE workspaces SET openAiPrompt = ? WHERE slug = ?");
-  }
-  const info = query.run(content, workspaceIdentifier);
-  console.log(`[sync-prompts] Synced ${filename} -> workspace ${workspaceIdentifier} (${info.changes} row(s) updated).`);
+interface WorkspaceConfig {
+  slug: string;
+  promptFile: string;
+  chatProvider: string;
+  chatModel: string;
+  agentProvider: string;
+  agentModel: string;
 }
 
-// 1. Assistant Chats (Thinking Partner & Obsidian)
-updateWorkspacePrompt("assistant-chats", "assistant-chats.md");
-updateWorkspacePrompt(2, "assistant-chats.md");
+const workspaces: WorkspaceConfig[] = [
+  {
+    slug: "assistant-chats",
+    promptFile: "assistant-chats.md",
+    chatProvider: "anythingllm_ollama",
+    chatModel: "gemma4:e4b-it-q4_K_M",
+    agentProvider: "anythingllm_ollama",
+    agentModel: "gemma4:e4b-it-q4_K_M",
+  },
+  {
+    slug: "onlychat",
+    promptFile: "onlychats.md",
+    chatProvider: "anythingllm_ollama",
+    chatModel: "gemma4:e4b-it-q4_K_M",
+    agentProvider: "anythingllm_ollama",
+    agentModel: "gemma4:e4b-it-q4_K_M",
+  },
+  {
+    slug: "my-workspace",
+    promptFile: "main-workspace.md",
+    chatProvider: "anythingllm_ollama",
+    chatModel: "qwen3-vl:4b-instruct",
+    agentProvider: "anythingllm_ollama",
+    agentModel: "qwen3-vl:4b-instruct",
+  },
+];
 
-// 2. Default Workspace (Developer & Systems Workspace)
-updateWorkspacePrompt(1, "dev-workspace.md");
+for (const ws of workspaces) {
+  const promptPath = path.join(PROMPTS_DIR, ws.promptFile);
+  if (!fs.existsSync(promptPath)) {
+    console.log(`[sync-prompts] Warning: File ${promptPath} not found.`);
+    continue;
+  }
+  const content = fs.readFileSync(promptPath, "utf8").trim();
+  const query = db.query(`
+    UPDATE workspaces
+    SET openAiPrompt = ?,
+        chatProvider = ?,
+        chatModel = ?,
+        agentProvider = ?,
+        agentModel = ?
+    WHERE slug = ?
+  `);
+  const info = query.run(
+    content,
+    ws.chatProvider,
+    ws.chatModel,
+    ws.agentProvider,
+    ws.agentModel,
+    ws.slug
+  );
+  console.log(`[sync-prompts] Configured '${ws.slug}': model=${ws.chatModel} (${info.changes} row updated).`);
+}
 
 db.close();
-console.log("[sync-prompts] All prompts successfully synchronized.");
+console.log("[sync-prompts] All workspaces and models synchronized successfully.");
