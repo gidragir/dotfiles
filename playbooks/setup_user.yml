@@ -50,6 +50,9 @@
       loop:
         - "{{ ansible_facts.env.HOME }}/.zshrc"
         - "{{ ansible_facts.env.HOME }}/.cargo/config.toml"
+        - "{{ ansible_facts.env.HOME }}/.config/anythingllm-desktop/storage/plugins/anythingllm_mcp_servers.json"
+        - "{{ ansible_facts.env.HOME }}/.config/anythingllm-desktop/storage/plugins/bash-mcp-server.js"
+        - "{{ ansible_facts.env.HOME }}/.config/anythingllm-desktop/storage/plugins/package.json"
         - "{{ ansible_facts.env.HOME }}/.config/atuin"
         - "{{ ansible_facts.env.HOME }}/.config/ghostty"
         - "{{ ansible_facts.env.HOME }}/.config/hypr"

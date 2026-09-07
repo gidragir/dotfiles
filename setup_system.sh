@@ -49,6 +49,7 @@ fi
 
 ansible-playbook playbooks/packages.yml --tags system
 ansible-playbook playbooks/setup_system.yml
+ansible-playbook playbooks/setup_display_manager.yml
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"

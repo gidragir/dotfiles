@@ -7,6 +7,7 @@
     kvm_packages:
       - qemu-full
       - libvirt
+      - virtiofsd
       - virt-manager
       - edk2-ovmf
       - swtpm
@@ -35,7 +36,7 @@
     - name: Ensure default libvirt network is active
       ansible.builtin.command: virsh net-start default
       register: net_start
-      failed_when: 
+      failed_when:
         - net_start.rc != 0
         - "'already active' not in net_start.stderr"
       changed_when: "'already active' not in net_start.stderr"
@@ -66,7 +67,7 @@
         append: true
       loop:
         - "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
-        - nobody  # Standard service account for QEMU in Arch/CachyOS
+        - nobody # Standard service account for QEMU in Arch/CachyOS
 
     - name: Create secure shared directory for Virtio-FS
       ansible.builtin.file:
@@ -74,7 +75,7 @@
         state: directory
         owner: root
         group: virtshare
-        mode: '2770' # Mode 770 + SGID (new files inherit virtshare group)
+        mode: "2770" # Mode 770 + SGID (new files inherit virtshare group)
 
     # Persistent UFW rules instead of iptables
     - name: Allow incoming traffic from virtual bridge (UFW INPUT)
@@ -115,7 +116,7 @@
       ansible.builtin.command: "groups {{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
       register: group_check
       changed_when: false
-      failed_when: 
+      failed_when:
         - "'libvirt' not in group_check.stdout"
         - "'kvm' not in group_check.stdout"
         - "'virtshare' not in group_check.stdout"

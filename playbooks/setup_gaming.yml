@@ -155,6 +155,11 @@
           PROTON_LOCAL_SHADER_CACHE=0
           PROTON_ENABLE_WAYLAND=0
           PROTON_ENABLE_HDR=0
+
+          # NVIDIA Vulkan/OpenGL Shader Cache Optimization
+          # Set cache size to ~10GB and disable cleanup so shaders aren't recompiled
+          __GL_SHADER_DISK_CACHE_SIZE=10737418240
+          __GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1
       become: false
 
     # ── 5. Optional GPU Switch ───────────────────────────────────────────────
