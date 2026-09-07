@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "meta-prompting": {
+      "source": "iliaal/ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/meta-prompting/SKILL.md",
+      "computedHash": "21d0666353c4003fc4138e0f49ab3f0eb46a2b692a460819efecf9714e7ba701"
+    },
+    "prompt-lookup": {
+      "source": "f/prompts.chat",
+      "sourceType": "github",
+      "skillPath": "plugins/claude/prompts.chat/skills/prompt-lookup/SKILL.md",
+      "computedHash": "97fa81279a6ecacb6b1139e2ef972355f2f71577bd8213498a21d1db20008999"
+    },
+    "refine-prompt": {
+      "source": "iliaal/ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/refine-prompt/SKILL.md",
+      "computedHash": "1dcc24e001ae9fd8c9acd43b44f058646920f96525f0723714924a3f57c68958"
+    },
+    "writing-for-agents": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/writing-for-agents/SKILL.md",
+      "computedHash": "95da47fc97af998e85b7d7e6d57b3ac76727c1e290cfe9ea09005aacb826959f"
+    }
+  }
+}

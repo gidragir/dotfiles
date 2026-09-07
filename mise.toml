@@ -11,3 +11,8 @@ run = "bun run build"
 description = "Watch and build atomic-commits skill with Bun"
 dir = "anythingllm/.config/anythingllm-desktop/storage/plugins"
 run = "bun run watch"
+
+[tasks."sync:prompts"]
+description = "Sync workspace prompts from dotfiles into AnythingLLM SQLite database"
+dir = "anythingllm/.config/anythingllm-desktop/storage/plugins"
+run = "bun run ./sync-prompts.ts"
