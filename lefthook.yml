@@ -1,0 +1,7 @@
+pre-commit:
+  parallel: false
+  commands:
+    build-anythingllm-skills:
+      glob: "anythingllm/**/agent-skills/**/*.ts"
+      run: mise run build:skills && git add anythingllm/.config/anythingllm-desktop/storage/plugins/agent-skills/**/handler.js
+      stage_fixed: true

@@ -1,0 +1,13 @@
+[tools]
+bun = "latest"
+node = "lts"
+
+[tasks."build:skills"]
+description = "Build all AnythingLLM agent skills with Bun"
+dir = "anythingllm/.config/anythingllm-desktop/storage/plugins"
+run = "bun run build"
+
+[tasks."watch:skills"]
+description = "Watch and build atomic-commits skill with Bun"
+dir = "anythingllm/.config/anythingllm-desktop/storage/plugins"
+run = "bun run watch"
