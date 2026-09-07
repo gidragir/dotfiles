@@ -40,7 +40,9 @@ dotfiles/
 │   ├── setup_gaming.yml         # Gaming-стек CachyOS, Proton/NVIDIA, symlink библиотеки Steam
 │   ├── setup_virt.yml           # QEMU/KVM/libvirt, swtpm, UFW правила, Virtio-FS /srv/Shared
 │   ├── setup_rclone.yml         # Systemd user unit + timer для bisync Obsidian в Google Drive
-│   └── setup_cooler_control.yml # Профили охлаждения и кривые вентиляторов
+│   ├── setup_cooler_control.yml # Профили охлаждения и кривые вентиляторов
+│   └── setup_anythingllm.yml    # AnythingLLM Desktop, MCP серверы, TS-скиллы и доступ к Obsidian
+
 │
 ├── docs/                        # Руководства пользователя (virt.md для Windows 11 KVM, vivaldi.md)
 ├── scripts/                     # Вспомогательные скрипты развертывания VM и тем

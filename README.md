@@ -90,7 +90,18 @@ Configures SDDM and Limine with Catppuccin Frappe theme:
 ansible-playbook -K playbooks/setup_display_manager.yml
 ```
 
+### 6. 🤖 AnythingLLM Desktop & Agent Skills (`playbooks/setup_anythingllm.yml`)
+Configures AnythingLLM Desktop, MCP servers, TypeScript agent skills, and Obsidian vault integration:
+- Symlinks AnythingLLM config and prompt templates via GNU Stow
+- Builds custom TypeScript agent skills (`bun run build`)
+- Synchronizes SQLite database: workspace models, system prompts, and allowed storage paths (`/data/obsidian`, `/data/projects`)
+
+```bash
+ansible-playbook playbooks/setup_anythingllm.yml
+```
+
 ---
+
 
 ## 💻 Terminal & Zsh Integration (`zsh/`)
 

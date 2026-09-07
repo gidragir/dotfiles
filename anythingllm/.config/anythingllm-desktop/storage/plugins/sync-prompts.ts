@@ -82,5 +82,51 @@ for (const ws of workspaces) {
   console.log(`[sync-prompts] Configured '${ws.slug}': model=${ws.chatModel} (${info.changes} row updated).`);
 }
 
+// Synchronize system settings (allowed filesystem paths, default agent skills)
+interface SystemSetting {
+  label: string;
+  value: string;
+}
+
+const systemSettings: SystemSetting[] = [
+  {
+    label: "allowed_filesystem_folders",
+    value: JSON.stringify(["/data/obsidian", "/data/projects"]),
+  },
+  {
+    label: "default_agent_skills",
+    value: JSON.stringify(["filesystem-agent"]),
+  },
+  {
+    label: "disabled_filesystem_skills",
+    value: JSON.stringify([]),
+  },
+  {
+    label: "disabled_agent_skills",
+    value: JSON.stringify([]),
+  },
+  {
+    label: "memory_enabled",
+    value: "true",
+  },
+  {
+    label: "onboarding_complete",
+    value: "true",
+  },
+];
+
+for (const setting of systemSettings) {
+  const query = db.query(`
+    INSERT INTO system_settings (label, value, createdAt, lastUpdatedAt)
+    VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ON CONFLICT(label) DO UPDATE SET
+      value = excluded.value,
+      lastUpdatedAt = CURRENT_TIMESTAMP
+  `);
+  query.run(setting.label, setting.value);
+}
+console.log("[sync-prompts] System settings synchronized (allowed folders: /data/obsidian, /data/projects).");
+
 db.close();
-console.log("[sync-prompts] All workspaces and models synchronized successfully.");
+console.log("[sync-prompts] All workspaces, models, and settings synchronized successfully.");
+
