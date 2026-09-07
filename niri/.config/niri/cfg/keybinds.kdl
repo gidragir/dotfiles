@@ -15,6 +15,8 @@ binds {
     
     Mod+Alt+V { spawn "sh" "-c" "wl-paste >> ~/Documents/ObsidianVault/STICKY/$(date +'%Y-%m-%d %H:%M').md && notify-send 'Obsidian' 'Заметка создана!'"; }
     Mod+V { spawn "bash" "-c" "~/.zsh/scripts/clipboard-picker.sh"; }
+    Mod+I hotkey-overlay-title="Insert Path/Note: Obsidian & Projects" { spawn "bash" "-c" "~/.zsh/scripts/path-picker.sh"; }
+    Mod+Shift+O hotkey-overlay-title="Insert Path/Note: Obsidian & Projects" { spawn "bash" "-c" "~/.zsh/scripts/path-picker.sh"; }
     Mod+Z { spawn "bash" "-c" "zoxide query -l | rofi -dmenu -p 'Zoxide' -theme ~/.config/rofi/main.rasi -i | xargs -I {} code '{}'";}
     Mod+X { spawn "bash" "-c" "ls ~/workspaces | rofi -dmenu -p 'Workspace' -theme ~/.config/rofi/main.rasi -i | xargs -I {} code ~/workspaces/{}"; }
     Mod+F1 hotkey-overlay-title="CoolerControl: Toggle Mode" { spawn-sh "cooler-toggle"; }
