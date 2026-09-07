@@ -52,6 +52,18 @@
     }
 
     window-rule {
+        match app-id="anythingllm-desktop" title="AnythingLLM Assistant"
+        open-floating true
+        default-floating-position x=20 y=20 relative-to="top-right"
+    }
+
+    window-rule {
+        match app-id="anythingllm-desktop"
+        exclude title="AnythingLLM Assistant"
+        default-column-width { proportion 0.4; }
+    }
+
+    window-rule {
         match app-id="ferdium"
         open-maximized-to-edges true
     }

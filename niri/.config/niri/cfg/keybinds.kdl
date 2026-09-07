@@ -22,6 +22,7 @@ binds {
     // Mod+Shift+ESCAPE                     { show-hotkey-overlay; }
 
     // ─── Applications ───
+    Mod+A                               hotkey-overlay-title="AI Assistant: AnythingLLM" { spawn "~/.local/bin/anythingllm-assistant-toggle.sh"; }
     Mod+Shift+Z {spawn "nu" "-c" "source $nu.config-path; open-focus-id obsidian obsidian";}
     Mod+Shift+A {spawn "nu" "-c" "source $nu.config-path; open-focus-id code code";}
 
