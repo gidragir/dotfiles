@@ -65,7 +65,7 @@ dotfiles/
     ├── television/              # ~/.config/television/ (быстрый fuzzy-finder / previewer)
     ├── vivaldi/                 # ~/.config/vivaldi-stable.conf (флаги Wayland/GPU)
     ├── wireplumber/             # ~/.config/wireplumber/ (скрипты маршрутизации аудио)
-    ├── anythingllm/             # ~/.config/anythingllm-desktop/ (MCP серверы, TS-скиллы, воркспейсы, config.json)
+    ├── anythingllm/             # ~/.config/anythingllm-desktop/ (MCP серверы, TS-скиллы, воркспейсы, промпты)
     └── zellij/                  # ~/.config/zellij/ (терминальный мультиплексор)
 ```
 
