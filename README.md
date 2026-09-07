@@ -80,6 +80,16 @@ ansible-playbook playbooks/packages.yml --tags system
 ansible-playbook playbooks/packages.yml --tags user,aur,cargo
 ```
 
+### 5. 🖥️ Display Manager & Bootloader UI (`playbooks/setup_display_manager.yml`)
+Configures SDDM and Limine with Catppuccin Frappe theme:
+- SDDM restricted exclusively to primary monitor `DP-2` (turns `HDMI-A-1` off in `Xsetup`)
+- Installs `catppuccin-frappe-blue` SDDM theme and configures `/etc/sddm.conf.d/`
+- Customizes Limine bootloader with Frappe color palette, wallpaper, and resolution
+
+```bash
+ansible-playbook -K playbooks/setup_display_manager.yml
+```
+
 ---
 
 ## 💻 Terminal & Zsh Integration (`zsh/`)

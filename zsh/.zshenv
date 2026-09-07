@@ -8,6 +8,7 @@ export XDG_STATE_HOME="$HOME/.local/state"
 # ── PATH Configuration ────────────────────────────────────────────────────────
 export SHELL="/usr/bin/zsh"
 export PNPM_HOME="/data/projects/.pnpm-store"
+export PATH="$HOME/.local/share/mise/shims:$PATH"
 
 typeset -U path
 path=(

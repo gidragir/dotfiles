@@ -56,6 +56,10 @@ if (( $+commands[carapace] )); then
   source <(carapace _carapace)
 fi
 
+if (( $+commands[mise] )); then
+  eval "$(mise completion zsh)"
+fi
+
 
 
 # ── FZF Keybindings & Interactive File Picker ─────────────────────────────────

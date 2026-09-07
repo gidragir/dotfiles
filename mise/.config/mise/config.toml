@@ -2,3 +2,4 @@
 node = "lts"
 uv = "latest"
 bun = "latest"
+usage = "latest"
