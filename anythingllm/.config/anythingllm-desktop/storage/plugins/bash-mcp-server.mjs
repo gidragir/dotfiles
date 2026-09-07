@@ -105,6 +105,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["command"],
         },
       },
+      {
+        name: "host-cli",
+        description:
+          "Executes shell commands directly on the host machine. Alias for execute_command.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            command: {
+              type: "string",
+              description: "The CLI command string to execute",
+            },
+            cwd: {
+              type: "string",
+              description:
+                "Working directory for execution (defaults to /data/projects/dotfiles)",
+            },
+          },
+          required: ["command"],
+        },
+      },
     ],
   };
 });
@@ -124,7 +144,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     return runCommand(`git diff ${flag}`, cwd);
   }
 
-  if (tool === "execute_command") {
+  if (
+    tool === "execute_command" ||
+    tool === "host-cli" ||
+    tool === "host_cli" ||
+    tool === "cli" ||
+    tool === "bash"
+  ) {
     const cwd = args.cwd || "/data/projects/dotfiles";
     return runCommand(args.command, cwd);
   }
