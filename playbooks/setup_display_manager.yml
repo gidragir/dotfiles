@@ -1,0 +1,170 @@
+---
+# =============================================================================
+# Playbook : setup_display_manager.yml
+# Purpose  : Configure SDDM (single monitor DP-2, Catppuccin Frappe theme)
+#            and Limine Bootloader styling (theme & wallpaper).
+# Requires : Sudo access (become: true)
+# Usage    : ansible-playbook -K playbooks/setup_display_manager.yml
+# =============================================================================
+
+- name: Configure SDDM and Limine Bootloader Styling
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  vars:
+    sddm_primary_monitor: "DP-2"
+    sddm_secondary_monitor: "HDMI-A-1"
+    sddm_resolution: "1920x1080"
+    sddm_refresh_rate: "144"
+    sddm_theme_name: "catppuccin-frappe-blue"
+    sddm_theme_url: "https://github.com/catppuccin/sddm/releases/download/v1.1.2/catppuccin-frappe-blue-sddm.zip"
+    sddm_themes_dir: "/usr/share/sddm/themes"
+    sddm_conf_dir: "/etc/sddm.conf.d"
+    boot_dir: "/boot"
+    limine_conf_path: "/boot/limine.conf"
+    limine_wallpaper_path: "/boot/limine-frappe-wallpaper.png"
+
+  tasks:
+    # ── 1. Configure SDDM Multi-Monitor Restrictions (DP-2 only) ─────────────
+    - name: Ensure SDDM scripts directory exists
+      ansible.builtin.file:
+        path: /usr/share/sddm/scripts
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Configure /usr/share/sddm/scripts/Xsetup to isolate login to primary monitor
+      ansible.builtin.copy:
+        dest: /usr/share/sddm/scripts/Xsetup
+        owner: root
+        group: root
+        mode: '0755'
+        content: |
+          #!/bin/sh
+          # Managed by Ansible (setup_display_manager.yml)
+
+          # Force modesetting/NVIDIA output source if needed
+          xrandr --setprovideroutputsource "modesetting" NVIDIA-0 2>/dev/null || true
+
+          # Strictly enable only primary monitor for SDDM login screen
+          xrandr --output "{{ sddm_secondary_monitor }}" --off 2>/dev/null || true
+          xrandr --output "{{ sddm_primary_monitor }}" --primary --mode "{{ sddm_resolution }}" --rate "{{ sddm_refresh_rate }}" 2>/dev/null || xrandr --output "{{ sddm_primary_monitor }}" --auto
+
+    # ── 2. Install Catppuccin Frappe Theme for SDDM ──────────────────────────
+    - name: Check if Catppuccin SDDM theme is already installed
+      ansible.builtin.stat:
+        path: "{{ sddm_themes_dir }}/{{ sddm_theme_name }}"
+      register: sddm_theme_stat
+
+    - name: Download and unpack Catppuccin SDDM theme
+      when: not sddm_theme_stat.stat.exists
+      block:
+        - name: Create temporary directory for theme archive
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: _sddm_theme
+          register: temp_theme_dir
+
+        - name: Download Catppuccin Frappe SDDM archive
+          ansible.builtin.get_url:
+            url: "{{ sddm_theme_url }}"
+            dest: "{{ temp_theme_dir.path }}/theme.zip"
+            mode: '0644'
+
+        - name: Ensure SDDM themes directory exists
+          ansible.builtin.file:
+            path: "{{ sddm_themes_dir }}"
+            state: directory
+            owner: root
+            group: root
+            mode: '0755'
+
+        - name: Extract Catppuccin theme to SDDM themes directory
+          ansible.builtin.unarchive:
+            src: "{{ temp_theme_dir.path }}/theme.zip"
+            dest: "{{ sddm_themes_dir }}"
+            remote_src: true
+            owner: root
+            group: root
+
+        - name: Clean up temporary theme directory
+          ansible.builtin.file:
+            path: "{{ temp_theme_dir.path }}"
+            state: absent
+
+    - name: Ensure SDDM config drop-in directory exists
+      ansible.builtin.file:
+        path: "{{ sddm_conf_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Configure SDDM to use Catppuccin Frappe theme
+      ansible.builtin.copy:
+        dest: "{{ sddm_conf_dir }}/10-theme-and-display.conf"
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Theme]
+          Current={{ sddm_theme_name }}
+
+          [General]
+          DisplayServer=x11
+
+    # ── 3. Configure Limine Bootloader Theme & Wallpaper ─────────────────────
+    - name: Check if Limine config exists
+      ansible.builtin.stat:
+        path: "{{ limine_conf_path }}"
+      register: limine_conf_stat
+
+    - name: Configure Limine theme and wallpaper
+      when: limine_conf_stat.stat.exists
+      block:
+        - name: Copy Catppuccin wallpaper to boot partition
+          ansible.builtin.copy:
+            src: "{{ sddm_themes_dir }}/{{ sddm_theme_name }}/backgrounds/wall.png"
+            dest: "{{ limine_wallpaper_path }}"
+            remote_src: true
+            owner: root
+            group: root
+            mode: '0644'
+
+        - name: Check if Limine palette is already configured
+          ansible.builtin.slurp:
+            src: "{{ limine_conf_path }}"
+          register: limine_conf_raw
+
+        - name: Set fact for limine config content
+          ansible.builtin.set_fact:
+            limine_conf_content: "{{ limine_conf_raw.content | b64decode }}"
+
+        - name: Prepend Catppuccin Frappe theme to limine.conf
+          ansible.builtin.copy:
+            dest: "{{ limine_conf_path }}"
+            owner: root
+            group: root
+            mode: '0644'
+            content: |
+              # --- Catppuccin Frappe UI Theme ---
+              resolution: 1920x1080x32
+              wallpaper: boot():/limine-frappe-wallpaper.png
+              wallpaper_style: stretched
+              term_background: 303446
+              term_foreground: c6d0f5
+              # Catppuccin Frappe 16 color palette:
+              term_palette: 51576d;e78284;a6d189;e5c890;8caaee;f4b8e4;81c8be;b5bfe2;626880;ea999c;a6d189;e5c890;85c1dc;f4b8e4;99d1db;c6d0f5
+              interface_branding: CachyOS [Catppuccin Frappe]
+              # -----------------------------------
+
+              {{ limine_conf_content }}
+          when: "'term_palette:' not in limine_conf_content"
+
+        - name: Enroll Limine config if tool is present
+          ansible.builtin.command: limine-enroll-config
+          failed_when: false
+          changed_when: false
