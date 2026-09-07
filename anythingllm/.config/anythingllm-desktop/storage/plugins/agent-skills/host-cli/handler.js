@@ -42,15 +42,15 @@ __export(exports_handler, {
   runtime: () => runtime
 });
 module.exports = __toCommonJS(exports_handler);
-var import_child_process = require("child_process");
+var import_node_child_process = require("node:child_process");
 var runtime = {
-  handler: async function(params) {
-    if (!params || !params.command) {
+  handler: async (params) => {
+    if (!params?.command) {
       return "Error: No command provided to host-cli.";
     }
     const targetDir = params.cwd || "/data/projects/dotfiles";
     return new Promise((resolve) => {
-      import_child_process.exec(params.command, {
+      import_node_child_process.exec(params.command, {
         shell: "/usr/bin/zsh",
         cwd: targetDir,
         maxBuffer: 10 * 1024 * 1024,
