@@ -186,7 +186,7 @@ dotfiles/
 ├── vivaldi/.config/          -> ~/.config/vivaldi-stable.conf
 ├── zellij/.config/zellij/    -> ~/.config/zellij
 ├── cargo/.cargo/             -> ~/.cargo/config.toml
-├── anythingllm/.config/      -> ~/.config/anythingllm-desktop, ~/.local/share/applications
+├── anythingllm/.config/      -> ~/.config/anythingllm-desktop
 └── git/                      -> ~/.gitconfig
 ```
 
