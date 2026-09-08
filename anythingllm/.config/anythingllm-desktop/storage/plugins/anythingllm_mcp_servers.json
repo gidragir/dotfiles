@@ -1,17 +1,5 @@
 {
   "mcpServers": {
-    "filesystem": {
-      "command": "/home/gidragir/.local/share/mise/installs/node/lts/bin/npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/data/projects",
-        "/data/obsidian"
-      ],
-      "env": {
-        "PATH": "/home/gidragir/.local/share/mise/installs/node/lts/bin:/home/gidragir/.local/share/mise/installs/uv/latest/uv-x86_64-unknown-linux-musl:/home/gidragir/.local/bin:/usr/local/bin:/usr/bin"
-      }
-    },
     "host-cli": {
       "command": "/home/gidragir/.local/share/mise/installs/node/lts/bin/node",
       "args": [
@@ -22,6 +10,17 @@
         "HOME": "/home/gidragir",
         "USER": "gidragir",
         "SHELL": "/usr/bin/zsh"
+      }
+    },
+    "headroom": {
+      "command": "/home/gidragir/.local/bin/headroom",
+      "args": [
+        "mcp",
+        "serve"
+      ],
+      "env": {
+        "PATH": "/home/gidragir/.local/bin:/usr/local/bin:/usr/bin",
+        "HEADROOM_PROXY_URL": "http://127.0.0.1:8787"
       }
     }
   }
