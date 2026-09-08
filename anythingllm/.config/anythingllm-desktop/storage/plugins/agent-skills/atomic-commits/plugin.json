@@ -3,28 +3,32 @@
   "hubId": "atomic-commits",
   "name": "Git Atomic Commits",
   "schema": "skill-1.0.0",
-  "version": "1.1.0",
-  "description": "Inspects git status and diff on a local repository, groups changes into atomic units, and outputs Conventional Commits with ready-to-run git add and git commit commands.",
+  "version": "1.2.0",
+  "description": "Inspects git repository status, groups changes into atomic Conventional Commits, and automatically executes all commits until clean when auto_commit=true.",
   "author": "gidragir",
   "author_url": "https://github.com/gidragir/dotfiles",
   "license": "MIT",
   "setup_args": {},
   "examples": [
     {
-      "prompt": "Create atomic commits for my changes in /data/projects/dotfiles",
-      "call": "{\"repo_path\": \"/data/projects/dotfiles\"}"
+      "prompt": "Execute all atomic commits in /data/projects/dotfiles",
+      "call": "{\"repo_path\": \"/data/projects/dotfiles\", \"auto_commit\": true}"
     },
     {
-      "prompt": "Check git status and generate commit commands",
-      "call": "{\"repo_path\": \"/data/projects/dotfiles\"}"
+      "prompt": "Inspect git status and generate commit commands",
+      "call": "{\"repo_path\": \"/data/projects/dotfiles\", \"auto_commit\": false}"
     }
   ],
   "entrypoint": {
     "file": "handler.js",
     "params": {
       "repo_path": {
-        "description": "Absolute directory path to target git repository",
+        "description": "Absolute directory path to target git repository (defaults to /data/projects/dotfiles)",
         "type": "string"
+      },
+      "auto_commit": {
+        "description": "If true, automatically groups and executes all commits until the repository working tree is completely clean.",
+        "type": "boolean"
       }
     }
   },
