@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "headroom": {
+      "command": "/home/gidragir/.local/bin/headroom",
+      "args": [
+        "mcp",
+        "serve"
+      ],
+      "env": {
+        "PATH": "/home/gidragir/.local/bin:/usr/local/bin:/usr/bin",
+        "HEADROOM_PROXY_URL": "http://127.0.0.1:8787"
+      }
+    }
+  }
+}

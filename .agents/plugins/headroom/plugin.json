@@ -1,0 +1,4 @@
+{
+  "name": "headroom",
+  "description": "Context optimization and token compression via Headroom CCR and proxy"
+}
