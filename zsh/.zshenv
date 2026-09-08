@@ -27,6 +27,10 @@ export FZF_BASE="/usr/share/fzf"
 export EDITOR="nvim"
 export VISUAL="nvim"
 
+# ── Headroom Context Optimization Proxy ──────────────────────────────────────
+export ANTHROPIC_BASE_URL="http://127.0.0.1:8787"
+export OPENAI_BASE_URL="http://127.0.0.1:8787/v1"
+
 # ── Local Secrets & Environment (Git-Ignored) ──────────────────────────────────
 [[ -f "$HOME/.zshenv.local" ]] && source "$HOME/.zshenv.local"
 [[ -f "${0:A:h}/.zshenv.local" ]] && source "${0:A:h}/.zshenv.local"
