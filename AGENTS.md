@@ -41,10 +41,11 @@ dotfiles/
 │   ├── setup_virt.yml           # QEMU/KVM/libvirt, swtpm, UFW правила, Virtio-FS /srv/Shared
 │   ├── setup_rclone.yml         # Systemd user unit + timer для bisync Obsidian в Google Drive
 │   ├── setup_cooler_control.yml # Профили охлаждения и кривые вентиляторов
-│   └── setup_anythingllm.yml    # AnythingLLM Desktop, MCP серверы, TS-скиллы и доступ к Obsidian
-
+│   └── setup_anythingllm.yml    # AnythingLLM Desktop, Headroom LLM proxy, MCP серверы, TS-скиллы, Obsidian
 │
-├── docs/                        # Руководства пользователя (virt.md для Windows 11 KVM, vivaldi.md)
+├── .agents/plugins/headroom/    # Antigravity плагин и MCP конфигурация Headroom
+
+├── docs/                        # Документация и траблшутинг (headroom_anythingllm_troubleshooting.md, virt.md, vivaldi.md)
 ├── scripts/                     # Вспомогательные скрипты развертывания VM и тем
 │
 └── [GNU Stow Пакеты]            # Каждый каталог ниже зеркалирует структуру $HOME
@@ -66,6 +67,8 @@ dotfiles/
     ├── vivaldi/                 # ~/.config/vivaldi-stable.conf (флаги Wayland/GPU)
     ├── wireplumber/             # ~/.config/wireplumber/ (скрипты маршрутизации аудио)
     ├── anythingllm/             # ~/.config/anythingllm-desktop/ (MCP серверы, TS-скиллы, воркспейсы, промпты)
+    ├── antigravity/             # ~/.gemini/config/ (глобальные правила и скиллы Antigravity)
+    ├── noctalia/                # ~/.config/noctalia/ (Noctalia Shell: бар, лаунчер, OSD, темы, виджеты)
     └── zellij/                  # ~/.config/zellij/ (терминальный мультиплексор)
 ```
 
@@ -263,6 +266,9 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - [ ] **Все скрипты автоматизации строго в dotfiles:** Никаких разовых скриптов в `~/.local/bin/` или вне репозитория! Все пользовательские CLI-утилиты, хелперы для Niri и скрипты автоматизации создаются в `zsh/.zsh/scripts/`, имеют права `+x`, линкуются через Stow и коммитятся в Git.
 - [ ] **Соблюдайте тему оформления:** Единый визуальный стиль системы — **Catppuccin Frappe**. Все новые терминальные утилиты, темы SDDM, Limine, Ghostty и Neovim должны соответствовать этой палитре.
 - [ ] **Сохраняйте целостность кэшей:** Не меняйте пути кэшей в `setup_user.yml`, так как они завязаны на Dual-NVMe разметку дисков.
+- [ ] **Оптимизация контекста через Headroom:** При анализе объемных терминальных выводов, логов сборки или результатов масштабного поиска (>100 строк) используйте MCP-инструмент `headroom_compress` для сжатия контекста с сохранением оригинала (CCR).
 - [ ] **Осторожность с дисками:** Никогда не запускайте скрипты разметки диска (`setup_system.yml`, `patrition_delete.sh`) без явного указания и подтверждения от пользователя.
+- [ ] **Ведение базы грабель и траблшутинга:** При обнаружении скрытых багов, специфичных нюансов API или интеграций (AnythingLLM, Ollama, Headroom, Niri) обязательно фиксируйте и пополняйте документацию в [`docs/headroom_anythingllm_troubleshooting.md`](file:///data/projects/dotfiles/docs/headroom_anythingllm_troubleshooting.md), чтобы предотвращать повторные ошибки в будущем.
 - [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `check_setup.sh`.
+
 

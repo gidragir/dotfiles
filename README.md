@@ -90,14 +90,19 @@ Configures SDDM and Limine with Catppuccin Frappe theme:
 ansible-playbook -K playbooks/setup_display_manager.yml
 ```
 
-### 6. 🤖 AnythingLLM Desktop & Agent Skills (`playbooks/setup_anythingllm.yml`)
-Configures AnythingLLM Desktop, MCP servers, TypeScript agent skills, and Obsidian vault integration:
+### 6. 🤖 AnythingLLM, Headroom & AI Agent Stack (`playbooks/setup_anythingllm.yml`)
+Configures AnythingLLM Desktop, Headroom context optimization proxy, MCP servers, and agent toolchains:
 - Symlinks AnythingLLM config and prompt templates via GNU Stow
 - Builds custom TypeScript agent skills (`bun run build`)
 - Synchronizes SQLite database: workspace models, system prompts, and allowed storage paths (`/data/obsidian`, `/data/projects`)
+- Configures persistent Headroom proxy on `http://127.0.0.1:8787` (`headroom-default.service`) with AST code compression (`tree-sitter`) and persistent memory
+- Integrates Headroom MCP server into Antigravity (`.agents/plugins/headroom/`) and AnythingLLM (`anythingllm_mcp_servers.json`)
+- Sets global shell routing (`ANTHROPIC_BASE_URL` & `OPENAI_BASE_URL`) in `~/.zshenv`
 
 ```bash
 ansible-playbook playbooks/setup_anythingllm.yml
+# Standalone Headroom setup script:
+./scripts/setup_headroom.sh
 ```
 
 ---
@@ -198,6 +203,8 @@ dotfiles/
 ├── zellij/.config/zellij/    -> ~/.config/zellij
 ├── cargo/.cargo/             -> ~/.cargo/config.toml
 ├── anythingllm/.config/      -> ~/.config/anythingllm-desktop
+├── antigravity/.gemini/      -> ~/.gemini/config
+├── noctalia/.config/         -> ~/.config/noctalia
 └── git/                      -> ~/.gitconfig
 ```
 
