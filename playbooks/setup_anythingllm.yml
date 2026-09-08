@@ -83,3 +83,20 @@
           or './scripts/anythingllm-sync.sh' to sync settings.
       when: not db_stat.stat.exists
       tags: [anythingllm, sync]
+
+    # ── Headroom Context Optimization Proxy & MCP ─────────────────────────────
+    - name: Configure Headroom proxy, systemd daemon, and MCP integrations
+      ansible.builtin.command:
+        cmd: "bash {{ dotfiles_dir }}/scripts/setup_headroom.sh"
+        chdir: "{{ dotfiles_dir }}"
+      changed_when: true
+      tags: [anythingllm, headroom]
+
+    - name: Ensure Headroom systemd user service is enabled and started
+      ansible.builtin.systemd:
+        name: headroom-default.service
+        enabled: yes
+        state: started
+        scope: user
+      tags: [anythingllm, headroom, systemd]
+

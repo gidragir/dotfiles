@@ -108,6 +108,9 @@ aur_packages:
   - carapace-bin
   - mise
   - k3d
+  - noctalia-qs
+  - noctalia
+  - noctalia-shell
 
 # Cargo utilities (installed via cargo binstall, MUST run as normal user)
 cargo_packages:
@@ -115,3 +118,8 @@ cargo_packages:
   - cargo-nextest
   - bacon
   - cargo-machete
+
+# Python CLI tools (installed via uv tool in isolated virtualenvs)
+uv_tools:
+  - "headroom-ai[proxy,code,mcp]"
+

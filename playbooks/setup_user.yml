@@ -58,6 +58,7 @@
         - "{{ ansible_facts.env.HOME }}/.config/k9s"
         - "{{ ansible_facts.env.HOME }}/.config/mise"
         - "{{ ansible_facts.env.HOME }}/.config/niri"
+        - "{{ ansible_facts.env.HOME }}/.config/noctalia"
         - "{{ ansible_facts.env.HOME }}/.config/nvim"
         - "{{ ansible_facts.env.HOME }}/.config/rofi"
         - "{{ ansible_facts.env.HOME }}/.config/sheldon"
@@ -67,6 +68,7 @@
         - "{{ ansible_facts.env.HOME }}/.config/vivaldi-stable.conf"
         - "{{ ansible_facts.env.HOME }}/.config/wireplumber"
         - "{{ ansible_facts.env.HOME }}/.config/zellij"
+        - "{{ ansible_facts.env.HOME }}/.gemini/config/rules"
       tags: [stow]
 
     - name: Run GNU Stow to link configurations
