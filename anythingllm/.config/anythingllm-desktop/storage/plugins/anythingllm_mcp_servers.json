@@ -1,12 +1,12 @@
 {
   "mcpServers": {
     "host-cli": {
-      "command": "/home/gidragir/.local/share/mise/installs/node/lts/bin/node",
+      "command": "/home/gidragir/.local/share/mise/shims/node",
       "args": [
         "/home/gidragir/.config/anythingllm-desktop/storage/plugins/bash-mcp-server.mjs"
       ],
       "env": {
-        "PATH": "/home/gidragir/.gemini/antigravity-ide/bin:/home/gidragir/.config/carapace/bin:/home/gidragir/.local/share/mise/installs/node/lts/bin:/home/gidragir/.local/share/mise/installs/uv/latest/uv-x86_64-unknown-linux-musl:/home/gidragir/.local/share/mise/installs/bun/latest/bin:/home/gidragir/.local/share/mise/installs/usage/latest/.mise-bins:/home/gidragir/.local/bin:/data/projects/.pnpm-store:/home/gidragir/projects/dotfiles/zsh/.zsh/scripts:/home/gidragir/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/usr/lib/rustup/bin",
+        "PATH": "/home/gidragir/.local/share/mise/shims:/home/gidragir/.local/bin:/home/gidragir/projects/dotfiles/zsh/.zsh/scripts:/data/projects/.pnpm-store:/usr/local/sbin:/usr/local/bin:/usr/bin",
         "HOME": "/home/gidragir",
         "USER": "gidragir",
         "SHELL": "/usr/bin/zsh"

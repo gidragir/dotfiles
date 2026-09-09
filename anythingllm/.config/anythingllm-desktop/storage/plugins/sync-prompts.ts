@@ -38,25 +38,25 @@ const workspaces: WorkspaceConfig[] = [
     slug: "assistant-chats",
     promptFile: "assistant-chats.md",
     chatProvider: "generic-openai",
-    chatModel: "gemma4:e4b-it-q4_K_M",
+    chatModel: "qwen2.5:14b",
     agentProvider: "generic-openai",
-    agentModel: "gemma4:e4b-it-q4_K_M",
+    agentModel: "qwen2.5:14b",
   },
   {
     slug: "onlychat",
     promptFile: "onlychats.md",
     chatProvider: "generic-openai",
-    chatModel: "gemma4:e4b-it-q4_K_M",
+    chatModel: "qwen2.5:14b",
     agentProvider: "generic-openai",
-    agentModel: "gemma4:e4b-it-q4_K_M",
+    agentModel: "qwen2.5:14b",
   },
   {
     slug: "my-workspace",
     promptFile: "main-workspace.md",
     chatProvider: "generic-openai",
-    chatModel: "qwen3-vl:4b-instruct",
+    chatModel: "deepseek-r1:14b",
     agentProvider: "generic-openai",
-    agentModel: "qwen3-vl:4b-instruct",
+    agentModel: "deepseek-r1:14b",
   },
 ];
 
@@ -108,7 +108,7 @@ const systemSettings: SystemSetting[] = [
   },
   {
     label: "disabled_agent_skills",
-    value: JSON.stringify(["web-scraping", "document-summarizer", "rag-memory"]),
+    value: JSON.stringify(["filesystem-agent", "web-scraping", "document-summarizer", "rag-memory"]),
   },
   {
     label: "memory_enabled",
@@ -128,11 +128,11 @@ const systemSettings: SystemSetting[] = [
   },
   {
     label: "generic_openai_model_pref",
-    value: "gemma4:e4b-it-q4_K_M",
+    value: "qwen2.5-coder:14b",
   },
   {
     label: "generic_openai_token_limit",
-    value: "16384",
+    value: "32768",
   },
 ];
 
@@ -148,24 +148,37 @@ for (const setting of systemSettings) {
 }
 console.log("[sync-prompts] System settings synchronized (disabled duplicate skills, Generic OpenAI proxy configured).");
 
-// Synchronize local folders for RAG
+// Synchronize local folders for RAG dynamically linked to 'onlychat' workspace
 const obsidianDocId = "local-obsidian-sync";
-db.query(`
-  INSERT INTO workspace_documents (docId, filename, docpath, workspaceId, watched, createdAt, lastUpdatedAt)
-  VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-  ON CONFLICT(docId) DO UPDATE SET watched = 1
-`).run(obsidianDocId, "obsidian", "local:///data/obsidian", 1, 1);
+const onlychatWs = db
+  .query(`SELECT id FROM workspaces WHERE slug = 'onlychat'`)
+  .get() as { id: number } | null;
 
-const workspaceDoc = db.query(`SELECT id FROM workspace_documents WHERE docId = ?`).get(obsidianDocId) as { id: number };
-
-if (workspaceDoc) {
+if (onlychatWs) {
   db.query(`
-    INSERT INTO document_sync_queues (staleAfterMs, nextSyncAt, createdAt, lastSyncedAt, type, workspaceDocId)
-    VALUES (?, datetime('now'), datetime('now'), datetime('now'), ?, ?)
-    ON CONFLICT(workspaceDocId) DO NOTHING
-  `).run(604800000, "local", workspaceDoc.id);
+    INSERT INTO workspace_documents (docId, filename, docpath, workspaceId, watched, createdAt, lastUpdatedAt)
+    VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+    ON CONFLICT(docId) DO UPDATE SET
+      workspaceId = excluded.workspaceId,
+      watched = 1,
+      lastUpdatedAt = datetime('now')
+  `).run(obsidianDocId, "obsidian", "local:///data/obsidian", onlychatWs.id, 1);
+
+  const workspaceDoc = db
+    .query(`SELECT id FROM workspace_documents WHERE docId = ?`)
+    .get(obsidianDocId) as { id: number } | null;
+
+  if (workspaceDoc) {
+    db.query(`
+      INSERT INTO document_sync_queues (staleAfterMs, nextSyncAt, createdAt, lastSyncedAt, type, workspaceDocId)
+      VALUES (?, datetime('now'), datetime('now'), datetime('now'), ?, ?)
+      ON CONFLICT(workspaceDocId) DO NOTHING
+    `).run(604800000, "local", workspaceDoc.id);
+  }
+  console.log(`[sync-prompts] Local RAG sync queue for /data/obsidian ensured on workspace 'onlychat' (id: ${onlychatWs.id}).`);
+} else {
+  console.log("[sync-prompts] Workspace 'onlychat' not found; skipped attaching /data/obsidian RAG doc.");
 }
-console.log("[sync-prompts] Local RAG sync queue for /data/obsidian ensured.");
 
 db.close();
 
@@ -173,11 +186,11 @@ db.close();
 if (fs.existsSync(ENV_PATH)) {
   let envContent = fs.readFileSync(ENV_PATH, "utf8");
   const updates: Record<string, string> = {
-    LLM_PROVIDER: "anythingllm_ollama",
+    LLM_PROVIDER: "generic-openai",
     GENERIC_OPEN_AI_BASE_PATH: "http://127.0.0.1:8787/v1",
     GENERIC_OPEN_AI_API_KEY: "headroom",
-    GENERIC_OPEN_AI_MODEL_PREF: "gemma4:e4b-it-q4_K_M",
-    GENERIC_OPEN_AI_TOKEN_LIMIT: "16384",
+    GENERIC_OPEN_AI_MODEL_PREF: "qwen2.5-coder:14b",
+    GENERIC_OPEN_AI_TOKEN_LIMIT: "32768",
     AGENT_SKILL_RERANKER_TOP_N: "30",
     AGENT_SKILL_RERANKER_ENABLED: "true",
   };
