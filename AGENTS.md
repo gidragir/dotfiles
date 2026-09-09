@@ -69,6 +69,7 @@ dotfiles/
     ├── anythingllm/             # ~/.config/anythingllm-desktop/ (MCP серверы, TS-скиллы, воркспейсы, промпты)
     ├── antigravity/             # ~/.gemini/config/ (глобальные правила и скиллы Antigravity)
     ├── noctalia/                # ~/.config/noctalia/ (Noctalia Shell: бар, лаунчер, OSD, темы, виджеты)
+    ├── btop/                    # ~/.config/btop/ (btop.conf: мониторинг ресурсов, кастомный макет и темы)
     └── zellij/                  # ~/.config/zellij/ (терминальный мультиплексор)
 ```
 

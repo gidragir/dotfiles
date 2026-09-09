@@ -152,9 +152,11 @@ The terminal environment is built on Zsh in [`zsh/`](file:///home/alatau/project
   - `k8s-install-argocd`: Automated installation and wait helper for ArgoCD
 - **Universal Archive Extractor (`extract` / `x`)**: Unpacks `.tar.gz`, `.zip`, `.7z`, `.tar.zst`, `.rar`, and other archive formats with a single command
 - **Automation Scripts & Window Helpers (`zsh/.zsh/scripts/`)**:
+  - `anything-ctl`: Полнофункциональная CLI-утилита для AnythingLLM Desktop, Ollama и Headroom (инспекция SQLite базы, аудит диалогов, переключение моделей воркспейсов, бенчмаркинг TTFT/tps, тесты вызова инструментов)
   - `anythingllm-assistant-toggle.sh`: Умный перенос и фокус плавающего окна AnythingLLM Assistant на активный воркспейс/монитор в Niri (`Mod+A`)
   - `clipboard-picker.sh`: Меню истории буфера обмена через rofi (`Mod+V`)
   - `cooler-toggle`: Быстрое переключение профилей охлаждения CoolerControl (`Mod+F1`)
+
 
 ---
 
@@ -205,6 +207,7 @@ dotfiles/
 ├── anythingllm/.config/      -> ~/.config/anythingllm-desktop
 ├── antigravity/.gemini/      -> ~/.gemini/config
 ├── noctalia/.config/         -> ~/.config/noctalia
+├── btop/.config/btop/        -> ~/.config/btop
 └── git/                      -> ~/.gitconfig
 ```
 

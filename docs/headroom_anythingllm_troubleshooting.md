@@ -12,24 +12,26 @@
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │                             AnythingLLM Desktop                                  │
 │                                                                                  │
-│   [Workspaces: onlychat / assistant-chats / my-workspace]                        │
+│   [Workspaces: assistant-chats / onlychat / my-workspace]                        │
 │   chatProvider = "generic-openai"  /  agentProvider = "generic-openai"           │
+│   Модели: qwen2.5-coder:14b, qwen2.5:14b, deepseek-r1:14b                       │
 └────────────────────────────────────────┬─────────────────────────────────────────┘
                                          │ HTTP (порт 8787/v1)
                                          ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │                      Headroom Proxy (Systemd User Daemon)                        │
 │   Служба: headroom-default.service (порт 8787)                                   │
-│   Функции: CCR Context Compression, Memory Injection, Deduplication              │
+│   Функции: CCR Context Compression, Deduplication, Tool Protection               │
 │   OPENAI_TARGET_API_URL = "http://127.0.0.1:11434/v1"                           │
 └────────────────────────────────────────┬─────────────────────────────────────────┘
                                          │ HTTP (порт 11434/v1)
                                          ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│                    AnythingLLM Embedded Ollama Engine                            │
-│   Бинарник: ~/.config/anythingllm-desktop/storage/engines/ollama/bin/llm serve   │
-│   Модели: gemma4:e4b-it-q4_K_M, qwen3-vl:4b-instruct (в storage/models/ollama) │
-│   Управляется: AnythingLLM Backend (при LLM_PROVIDER='anythingllm_ollama')       │
+│             Standalone Hardware-Accelerated Ollama (User Daemon)                 │
+│   Служба: ~/.config/systemd/user/ollama.service (порт 11434)                     │
+│   Оптимизации: OLLAMA_FLASH_ATTENTION=1, OLLAMA_KV_CACHE_TYPE=q8_0               │
+│   Хранилище моделей: /data/models/ollama (NVMe Btrfs zstd)                       │
+│   Управление: systemctl --user {start,stop,restart,status} ollama.service        │
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -55,27 +57,25 @@
 
 ---
 
-### 2. Жизненный цикл встроенного движка Ollama (`LLM_PROVIDER` в `.env`)
-* **Симптом:** Ошибка `502 Bad Gateway / Failed to connect to upstream API: All connection attempts failed`.
-* **Причина:** AnythingLLM Desktop использует свой изолированный бинарник Ollama (`storage/engines/ollama/bin/llm serve`). Бэкенд AnythingLLM запускает его функцию `preloadOllamaService()` **исключительно** в том случае, если глобальная переменная в `storage/.env` равна:
-  ```bash
-  LLM_PROVIDER='anythingllm_ollama'
-  ```
-  Если установить глобальный `LLM_PROVIDER='generic-openai'`, AnythingLLM логирует:
-  ```text
-  Skipping preloading of AnythingLLMOllama - LLM_PROVIDER is generic-openai.
-  ```
-  И локальный Ollama **не стартует вовсе**, порт 11434 остается закрытым, а Headroom Proxy при попытке проксирования к Ollama падает с `502`.
-* **Решение (Архитектурный паттерн):**
-  - В `storage/.env` глобальный `LLM_PROVIDER` должен всегда оставаться `'anythingllm_ollama'`. Это заставляет AnythingLLM автоматически держать запущенным демон Ollama на порту `11434`.
-  - Перенаправление в Headroom настраивается **на уровне воркспейсов** (`workspaces.chatProvider = 'generic-openai'` и `workspaces.agentProvider = 'generic-openai'`).
-  - В `storage/.env` прописываются сопутствующие переменные для Generic OpenAI:
-    ```bash
-    GENERIC_OPEN_AI_BASE_PATH='http://127.0.0.1:8787/v1'
-    GENERIC_OPEN_AI_API_KEY='headroom'
-    GENERIC_OPEN_AI_MODEL_PREF='gemma4:e4b-it-q4_K_M'
-    GENERIC_OPEN_AI_TOKEN_LIMIT='16384'
+### 2. Жизненный цикл движка Ollama: встроенный `llm serve` vs Standalone User Daemon
+* **Проблема встроенного движка:**
+  - AnythingLLM Desktop по умолчанию пытается запустить устаревший встроенный форк Ollama (`storage/engines/ollama/bin/llm serve` v0.20.7).
+  - Встроенный форк не поддерживает современные флаги ускорения NVIDIA (Flash Attention, 8-битное квантование KV-кэша через переменные окружения), скачивает модели в `$HOME`, а при сбоях зависает и блокирует порт `11434`.
+* **Целевое архитектурное решение (Standalone User Daemon):**
+  - Развертывание независимой службы systemd пользователя: `~/.config/systemd/user/ollama.service` (управляется пакетом Stow `anythingllm` и плейбуком `playbooks/setup_ollama.yml`).
+  - Служба запускает системный бинарник `/usr/bin/ollama serve` (пакет `ollama-cuda` в CachyOS/Arch) с аппаратным ускорением:
+    ```ini
+    [Service]
+    ExecStart=/usr/bin/ollama serve
+    Environment="OLLAMA_FLASH_ATTENTION=1"
+    Environment="OLLAMA_KV_CACHE_TYPE=q8_0"
+    Environment="OLLAMA_HOST=127.0.0.1:11434"
+    Environment="OLLAMA_KEEP_ALIVE=30m"
+    Environment="OLLAMA_MODELS=/data/models/ollama"
     ```
+  - В `storage/.env` AnythingLLM глобально выставляется `LLM_PROVIDER='generic-openai'`. Это предотвращает запуск устаревшего встроенного процесса AnythingLLM и исключает конфликт портов.
+  - Headroom проксирует вызовы с порта `8787` на постоянный порт `11434`.
+  - Воркспейсы AnythingLLM подключаются через Headroom по протоколу `generic-openai`.
 
 ---
 
@@ -342,11 +342,65 @@
 
 ---
 
+### 10. Оптимизация под RTX 4070 Ti Super (16 ГБ VRAM) и модели класса 14B
+* **Обоснование отказа от 4B и 32B:**
+  - Модели 4B недоиспользуют 16 ГБ VRAM (занимают ~3 ГБ, простаивает 13 ГБ), склонны к галлюцинациям и ошибкам в синтаксисе Tool Calling.
+  - Модели 32B требуют 20–24 ГБ VRAM; сжатие в Q3_K_S резко роняет точность, а малейший контекст вызывает CPU offload и обрушивает генерацию до 3 т/с.
+  - Модели класса **14B (Q4_K_M)** весят ~9 ГБ VRAM, оставляя 5–6 ГБ под рабочий контекст (8k–32k токенов) и выдавая 45–65 токенов/сек.
+* **Распределение по воркспейсам:**
+  - `assistant-chats` ➔ **`qwen2.5-coder:14b`** (DevOps, CachyOS, Ansible, Bash, Git atomic commits, MCP tool calls).
+  - `onlychat` ➔ **`qwen2.5:14b`** (Obsidian vault `/data/obsidian`, синтез, философия, русскоязычная эрудиция).
+  - `my-workspace` ➔ **`deepseek-r1:14b`** (Reasoning, многоэтапная логика, сложные алгоритмы и deep research).
+* **Аппаратный стек ускорения (в `~/.config/systemd/user/ollama.service`):**
+  - `OLLAMA_FLASH_ATTENTION=1`: снижает потребление VRAM на 30–40% под KV-кэш на архитектуре Ada Lovelace.
+  - `OLLAMA_KV_CACHE_TYPE=q8_0`: сжимает кэш контекста вдвое без потери качества, позволяя держать контекст до 32k токенов.
+  - `OLLAMA_MAX_LOADED_MODELS=1`: критический лимит для 16 ГБ VRAM, предотвращающий одновременное удержание в памяти двух 14B моделей ($9 + 9 = 18$ ГБ) при смене воркспейса (исключает CPU offload и деградацию до 3 т/с).
+  - `OLLAMA_NUM_PARALLEL=1`: ограничивает параллельные слоты контекста для сохранения VRAM под длинные сессии одного пользователя.
+  - `OLLAMA_MODELS=/data/models/ollama`: хранение весов на высокоскоростном NVMe Btrfs сжатом диске.
+
+---
+
+### 16. Динамическая привязка локальных RAG-документов по слагу воркспейса
+* **Симптом:** После добавления папки `/data/obsidian` в базу через скрипт синхронизации, в воркспейсе `onlychat` документов нет, а они отображаются в дефолтном `my-workspace`.
+* **Причина:** Хардкод `workspaceId: 1` в `sync-prompts.ts`. На чистой установке `my-workspace` имеет `id: 1`, а `onlychat` получает `id: 3`.
+* **Решение:** Выполнять динамический запрос `SELECT id FROM workspaces WHERE slug = 'onlychat'` и привязывать `workspace_documents` и `document_sync_queues` строго к полученному ID.
+
+---
+
+### 17. Обязательное отключение встроенного плагина `filesystem-agent`
+* **Проблема:** Если в `disabled_agent_skills` не указан `filesystem-agent`, AnythingLLM загружает свои встроенные инструменты работы с файлами, создавая дубли с MCP `bash-mcp-server`. Реранкер вытесняет `headroom_compress` и `atomic-commits`.
+* **Решение:** В `sync-prompts.ts` передавать `disabled_agent_skills: ["filesystem-agent", "web-scraping", "document-summarizer", "rag-memory"]`.
+
+---
+
 ## 🛠️ Справочник команд проверки и диагностики (Cheat Sheet)
 
 ```bash
+# 0. Универсальная CLI-утилита AnythingLLM + Ollama + Headroom (в $PATH):
+anything-ctl status                           # Статус Ollama, Headroom, VRAM, активной модели в памяти
+anything-ctl chats [-n 10] [-s "поиск"] [-a]  # Просмотр истории диалогов (фильтр по слову, ошибкам, воркспейсу)
+anything-ctl chat <ID>                        # Детальный инспектор диалога (промпт, ответ, токены/сек, аномалии)
+anything-ctl audit [-n 25]                    # Сканирование диалогов на утечки CJK, дампы инструментов, симуляции
+anything-ctl ws list                          # Список воркспейсов, моделей, провайдеров и счетчиков диалогов
+anything-ctl ws show <slug>                   # Полная конфигурация воркспейса и его системный промпт
+anything-ctl ws set <slug> --chat-model M     # Быстрое изменение модели/температуры воркспейса
+anything-ctl settings list                    # Просмотр всех системных параметров AnythingLLM
+anything-ctl skills list                      # Просмотр отключенных встроенных навыков (disabled_agent_skills)
+anything-ctl docs list                        # Просмотр локальных RAG-папок и счетчиков векторов
+anything-ctl db tables                        # Список всех таблиц SQLite с количеством строк
+anything-ctl db schema <table_name>           # Схема колонок и типов таблицы
+anything-ctl db dump <table> [-n 10]          # JSON-дамп строк произвольной таблицы
+anything-ctl bench --model qwen2.5:14b        # Замер TTFT и токенов/сек (45-60 т/с)
+anything-ctl test-tool --model qwen2.5:14b    # Проверка поддержки нативного tool_calls
+anything-ctl test-prompt <ws> "Запрос"        # Тест генерации ответа модели с промптом воркспейса
+anything-ctl test-search "лидерство"          # Тест морфологического поиска по Obsidian через MCP
+anything-ctl sync                             # Применение промптов и настроек воркспейсов из dotfiles
+anything-ctl logs [ollama|headroom]           # Просмотр логов systemd сервисов
+anything-ctl restart [ollama|headroom|all]    # Перезапуск служб AI-стека
+
 # 1. Проверка демона Headroom и доступности моделей через прокси:
 curl -s -H "Authorization: Bearer headroom" http://127.0.0.1:8787/v1/models | jq -r '.data[]?.id'
+
 
 # 2. Проверка запущенных процессов:
 pgrep -fl "headroom.cli proxy"
