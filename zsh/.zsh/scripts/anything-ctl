@@ -1,0 +1,1293 @@
+#!/usr/bin/env python3
+"""
+anything-ctl — Production CLI diagnostic, benchmark, DB manager, and control tool
+for AnythingLLM Desktop + Ollama + Headroom stack on CachyOS.
+Part of dotfiles (zsh/.zsh/scripts/anything-ctl).
+"""
+
+import argparse
+import datetime
+import json
+import os
+import re
+import shutil
+import sqlite3
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+# Paths & URLs
+DB_PATH = Path.home() / ".config/anythingllm-desktop/storage/anythingllm.db"
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
+HEADROOM_URL = os.environ.get("HEADROOM_URL", "http://127.0.0.1:8787")
+DOTFILES_DIR = Path("/data/projects/dotfiles")
+PLUGINS_DIR = DOTFILES_DIR / "anythingllm/.config/anythingllm-desktop/storage/plugins"
+
+# Anomaly detection patterns
+CJK_REGEX = re.compile(r"[\u4e00-\u9fff\uac00-\ud7af\u3040-\u30ff]")
+RAW_TOOL_REGEX = re.compile(r'^\s*\{\s*"name"\s*:\s*"[^"]+"\s*,\s*"arguments"\s*:', re.DOTALL)
+SIMULATION_REGEX = re.compile(
+    r"(я вызываю команду|вызываю функцию|cat /etc/|Simulation of|Activating search|simulation of search)",
+    re.IGNORECASE,
+)
+
+
+def get_db():
+    if not DB_PATH.exists():
+        print_error(f"AnythingLLM database not found at {DB_PATH}")
+        sys.exit(1)
+    conn = sqlite3.connect(str(DB_PATH), timeout=10.0)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def print_header(title: str):
+    print(f"\n\033[1;36m=== {title} ===\033[0m")
+
+
+def print_success(msg: str):
+    print(f"\033[32m✓ {msg}\033[0m")
+
+
+def print_warn(msg: str):
+    print(f"\033[33m⚠ {msg}\033[0m")
+
+
+def print_error(msg: str):
+    print(f"\033[31m✗ {msg}\033[0m")
+
+
+def http_get_json(url: str, headers: dict = None, timeout: float = 5.0):
+    req = urllib.request.Request(url, headers=headers or {})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode())
+    except Exception:
+        return None
+
+
+def http_post_json(url: str, payload: dict, headers: dict = None, timeout: float = 120.0):
+    data = json.dumps(payload).encode("utf-8")
+    req_headers = {"Content-Type": "application/json"}
+    if headers:
+        req_headers.update(headers)
+    req = urllib.request.Request(url, data=data, headers=req_headers)
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode())
+
+
+def get_vram_info() -> str:
+    try:
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=memory.used,memory.total,utilization.gpu", "--format=csv,noheader,nounits"],
+            encoding="utf-8",
+        ).strip()
+        used, total, util = [x.strip() for x in out.split(",")]
+        return f"{used} MiB / {total} MiB ({util}% GPU util)"
+    except Exception:
+        return "N/A"
+
+
+def parse_chat_response(raw_resp: str) -> dict:
+    try:
+        data = json.loads(raw_resp)
+        if isinstance(data, dict):
+            return {
+                "text": data.get("text", ""),
+                "metrics": data.get("metrics", {}),
+                "type": data.get("type", "chat"),
+                "sources": data.get("sources", []),
+            }
+    except Exception:
+        pass
+    return {"text": raw_resp, "metrics": {}, "type": "chat", "sources": []}
+
+
+def format_ts(ts) -> str:
+    try:
+        if isinstance(ts, (int, float)) or (isinstance(ts, str) and ts.isdigit()):
+            sec = int(ts) / 1000.0
+            return datetime.datetime.fromtimestamp(sec).strftime("%Y-%m-%d %H:%M:%S")
+        return str(ts)[:19]
+    except Exception:
+        return str(ts)
+
+
+def detect_chat_anomalies(text: str) -> list[str]:
+    anomalies = []
+    if RAW_TOOL_REGEX.search(text):
+        anomalies.append("\033[1;31m[RAW_TOOL_DUMP]\033[0m")
+    if CJK_REGEX.search(text):
+        anomalies.append("\033[1;31m[CJK_LEAK]\033[0m")
+    if SIMULATION_REGEX.search(text):
+        anomalies.append("\033[1;33m[SIMULATED_TOOL]\033[0m")
+    if not text.strip():
+        anomalies.append("\033[1;31m[EMPTY_RESPONSE]\033[0m")
+    return anomalies
+
+
+# ==============================================================================
+# 1. STATUS & LOGS & RESTART
+# ==============================================================================
+
+def cmd_status(args):
+    print_header("AI Stack Health & Runtime Status")
+
+    # GPU
+    vram = get_vram_info()
+    print(f"• GPU VRAM : {vram}")
+
+    # Ollama
+    ollama_info = http_get_json(f"{OLLAMA_URL}/api/version")
+    if ollama_info:
+        print_success(f"Ollama daemon running (v{ollama_info.get('version')}) at {OLLAMA_URL}")
+        loaded = http_get_json(f"{OLLAMA_URL}/api/ps")
+        if loaded and loaded.get("models"):
+            for m in loaded["models"]:
+                size_gb = m.get("size", 0) / (1024 ** 3)
+                vram_gb = m.get("size_vram", 0) / (1024 ** 3)
+                print(f"  └─ Loaded in VRAM: {m.get('name')} ({vram_gb:.2f} GB VRAM / {size_gb:.2f} GB total)")
+        else:
+            print("  └─ Loaded in VRAM: None (idle)")
+    else:
+        print_error(f"Ollama is NOT responding at {OLLAMA_URL}")
+
+    # Headroom Proxy
+    headroom_models = http_get_json(
+        f"{HEADROOM_URL}/v1/models",
+        headers={"Authorization": "Bearer headroom"},
+    )
+    if headroom_models and "data" in headroom_models:
+        model_ids = [m["id"] for m in headroom_models["data"]]
+        print_success(f"Headroom proxy running at {HEADROOM_URL} (available: {', '.join(model_ids)})")
+    else:
+        print_error(f"Headroom proxy NOT responding at {HEADROOM_URL}")
+
+    # Desktop app
+    try:
+        out = subprocess.check_output(["pgrep", "-af", "anythingllm-desktop"], encoding="utf-8").strip()
+        pids = [line.split()[0] for line in out.splitlines() if "anythingllm-desktop" in line]
+        if pids:
+            print_success(f"AnythingLLM Desktop running (PIDs: {', '.join(pids)})")
+        else:
+            print_warn("AnythingLLM Desktop process not found (may be closed)")
+    except Exception:
+        print_warn("AnythingLLM Desktop process not running")
+
+    # DB
+    if DB_PATH.exists():
+        size_kb = DB_PATH.stat().st_size / 1024
+        print_success(f"AnythingLLM SQLite DB found: {DB_PATH} ({size_kb:.1f} KB)")
+    else:
+        print_warn(f"AnythingLLM SQLite DB not found at {DB_PATH}")
+
+
+def cmd_logs(args):
+    service = args.service or "ollama"
+    unit_map = {
+        "ollama": "ollama.service",
+        "headroom": "headroom-default.service",
+    }
+    unit = unit_map.get(service, service)
+    lines = args.lines or 50
+    print_header(f"Systemd Logs for {unit} (Last {lines} lines)")
+    subprocess.run(["journalctl", "--user", "-u", unit, "-n", str(lines), "--no-pager"])
+
+
+def cmd_restart(args):
+    target = args.service or "all"
+    services = []
+    if target in ("ollama", "all"):
+        services.append("ollama.service")
+    if target in ("headroom", "all"):
+        services.append("headroom-default.service")
+
+    for s in services:
+        print(f"Restarting {s}...")
+        res = subprocess.run(["systemctl", "--user", "restart", s])
+        if res.returncode == 0:
+            print_success(f"{s} restarted successfully.")
+        else:
+            print_error(f"Failed to restart {s}.")
+
+
+def cmd_models(args):
+    print_header("Ollama Installed Models")
+    data = http_get_json(f"{OLLAMA_URL}/api/tags")
+    if not data or "models" not in data:
+        print_error("Failed to fetch models from Ollama.")
+        return
+
+    print(f"{'NAME':<28} {'SIZE (GB)':<12} {'DIGEST':<15} {'MODIFIED':<22}")
+    print("-" * 77)
+    for m in data["models"]:
+        name = m.get("name", "unknown")
+        size_gb = m.get("size", 0) / (1024 ** 3)
+        digest = m.get("digest", "")[:12]
+        mod = m.get("modified_at", "")[:19].replace("T", " ")
+        print(f"{name:<28} {size_gb:<12.2f} {digest:<15} {mod:<22}")
+
+
+# ==============================================================================
+# 2. WORKSPACES (ws)
+# ==============================================================================
+
+def cmd_ws_list(args):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT w.id, w.name, w.slug, w.chatProvider, w.chatModel, w.agentProvider, w.agentModel,
+               (SELECT COUNT(*) FROM workspace_threads WHERE workspace_id = w.id) as threads_count,
+               (SELECT COUNT(*) FROM workspace_chats WHERE workspaceId = w.id) as chats_count,
+               (SELECT COUNT(*) FROM workspace_documents WHERE workspaceId = w.id) as docs_count
+        FROM workspaces w
+        ORDER BY w.id ASC;
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    print_header(f"Workspaces ({len(rows)} registered)")
+    if not rows:
+        print("No workspaces found.")
+        return
+
+    for r in rows:
+        print(f"\n\033[1mID {r['id']}: {r['name']}\033[0m (slug: \033[36m{r['slug']}\033[0m)")
+        print(f"  • Chat Engine  : {r['chatProvider']} / \033[33m{r['chatModel']}\033[0m")
+        print(f"  • Agent Engine : {r['agentProvider']} / \033[33m{r['agentModel']}\033[0m")
+        print(f"  • Stats        : {r['threads_count']} threads, {r['chats_count']} chats, {r['docs_count']} attached docs")
+
+
+def cmd_ws_show(args):
+    slug_or_id = args.slug_or_id
+    conn = get_db()
+    cur = conn.cursor()
+    if slug_or_id.isdigit():
+        cur.execute("SELECT * FROM workspaces WHERE id = ?", (int(slug_or_id),))
+    else:
+        cur.execute("SELECT * FROM workspaces WHERE slug = ?", (slug_or_id,))
+    row = cur.fetchone()
+    conn.close()
+
+    if not row:
+        print_error(f"Workspace '{slug_or_id}' not found.")
+        return
+
+    print_header(f"Workspace: {row['name']} (ID: {row['id']}, Slug: '{row['slug']}')")
+    for key in row.keys():
+        if key == "openAiPrompt":
+            continue
+        print(f"  • {key:24} : {row[key]}")
+
+    print("\n\033[1;34m=== SYSTEM PROMPT (openAiPrompt) ===\033[0m")
+    prompt = row["openAiPrompt"] or "(None / Default)"
+    print(prompt.strip())
+
+
+def cmd_ws_set(args):
+    slug_or_id = args.slug_or_id
+    conn = get_db()
+    cur = conn.cursor()
+
+    if slug_or_id.isdigit():
+        cur.execute("SELECT id, slug, name FROM workspaces WHERE id = ?", (int(slug_or_id),))
+    else:
+        cur.execute("SELECT id, slug, name FROM workspaces WHERE slug = ?", (slug_or_id,))
+    target = cur.fetchone()
+
+    if not target:
+        print_error(f"Workspace '{slug_or_id}' not found.")
+        conn.close()
+        return
+
+    updates = []
+    params = []
+
+    if args.chat_model:
+        updates.append("chatModel = ?")
+        params.append(args.chat_model)
+    if args.chat_provider:
+        updates.append("chatProvider = ?")
+        params.append(args.chat_provider)
+    if args.agent_model:
+        updates.append("agentModel = ?")
+        params.append(args.agent_model)
+    if args.agent_provider:
+        updates.append("agentProvider = ?")
+        params.append(args.agent_provider)
+    if args.temp is not None:
+        updates.append("openAiTemp = ?")
+        params.append(args.temp)
+    if args.prompt:
+        updates.append("openAiPrompt = ?")
+        params.append(args.prompt)
+    elif args.prompt_file:
+        p_path = Path(args.prompt_file)
+        if not p_path.exists():
+            print_error(f"Prompt file not found: {p_path}")
+            conn.close()
+            return
+        updates.append("openAiPrompt = ?")
+        params.append(p_path.read_text(encoding="utf-8"))
+
+    if not updates:
+        print_warn("No updates specified. Use --chat-model, --agent-model, --prompt-file, etc.")
+        conn.close()
+        return
+
+    params.append(target["id"])
+    query = f"UPDATE workspaces SET {', '.join(updates)} WHERE id = ?"
+    cur.execute(query, params)
+    conn.commit()
+    conn.close()
+
+    print_success(f"Workspace '{target['name']}' ({target['slug']}) updated successfully.")
+
+
+# ==============================================================================
+# 3. CHATS & THREADS & AUDIT
+# ==============================================================================
+
+def cmd_chats(args):
+    limit = args.limit or 10
+    ws_filter = args.workspace
+    thread_filter = args.thread
+    search_query = args.search
+    anomalies_only = args.anomalies_only
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    query = """
+        SELECT c.id, w.name as ws_name, w.slug as ws_slug, c.prompt, c.response, c.createdAt, c.thread_id
+        FROM workspace_chats c
+        JOIN workspaces w ON c.workspaceId = w.id
+        WHERE 1=1
+    """
+    params = []
+    if ws_filter:
+        query += " AND (w.slug = ? OR w.name LIKE ?) "
+        params.extend([ws_filter, f"%{ws_filter}%"])
+    if thread_filter:
+        query += " AND c.thread_id = ? "
+        params.append(thread_filter)
+    if search_query:
+        query += " AND (c.prompt LIKE ? OR c.response LIKE ?) "
+        params.extend([f"%{search_query}%", f"%{search_query}%"])
+
+    query += " ORDER BY c.id DESC LIMIT ?"
+    # If anomalies_only, fetch up to 100 candidates to find enough matches
+    fetch_limit = limit if not anomalies_only else min(limit * 5, 200)
+    params.append(fetch_limit)
+
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    conn.close()
+
+    print_header(f"Workspace Chats (Showing up to {limit})")
+    if not rows:
+        print("No matching chats found.")
+        return
+
+    shown = 0
+    for r in reversed(rows):
+        cid = r["id"]
+        wname = r["ws_name"]
+        slug = r["ws_slug"]
+        prompt = r["prompt"]
+        raw_resp = r["response"]
+        created_at = r["createdAt"]
+        thread_id = r["thread_id"]
+
+        parsed = parse_chat_response(raw_resp)
+        text = parsed["text"].strip()
+        ts = format_ts(created_at)
+        anomalies = detect_chat_anomalies(text)
+
+        if anomalies_only and not anomalies:
+            continue
+
+        flag_str = " ".join(anomalies) if anomalies else "\033[32m[OK]\033[0m"
+
+        print(f"\n\033[1mChat #{cid}\033[0m | {ts} | \033[36m{wname}\033[0m ({slug}) | Thread: {thread_id} | Status: {flag_str}")
+        print(f"  \033[1;34mUser  :\033[0m {prompt.strip()[:180]}")
+        if args.full:
+            print(f"  \033[1;32mModel :\033[0m\n{text}")
+        else:
+            snippet = text.replace("\n", " ")
+            if len(snippet) > 220:
+                snippet = snippet[:217] + "..."
+            print(f"  \033[1;32mModel :\033[0m {snippet}")
+
+        shown += 1
+        if shown >= limit:
+            break
+
+
+def cmd_chat_inspect(args):
+    chat_id = args.id
+    print_header(f"Inspect Chat #{chat_id}")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT c.id, w.name as ws_name, w.slug as ws_slug, c.prompt, c.response,
+               c.createdAt, c.thread_id, c.feedbackScore
+        FROM workspace_chats c
+        JOIN workspaces w ON c.workspaceId = w.id
+        WHERE c.id = ?
+    """, (chat_id,))
+    row = cur.fetchone()
+    conn.close()
+
+    if not row:
+        print_error(f"Chat #{chat_id} not found in database.")
+        return
+
+    cid = row["id"]
+    wname = row["ws_name"]
+    slug = row["ws_slug"]
+    prompt = row["prompt"]
+    raw_resp = row["response"]
+    created_at = row["createdAt"]
+    thread_id = row["thread_id"]
+    feedback = row["feedbackScore"]
+
+    parsed = parse_chat_response(raw_resp)
+    text = parsed["text"]
+    anomalies = detect_chat_anomalies(text)
+
+    print(f"• ID         : {cid}")
+    print(f"• Timestamp  : {format_ts(created_at)}")
+    print(f"• Workspace  : {wname} ({slug})")
+    print(f"• Thread ID  : {thread_id}")
+    print(f"• Feedback   : {feedback}")
+    print(f"• Anomalies  : {' '.join(anomalies) if anomalies else 'None (Clean)'}")
+
+    if parsed["metrics"]:
+        print(f"• Metrics    : {json.dumps(parsed['metrics'], indent=2)}")
+
+    print(f"\n\033[1;34m=== USER PROMPT ===\033[0m\n{prompt.strip()}")
+    print(f"\n\033[1;32m=== MODEL RESPONSE ===\033[0m\n{text.strip()}")
+
+
+def cmd_chat_delete(args):
+    chat_id = args.id
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, prompt FROM workspace_chats WHERE id = ?", (chat_id,))
+    row = cur.fetchone()
+    if not row:
+        print_error(f"Chat #{chat_id} not found.")
+        conn.close()
+        return
+
+    if not args.yes:
+        confirm = input(f"Delete Chat #{chat_id} ('{row['prompt'][:50]}...')? [y/N]: ")
+        if confirm.lower() != "y":
+            print("Cancelled.")
+            conn.close()
+            return
+
+    cur.execute("DELETE FROM workspace_chats WHERE id = ?", (chat_id,))
+    conn.commit()
+    conn.close()
+    print_success(f"Chat #{chat_id} deleted.")
+
+
+def cmd_clear_history(args):
+    slug_or_id = args.workspace
+    conn = get_db()
+    cur = conn.cursor()
+
+    if slug_or_id.isdigit():
+        cur.execute("SELECT id, name, slug FROM workspaces WHERE id = ?", (int(slug_or_id),))
+    else:
+        cur.execute("SELECT id, name, slug FROM workspaces WHERE slug = ?", (slug_or_id,))
+    ws = cur.fetchone()
+
+    if not ws:
+        print_error(f"Workspace '{slug_or_id}' not found.")
+        conn.close()
+        return
+
+    ws_id = ws["id"]
+    thread_id = args.thread
+
+    if thread_id:
+        cur.execute("SELECT COUNT(*) FROM workspace_chats WHERE workspaceId = ? AND thread_id = ?", (ws_id, thread_id))
+    else:
+        cur.execute("SELECT COUNT(*) FROM workspace_chats WHERE workspaceId = ?", (ws_id,))
+    count = cur.fetchone()[0]
+
+    target_desc = f"all {count} chats in workspace '{ws['name']}'" if not thread_id else f"{count} chats in thread {thread_id}"
+
+    if not args.yes:
+        confirm = input(f"Are you sure you want to delete {target_desc}? [y/N]: ")
+        if confirm.lower() != "y":
+            print("Cancelled.")
+            conn.close()
+            return
+
+    if thread_id:
+        cur.execute("DELETE FROM workspace_chats WHERE workspaceId = ? AND thread_id = ?", (ws_id, thread_id))
+        cur.execute("DELETE FROM workspace_threads WHERE id = ?", (thread_id,))
+    else:
+        cur.execute("DELETE FROM workspace_chats WHERE workspaceId = ?", (ws_id,))
+        cur.execute("DELETE FROM workspace_threads WHERE workspace_id = ?", (ws_id,))
+
+    conn.commit()
+    conn.close()
+    print_success(f"Deleted {target_desc}.")
+
+
+def cmd_threads_list(args):
+    ws_filter = args.workspace
+    limit = args.limit or 20
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    query = """
+        SELECT t.id, t.name, t.slug, t.createdAt, w.name as ws_name, w.slug as ws_slug,
+               (SELECT COUNT(*) FROM workspace_chats WHERE thread_id = t.id) as chat_count
+        FROM workspace_threads t
+        JOIN workspaces w ON t.workspace_id = w.id
+        WHERE 1=1
+    """
+    params = []
+    if ws_filter:
+        query += " AND (w.slug = ? OR w.name LIKE ?) "
+        params.extend([ws_filter, f"%{ws_filter}%"])
+
+    query += " ORDER BY t.id DESC LIMIT ?"
+    params.append(limit)
+
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    conn.close()
+
+    print_header(f"Workspace Threads (Limit: {limit})")
+    if not rows:
+        print("No threads found.")
+        return
+
+    print(f"{'ID':<6} {'WORKSPACE':<20} {'CHATS':<8} {'CREATED':<20} {'NAME'}")
+    print("-" * 75)
+    for r in rows:
+        ts = format_ts(r["createdAt"])
+        print(f"{r['id']:<6} {r['ws_name'][:18]:<20} {r['chat_count']:<8} {ts:<20} {r['name']}")
+
+
+def cmd_audit(args):
+    limit = args.limit or 25
+    ws_filter = args.workspace
+
+    print_header(f"Automated Dialogue Audit (Last {limit} chats)")
+    conn = get_db()
+    cur = conn.cursor()
+
+    query = """
+        SELECT c.id, w.name as ws_name, w.slug as ws_slug, c.prompt, c.response, c.createdAt
+        FROM workspace_chats c
+        JOIN workspaces w ON c.workspaceId = w.id
+        WHERE 1=1
+    """
+    params = []
+    if ws_filter:
+        query += " AND (w.slug = ? OR w.name LIKE ?) "
+        params.extend([ws_filter, f"%{ws_filter}%"])
+
+    query += " ORDER BY c.id DESC LIMIT ?"
+    params.append(limit)
+
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    conn.close()
+
+    clean_count = 0
+    issue_count = 0
+
+    for r in reversed(rows):
+        cid = r["id"]
+        slug = r["ws_slug"]
+        prompt = r["prompt"]
+        raw_resp = r["response"]
+        parsed = parse_chat_response(raw_resp)
+        text = parsed["text"].strip()
+        anomalies = detect_chat_anomalies(text)
+
+        if anomalies:
+            issue_count += 1
+            print(f"✗ \033[1mChat #{cid:3d}\033[0m ({slug:15s}) {' '.join(anomalies)}")
+            print(f"  Prompt : \"{prompt.strip()[:90]}\"")
+            print(f"  Excerpt: \"{text[:120].replace(chr(10), ' ')}...\"\n")
+        else:
+            clean_count += 1
+
+    print("\033[1mAudit Summary:\033[0m")
+    print(f"  • Total Evaluated : {len(rows)}")
+    print(f"  • Clean Chats     : \033[32m{clean_count}\033[0m")
+    print(f"  • Anomalies Found : \033[31m{issue_count}\033[0m" if issue_count > 0 else "  • Anomalies Found : \033[32m0\033[0m")
+
+
+# ==============================================================================
+# 4. SETTINGS & SKILLS
+# ==============================================================================
+
+def cmd_settings_list(args):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, label, value, lastUpdatedAt FROM system_settings ORDER BY label ASC;")
+    rows = cur.fetchall()
+    conn.close()
+
+    print_header(f"AnythingLLM System Settings ({len(rows)} entries)")
+    for r in rows:
+        val = r["value"]
+        if len(val) > 80:
+            val = val[:77] + "..."
+        print(f"  • \033[1m{r['label']:32}\033[0m: {val}")
+
+
+def cmd_settings_get(args):
+    key = args.key
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT label, value FROM system_settings WHERE label = ?", (key,))
+    row = cur.fetchone()
+    conn.close()
+
+    if not row:
+        print_error(f"Setting '{key}' not found.")
+        return
+
+    print_header(f"Setting: {key}")
+    val = row["value"]
+    try:
+        parsed = json.loads(val)
+        print(json.dumps(parsed, indent=2, ensure_ascii=False))
+    except Exception:
+        print(val)
+
+
+def cmd_settings_set(args):
+    key = args.key
+    val = args.value
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT id FROM system_settings WHERE label = ?", (key,))
+    existing = cur.fetchone()
+
+    now_ms = int(time.time() * 1000)
+    if existing:
+        cur.execute("UPDATE system_settings SET value = ?, lastUpdatedAt = ? WHERE label = ?", (val, now_ms, key))
+    else:
+        cur.execute("INSERT INTO system_settings (label, value, createdAt, lastUpdatedAt) VALUES (?, ?, ?, ?)",
+                    (key, val, now_ms, now_ms))
+
+    conn.commit()
+    conn.close()
+    print_success(f"Setting '{key}' set to '{val}'.")
+
+
+def cmd_skills_list(args):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT value FROM system_settings WHERE label = 'disabled_agent_skills'")
+    row = cur.fetchone()
+    conn.close()
+
+    disabled = []
+    if row and row["value"]:
+        try:
+            disabled = json.loads(row["value"])
+        except Exception:
+            pass
+
+    print_header("Agent Skills Status")
+    print(f"• Disabled Skills ({len(disabled)}):")
+    for s in disabled:
+        print(f"  ✗ \033[31m{s}\033[0m")
+    if not disabled:
+        print("  (None disabled)")
+
+
+def cmd_skills_toggle(args, disable: bool):
+    skill = args.skill
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT value FROM system_settings WHERE label = 'disabled_agent_skills'")
+    row = cur.fetchone()
+
+    disabled = []
+    if row and row["value"]:
+        try:
+            disabled = json.loads(row["value"])
+        except Exception:
+            pass
+
+    now_ms = int(time.time() * 1000)
+    if disable:
+        if skill not in disabled:
+            disabled.append(skill)
+            val = json.dumps(disabled)
+            if row:
+                cur.execute("UPDATE system_settings SET value = ?, lastUpdatedAt = ? WHERE label = 'disabled_agent_skills'", (val, now_ms))
+            else:
+                cur.execute("INSERT INTO system_settings (label, value, createdAt, lastUpdatedAt) VALUES ('disabled_agent_skills', ?, ?, ?)", (val, now_ms, now_ms))
+            conn.commit()
+            print_success(f"Skill '{skill}' is now DISABLED.")
+        else:
+            print_warn(f"Skill '{skill}' is already disabled.")
+    else:
+        if skill in disabled:
+            disabled.remove(skill)
+            val = json.dumps(disabled)
+            cur.execute("UPDATE system_settings SET value = ?, lastUpdatedAt = ? WHERE label = 'disabled_agent_skills'", (val, now_ms))
+            conn.commit()
+            print_success(f"Skill '{skill}' is now ENABLED.")
+        else:
+            print_warn(f"Skill '{skill}' was not in disabled list.")
+
+    conn.close()
+
+
+# ==============================================================================
+# 5. DOCUMENTS & VECTORS (docs)
+# ==============================================================================
+
+def cmd_docs_list(args):
+    ws_filter = args.workspace
+    conn = get_db()
+    cur = conn.cursor()
+
+    query = """
+        SELECT d.id, d.docId, d.filename, d.docpath, d.pinned, d.watched, d.createdAt,
+               w.name as ws_name, w.slug as ws_slug,
+               (SELECT COUNT(*) FROM document_vectors WHERE docId = d.docId) as vector_count
+        FROM workspace_documents d
+        JOIN workspaces w ON d.workspaceId = w.id
+        WHERE 1=1
+    """
+    params = []
+    if ws_filter:
+        query += " AND (w.slug = ? OR w.name LIKE ?) "
+        params.extend([ws_filter, f"%{ws_filter}%"])
+
+    query += " ORDER BY d.id ASC"
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    conn.close()
+
+    print_header(f"Workspace Documents ({len(rows)} registered)")
+    if not rows:
+        print("No documents attached to workspaces.")
+        return
+
+    for r in rows:
+        watched_str = "\033[32m[WATCHED]\033[0m" if r["watched"] else ""
+        pinned_str = "\033[33m[PINNED]\033[0m" if r["pinned"] else ""
+        print(f"• ID {r['id']}: \033[1m{r['filename']}\033[0m {watched_str} {pinned_str}")
+        print(f"  └─ Path      : {r['docpath']}")
+        print(f"  └─ Workspace : {r['ws_name']} ({r['ws_slug']})")
+        print(f"  └─ Vectors   : {r['vector_count']} chunks")
+
+
+# ==============================================================================
+# 6. DIRECT DATABASE CLI (db)
+# ==============================================================================
+
+def cmd_db_tables(args):
+    print_header("AnythingLLM SQLite Tables")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name ASC;")
+    tables = [r[0] for r in cur.fetchall()]
+
+    for t in tables:
+        cur.execute(f"SELECT COUNT(*) FROM `{t}`;")
+        count = cur.fetchone()[0]
+        print(f"  • {t:36}: {count:6d} rows")
+
+    conn.close()
+
+
+def cmd_db_schema(args):
+    table = args.table
+    print_header(f"Schema for Table: {table}")
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(f"PRAGMA table_info(`{table}`);")
+        columns = cur.fetchall()
+        if not columns:
+            print_error(f"Table '{table}' not found or empty schema.")
+            return
+
+        print(f"{'CID':<5} {'NAME':<28} {'TYPE':<16} {'NOTNULL':<8} {'DFLT':<15} {'PK':<5}")
+        print("-" * 80)
+        for col in columns:
+            cid, name, ctype, notnull, dflt, pk = col
+            dflt_str = str(dflt) if dflt is not None else "NULL"
+            print(f"{cid:<5} {name:<28} {ctype:<16} {notnull:<8} {dflt_str:<15} {pk:<5}")
+    except Exception as e:
+        print_error(f"Schema lookup failed: {e}")
+    finally:
+        conn.close()
+
+
+def cmd_db_dump(args):
+    table = args.table
+    limit = args.limit or 20
+    where_clause = f"WHERE {args.where}" if args.where else ""
+
+    print_header(f"Dump Table: {table} ({where_clause or 'All'}, Limit {limit})")
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(f"SELECT * FROM `{table}` {where_clause} LIMIT {limit};")
+        rows = cur.fetchall()
+        if not rows:
+            print("No rows found.")
+            return
+
+        for r in rows:
+            d = dict(r)
+            print(json.dumps(d, indent=2, default=str, ensure_ascii=False))
+    except Exception as e:
+        print_error(f"Query failed: {e}")
+    finally:
+        conn.close()
+
+
+def cmd_db_query(args):
+    query = args.query
+    print_header(f"SQL Query: {query}")
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(query)
+        if query.strip().upper().startswith("SELECT"):
+            rows = cur.fetchall()
+            print(f"Rows returned: {len(rows)}\n")
+            for r in rows:
+                print(dict(r))
+        else:
+            conn.commit()
+            print_success(f"Query executed successfully. Rows affected: {cur.rowcount}")
+    except Exception as e:
+        print_error(f"SQL Execution Error: {e}")
+    finally:
+        conn.close()
+
+
+# ==============================================================================
+# 7. BENCHMARK & TESTING & SYNC
+# ==============================================================================
+
+def cmd_bench(args):
+    model = args.model or "qwen2.5:14b"
+    prompt = args.prompt or "Объясни концепцию архитектуры микроядра и сравни её с монолитным ядром Linux в трёх пунктах."
+    print_header(f"Benchmarking Model: {model}")
+    print(f"Prompt: \"{prompt}\"")
+    print(f"Initial VRAM: {get_vram_info()}")
+
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "stream": False,
+    }
+
+    t0 = time.perf_counter()
+    try:
+        res = http_post_json(f"{OLLAMA_URL}/api/chat", payload)
+    except Exception as e:
+        print_error(f"Benchmark failed: {e}")
+        return
+
+    t1 = time.perf_counter()
+    total_elapsed = t1 - t0
+
+    eval_count = res.get("eval_count", 0)
+    eval_duration_sec = res.get("eval_duration", 0) / 1e9
+    prompt_eval_count = res.get("prompt_eval_count", 0)
+    prompt_eval_sec = res.get("prompt_eval_duration", 0) / 1e9
+
+    tokens_per_sec = (eval_count / eval_duration_sec) if eval_duration_sec > 0 else 0
+    prompt_tps = (prompt_eval_count / prompt_eval_sec) if prompt_eval_sec > 0 else 0
+
+    print("\n\033[1;32mResults:\033[0m")
+    print(f"  • Total wall time       : {total_elapsed:.2f} s")
+    print(f"  • Prompt Processing     : {prompt_eval_count} tokens in {prompt_eval_sec:.3f} s ({prompt_tps:.1f} t/s)")
+    print(f"  • Response Generation   : {eval_count} tokens in {eval_duration_sec:.3f} s (\033[1;36m{tokens_per_sec:.2f} tokens/s\033[0m)")
+    print(f"  • Active VRAM           : {get_vram_info()}")
+
+    if tokens_per_sec > 40:
+        print_success("Hardware acceleration ACTIVE (Full GPU VRAM inference)")
+    else:
+        print_warn("Generation speed is LOW (<40 t/s). Possible CPU offload!")
+
+
+def cmd_test_tool(args):
+    model = args.model or "qwen2.5:14b"
+    print_header(f"Testing Tool-Calling Capabilities for: {model}")
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "user", "content": "проверь статус git репозитория /data/projects/dotfiles"}
+        ],
+        "stream": False,
+        "tools": [
+            {
+                "type": "function",
+                "function": {
+                    "name": "host-cli-git_status",
+                    "description": "Runs git status on a repository to inspect changed files",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "repo_path": {
+                                "type": "string",
+                                "description": "Absolute path to the repository"
+                            }
+                        },
+                        "required": ["repo_path"]
+                    }
+                }
+            }
+        ]
+    }
+
+    print(f"Testing via Headroom Proxy ({HEADROOM_URL}/v1/chat/completions)...")
+    try:
+        resp = http_post_json(
+            f"{HEADROOM_URL}/v1/chat/completions",
+            payload,
+            headers={"Authorization": "Bearer headroom"}
+        )
+        msg = resp["choices"][0]["message"]
+        tool_calls = msg.get("tool_calls")
+        content = msg.get("content", "")
+
+        if tool_calls and len(tool_calls) > 0:
+            tc = tool_calls[0]["function"]
+            print_success("PASSED! Native Tool Call generated cleanly:")
+            print(f"  Function : {tc.get('name')}")
+            print(f"  Arguments: {tc.get('arguments')}")
+        else:
+            print_error("FAILED! Model outputted raw text to content instead of tool_calls object:")
+            print(f"  Raw Content: {content}")
+            print_warn("AnythingLLM will NOT execute this tool automatically.")
+    except Exception as e:
+        print_error(f"Request failed: {e}")
+
+
+def cmd_test_search(args):
+    query = args.query
+    directory = args.dir or "/data/obsidian"
+    print_header(f"Testing bash-mcp-server search_files: query='{query}' dir='{directory}'")
+
+    mcp_script = PLUGINS_DIR / "bash-mcp-server.mjs"
+    if not mcp_script.exists():
+        print_error(f"MCP script not found at {mcp_script}")
+        return
+
+    rpc_req = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+            "name": "search_files",
+            "arguments": {
+                "keyword": query,
+                "directory": directory
+            }
+        }
+    }
+
+    try:
+        proc = subprocess.Popen(
+            ["node", str(mcp_script)],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8"
+        )
+        stdout, stderr = proc.communicate(input=json.dumps(rpc_req) + "\n", timeout=10)
+        resp = json.loads(stdout.strip())
+        content = resp.get("result", {}).get("content", [{}])[0].get("text", "")
+        print(content)
+    except Exception as e:
+        print_error(f"Search execution error: {e}")
+
+
+def cmd_test_prompt(args):
+    slug_or_id = args.workspace
+    user_prompt = args.prompt
+
+    conn = get_db()
+    cur = conn.cursor()
+    if slug_or_id.isdigit():
+        cur.execute("SELECT id, name, slug, chatModel, openAiPrompt FROM workspaces WHERE id = ?", (int(slug_or_id),))
+    else:
+        cur.execute("SELECT id, name, slug, chatModel, openAiPrompt FROM workspaces WHERE slug = ?", (slug_or_id,))
+    ws = cur.fetchone()
+    conn.close()
+
+    if not ws:
+        print_error(f"Workspace '{slug_or_id}' not found.")
+        return
+
+    system_prompt = ws["openAiPrompt"] or ""
+    model = ws["chatModel"]
+
+    print_header(f"Testing Prompt in Context of Workspace: {ws['name']} ({ws['slug']})")
+    print(f"• Model : {model}")
+    print(f"• User  : {user_prompt}\n")
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        "stream": False
+    }
+
+    try:
+        res = http_post_json(
+            f"{HEADROOM_URL}/v1/chat/completions",
+            payload,
+            headers={"Authorization": "Bearer headroom"}
+        )
+        msg = res["choices"][0]["message"]
+        print("\033[1;32m=== MODEL RESPONSE ===\033[0m")
+        print(msg.get("content", ""))
+    except Exception as e:
+        print_error(f"Test prompt failed: {e}")
+
+
+def cmd_sync(args):
+    print_header("Synchronizing AnythingLLM Workspaces & Prompts")
+    sync_script = PLUGINS_DIR / "sync-prompts.ts"
+    if not sync_script.exists():
+        print_error(f"sync-prompts.ts not found at {sync_script}")
+        return
+
+    cmd = ["mise", "exec", "bun", "--", "bun", "run", "sync-prompts.ts"]
+    subprocess.run(cmd, cwd=str(PLUGINS_DIR), check=True)
+
+
+# ==============================================================================
+# MAIN ARGPARSE DISPATCHER
+# ==============================================================================
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="anything-ctl",
+        description="Comprehensive CLI for AnythingLLM Desktop + Ollama + Headroom stack on CachyOS"
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    # 1. status
+    sub.add_parser("status", help="Show system, VRAM, Ollama, Headroom, and DB health")
+
+    # 2. logs
+    p_logs = sub.add_parser("logs", help="View journalctl logs for ollama or headroom")
+    p_logs.add_argument("service", nargs="?", choices=["ollama", "headroom"], default="ollama", help="Service name")
+    p_logs.add_argument("-n", "--lines", type=int, default=50, help="Number of log lines")
+
+    # 3. restart
+    p_restart = sub.add_parser("restart", help="Restart systemd user service(s)")
+    p_restart.add_argument("service", nargs="?", choices=["ollama", "headroom", "all"], default="all")
+
+    # 4. models
+    sub.add_parser("models", help="List installed models in Ollama with size and digests")
+
+    # 5. ws
+    p_ws = sub.add_parser("ws", help="Manage AnythingLLM workspaces")
+    ws_sub = p_ws.add_subparsers(dest="ws_command", required=True)
+    ws_sub.add_parser("list", help="List all workspaces")
+    p_ws_show = ws_sub.add_parser("show", help="Show full workspace details and system prompt")
+    p_ws_show.add_argument("slug_or_id", help="Workspace slug or numeric ID")
+    p_ws_set = ws_sub.add_parser("set", help="Update workspace model, provider, temperature, or prompt")
+    p_ws_set.add_argument("slug_or_id", help="Workspace slug or numeric ID")
+    p_ws_set.add_argument("--chat-model", help="Chat model name")
+    p_ws_set.add_argument("--chat-provider", help="Chat provider (e.g. generic-openai)")
+    p_ws_set.add_argument("--agent-model", help="Agent model name")
+    p_ws_set.add_argument("--agent-provider", help="Agent provider")
+    p_ws_set.add_argument("--temp", type=float, help="Temperature (e.g. 0.7)")
+    p_ws_set.add_argument("--prompt", help="Direct text for system prompt")
+    p_ws_set.add_argument("--prompt-file", help="File path to read system prompt from")
+
+    # 6. chats
+    p_chats = sub.add_parser("chats", help="List recent dialogs/chats across workspaces")
+    p_chats.add_argument("--limit", "-n", type=int, default=10, help="Number of chats to show (default: 10)")
+    p_chats.add_argument("--workspace", "-w", help="Filter by workspace slug or name")
+    p_chats.add_argument("--thread", "-t", type=int, help="Filter by thread ID")
+    p_chats.add_argument("--search", "-s", help="Search text in prompt or model response")
+    p_chats.add_argument("--anomalies-only", "-a", action="store_true", help="Only show chats with anomalies")
+    p_chats.add_argument("--full", "-f", action="store_true", help="Print full response text instead of snippet")
+
+    # 7. chat (inspect single)
+    p_inspect = sub.add_parser("chat", help="Inspect single chat by ID in detail")
+    p_inspect.add_argument("id", type=int, help="Chat ID to inspect")
+
+    # 8. chat-delete
+    p_cdel = sub.add_parser("chat-delete", help="Delete a single chat by ID")
+    p_cdel.add_argument("id", type=int, help="Chat ID to delete")
+    p_cdel.add_argument("-y", "--yes", action="store_true", help="Skip confirmation prompt")
+
+    # 9. clear-history
+    p_clear = sub.add_parser("clear-history", help="Clear chat history for a workspace or thread")
+    p_clear.add_argument("--workspace", "-w", required=True, help="Workspace slug or ID")
+    p_clear.add_argument("--thread", "-t", type=int, help="Optional thread ID")
+    p_clear.add_argument("-y", "--yes", action="store_true", help="Skip confirmation prompt")
+
+    # 10. threads
+    p_threads = sub.add_parser("threads", help="Manage workspace threads")
+    threads_sub = p_threads.add_subparsers(dest="threads_command", required=True)
+    p_th_list = threads_sub.add_parser("list", help="List threads")
+    p_th_list.add_argument("--workspace", "-w", help="Filter by workspace")
+    p_th_list.add_argument("--limit", "-n", type=int, default=20, help="Limit (default: 20)")
+
+    # 11. audit
+    p_audit = sub.add_parser("audit", help="Audit recent chats for tool errors, simulations, and CJK leaks")
+    p_audit.add_argument("--limit", "-n", type=int, default=25, help="Number of chats to audit (default: 25)")
+    p_audit.add_argument("--workspace", "-w", help="Filter by workspace slug or name")
+
+    # 12. settings
+    p_settings = sub.add_parser("settings", help="Manage AnythingLLM system settings")
+    settings_sub = p_settings.add_subparsers(dest="settings_command", required=True)
+    settings_sub.add_parser("list", help="List all system settings")
+    p_set_get = settings_sub.add_parser("get", help="Get value of specific setting")
+    p_set_get.add_argument("key", help="Setting key/label")
+    p_set_set = settings_sub.add_parser("set", help="Set value of specific setting")
+    p_set_set.add_argument("key", help="Setting key/label")
+    p_set_set.add_argument("value", help="Setting value")
+
+    # 13. skills
+    p_skills = sub.add_parser("skills", help="Manage disabled/enabled agent skills")
+    skills_sub = p_skills.add_subparsers(dest="skills_command", required=True)
+    skills_sub.add_parser("list", help="List disabled skills")
+    p_sk_dis = skills_sub.add_parser("disable", help="Disable an agent skill")
+    p_sk_dis.add_argument("skill", help="Skill name (e.g. filesystem-agent)")
+    p_sk_en = skills_sub.add_parser("enable", help="Enable an agent skill")
+    p_sk_en.add_argument("skill", help="Skill name")
+
+    # 14. docs
+    p_docs = sub.add_parser("docs", help="Manage workspace documents and vectors")
+    docs_sub = p_docs.add_subparsers(dest="docs_command", required=True)
+    p_docs_list = docs_sub.add_parser("list", help="List workspace documents")
+    p_docs_list.add_argument("--workspace", "-w", help="Filter by workspace")
+
+    # 15. db
+    p_db = sub.add_parser("db", help="Inspect and query AnythingLLM SQLite database")
+    db_sub = p_db.add_subparsers(dest="db_command", required=True)
+    db_sub.add_parser("tables", help="List all database tables and row counts")
+    p_db_schema = db_sub.add_parser("schema", help="Show table column schema")
+    p_db_schema.add_argument("table", help="Table name")
+    p_db_dump = db_sub.add_parser("dump", help="Dump table rows as JSON")
+    p_db_dump.add_argument("table", help="Table name")
+    p_db_dump.add_argument("-n", "--limit", type=int, default=10, help="Row limit")
+    p_db_dump.add_argument("--where", help="SQL WHERE clause")
+    p_db_query = db_sub.add_parser("query", help="Execute raw SQL query")
+    p_db_query.add_argument("query", help="SQL string")
+
+    # 16. bench
+    p_bench = sub.add_parser("bench", help="Measure TTFT and tokens/sec generation speed")
+    p_bench.add_argument("--model", "-m", help="Target model (default: qwen2.5:14b)")
+    p_bench.add_argument("--prompt", "-p", help="Custom prompt for benchmark")
+
+    # 17. test-tool
+    p_tool = sub.add_parser("test-tool", help="Test if a model natively produces tool_calls")
+    p_tool.add_argument("--model", "-m", help="Target model (default: qwen2.5:14b)")
+
+    # 18. test-search
+    p_search = sub.add_parser("test-search", help="Test Obsidian search_files with Russian/English stemming")
+    p_search.add_argument("query", help="Search query (e.g. лидерство, docker, vault)")
+    p_search.add_argument("--dir", "-d", help="Target directory (default: /data/obsidian)")
+
+    # 19. test-prompt
+    p_tprompt = sub.add_parser("test-prompt", help="Test prompt against workspace system prompt and model")
+    p_tprompt.add_argument("workspace", help="Workspace slug or ID")
+    p_tprompt.add_argument("prompt", help="User prompt to send")
+
+    # 20. sync
+    sub.add_parser("sync", help="Run sync-prompts.ts to update workspaces and prompts")
+
+    args = parser.parse_args()
+
+    if args.command == "status":
+        cmd_status(args)
+    elif args.command == "logs":
+        cmd_logs(args)
+    elif args.command == "restart":
+        cmd_restart(args)
+    elif args.command == "models":
+        cmd_models(args)
+    elif args.command == "ws":
+        if args.ws_command == "list":
+            cmd_ws_list(args)
+        elif args.ws_command == "show":
+            cmd_ws_show(args)
+        elif args.ws_command == "set":
+            cmd_ws_set(args)
+    elif args.command == "chats":
+        cmd_chats(args)
+    elif args.command == "chat":
+        cmd_chat_inspect(args)
+    elif args.command == "chat-delete":
+        cmd_chat_delete(args)
+    elif args.command == "clear-history":
+        cmd_clear_history(args)
+    elif args.command == "threads":
+        if args.threads_command == "list":
+            cmd_threads_list(args)
+    elif args.command == "audit":
+        cmd_audit(args)
+    elif args.command == "settings":
+        if args.settings_command == "list":
+            cmd_settings_list(args)
+        elif args.settings_command == "get":
+            cmd_settings_get(args)
+        elif args.settings_command == "set":
+            cmd_settings_set(args)
+    elif args.command == "skills":
+        if args.skills_command == "list":
+            cmd_skills_list(args)
+        elif args.skills_command == "disable":
+            cmd_skills_toggle(args, disable=True)
+        elif args.skills_command == "enable":
+            cmd_skills_toggle(args, disable=False)
+    elif args.command == "docs":
+        if args.docs_command == "list":
+            cmd_docs_list(args)
+    elif args.command == "db":
+        if args.db_command == "tables":
+            cmd_db_tables(args)
+        elif args.db_command == "schema":
+            cmd_db_schema(args)
+        elif args.db_command == "dump":
+            cmd_db_dump(args)
+        elif args.db_command == "query":
+            cmd_db_query(args)
+    elif args.command == "bench":
+        cmd_bench(args)
+    elif args.command == "test-tool":
+        cmd_test_tool(args)
+    elif args.command == "test-search":
+        cmd_test_search(args)
+    elif args.command == "test-prompt":
+        cmd_test_prompt(args)
+    elif args.command == "sync":
+        cmd_sync(args)
+
+
+if __name__ == "__main__":
+    main()
