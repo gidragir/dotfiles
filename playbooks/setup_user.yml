@@ -39,6 +39,7 @@
       loop:
         - "{{ ansible_facts.env.HOME }}/.cargo"
         - "{{ ansible_facts.env.HOME }}/.config"
+        - "{{ ansible_facts.env.HOME }}/.config/systemd/user"
         - "{{ ansible_facts.env.HOME }}/.config/wireplumber"
         - "{{ ansible_facts.env.HOME }}/.local/state/zsh"
       tags: [stow]
@@ -52,6 +53,7 @@
         - "{{ ansible_facts.env.HOME }}/.cargo/config.toml"
         - "{{ ansible_facts.env.HOME }}/.config/anythingllm-desktop/prompts"
         - "{{ ansible_facts.env.HOME }}/.config/atuin"
+        - "{{ ansible_facts.env.HOME }}/.config/btop"
         - "{{ ansible_facts.env.HOME }}/.config/ghostty"
         - "{{ ansible_facts.env.HOME }}/.config/hypr"
         - "{{ ansible_facts.env.HOME }}/.config/k3d"

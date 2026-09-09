@@ -84,6 +84,15 @@
       when: not db_stat.stat.exists
       tags: [anythingllm, sync]
 
+    # ── Hardware-Accelerated Ollama Service ───────────────────────────────────
+    - name: Ensure user Ollama service is enabled and started
+      ansible.builtin.systemd:
+        name: ollama.service
+        enabled: true
+        state: started
+        scope: user
+      tags: [anythingllm, ollama]
+
     # ── Headroom Context Optimization Proxy & MCP ─────────────────────────────
     - name: Configure Headroom proxy, systemd daemon, and MCP integrations
       ansible.builtin.command:
@@ -99,4 +108,5 @@
         state: started
         scope: user
       tags: [anythingllm, headroom, systemd]
+
 

@@ -136,6 +136,7 @@ else
         --env OPENAI_TARGET_API_URL=http://127.0.0.1:11434/v1 \
         --env HEADROOM_PROTECT_TOOL_RESULTS="${PROTECT_TOOLS}" \
         --env HEADROOM_NO_CCR=1 \
+        --protect-tool-results "${PROTECT_TOOLS}" \
         --code-aware \
         --port 8787
 fi

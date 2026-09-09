@@ -1,0 +1,91 @@
+---
+# =============================================================================
+# Playbook : setup_ollama.yml
+# Purpose  : Standalone setup for hardware-accelerated Ollama (NVIDIA CUDA)
+#            with Flash Attention, KV Cache Quantization (q8_0), 14B models,
+#            and integration with AnythingLLM Desktop & Headroom proxy.
+# Usage    : ansible-playbook playbooks/setup_ollama.yml
+# =============================================================================
+
+- name: Configure Hardware-Accelerated Ollama for AnythingLLM
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: true
+
+  vars:
+    dotfiles_dir: "{{ playbook_dir }}/.."
+    models_dir: "/data/models/ollama"
+    plugins_dir: "{{ dotfiles_dir }}/anythingllm/.config/anythingllm-desktop/storage/plugins"
+    target_models:
+      - "qwen2.5-coder:14b"
+      - "qwen2.5:14b"
+      - "deepseek-r1:14b"
+
+  tasks:
+    - name: Ensure dedicated models directory exists on fast storage
+      ansible.builtin.file:
+        path: "{{ models_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Ensure systemd user directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts.env.HOME }}/.config/systemd/user"
+        state: directory
+        mode: '0755'
+
+    - name: Ensure Stow symlink for anythingllm package is applied
+      ansible.builtin.command:
+        cmd: "stow -R -t {{ ansible_facts.env.HOME }} anythingllm"
+        chdir: "{{ dotfiles_dir }}"
+
+    - name: Stop conflicting embedded AnythingLLM llm serve process if running
+      ansible.builtin.shell: |
+        pkill -9 -f '[a]nythingllm-desktop/storage/engines/ollama/bin/llm' || true
+      changed_when: false
+
+    - name: Reload systemd user daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+        scope: user
+
+    - name: Enable and restart user Ollama service
+      ansible.builtin.systemd:
+        name: ollama.service
+        enabled: true
+        state: restarted
+        scope: user
+
+    - name: Wait for Ollama API to become available on port 11434
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 11434
+        delay: 1
+        timeout: 30
+
+    - name: Get list of currently installed Ollama models
+      ansible.builtin.command:
+        cmd: ollama list
+      register: ollama_list_res
+      changed_when: false
+
+    - name: Pull required 14B models for AnythingLLM workspaces
+      ansible.builtin.command:
+        cmd: "ollama pull {{ item }}"
+      loop: "{{ target_models }}"
+      when: item not in ollama_list_res.stdout
+      register: pull_res
+      async: 7200
+      poll: 15
+
+    - name: Ensure Bun runtime is available via mise
+      ansible.builtin.command:
+        cmd: mise install bun
+      changed_when: false
+
+    - name: Synchronize AnythingLLM workspace models and environment
+      ansible.builtin.command:
+        cmd: mise exec bun -- bun run sync-prompts.ts
+        chdir: "{{ plugins_dir }}"
+      changed_when: true
