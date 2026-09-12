@@ -1,0 +1,6 @@
+[submodule "crates/context-init"]
+	path = crates/context-init
+	url = git@github.com:gidragir/context-init.git
+[submodule "local-ai-stack"]
+	path = local-ai-stack
+	url = git@github.com:gidragir/local-ai-stack.git
