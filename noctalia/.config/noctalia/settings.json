@@ -197,6 +197,21 @@
                     "width": 20
                 },
                 {
+                    "defaultSettings": {
+                        "badgeMode": "pending",
+                        "dailyFolder": "DAILY",
+                        "dailyFormat": "YYYY-MM-DD",
+                        "inboxFile": "INBOX.md",
+                        "panelPosition": "follow_launcher",
+                        "preferredEditor": "neovim",
+                        "refreshIntervalSec": 15,
+                        "showBadge": true,
+                        "syncService": "rclone-obsidian-sync.service",
+                        "vaultPath": "/data/obsidian"
+                    },
+                    "id": "plugin:obsidian"
+                },
+                {
                     "colorizeSystemIcon": "none",
                     "colorizeSystemText": "none",
                     "generalTooltipText": "🧠 AI Assistant Hub\n• ЛКМ: AnythingLLM\n• ПКМ: Khoj WebApp\n• СКМ: Local AI Меню",

@@ -178,6 +178,10 @@
           Type=oneshot
           ExecStart=/usr/bin/rclone bisync /data/obsidian gdrive:Obsidian \
               --fast-list \
+              --modify-window 2s \
+              --resilient \
+              --recover \
+              --retries 3 \
               --log-level INFO \
               --log-file=%h/.cache/rclone/obsidian-sync.log
       tags: [systemd]
@@ -215,6 +219,27 @@
       ansible.builtin.stat:
         path: "{{ ansible_facts.env.HOME }}/.config/rclone/rclone.conf"
       register: rclone_conf_check
+      tags: [systemd]
+
+    - name: Check if bisync has prior listings initialized
+      ansible.builtin.stat:
+        path: "{{ ansible_facts.env.HOME }}/.cache/rclone/bisync/data_obsidian..gdrive_Obsidian.path1.lst"
+      register: rclone_bisync_init_check
+      tags: [systemd]
+
+    - name: Perform initial rclone bisync resync if not initialized
+      ansible.builtin.command:
+        cmd: >
+          /usr/bin/rclone bisync /data/obsidian gdrive:Obsidian
+          --fast-list
+          --modify-window 2s
+          --resync
+          --log-level INFO
+          --log-file={{ ansible_facts.env.HOME }}/.cache/rclone/obsidian-sync.log
+      when:
+        - rclone_conf_check.stat.exists
+        - not rclone_bisync_init_check.stat.exists
+      changed_when: true
       tags: [systemd]
 
     - name: Enable rclone timers

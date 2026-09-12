@@ -1,0 +1,12 @@
+{
+  "vaultPath": "/data/obsidian",
+  "dailyFolder": "DAILY",
+  "dailyFormat": "YYYY-MM-DD",
+  "inboxFile": "INBOX.md",
+  "preferredEditor": "neovim",
+  "showBadge": true,
+  "badgeMode": "pending",
+  "refreshIntervalSec": 15,
+  "syncService": "rclone-obsidian-sync.service",
+  "panelPosition": "follow_launcher"
+}

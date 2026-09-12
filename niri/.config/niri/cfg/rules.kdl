@@ -72,7 +72,7 @@
     }
 
     window-rule {
-        match title=r#"^(Khoj Quick Chat|Khoj Tags Browser|AI Stack Status|Anything-CTL)$"#
+        match title=r#"^(Khoj Quick Chat|Khoj Tags Browser|AI Stack Status|Anything-CTL|Obsidian Note:.*)$"#
         open-floating true
         default-floating-position x=485 y=150 relative-to="top-left"
         default-column-width { fixed 950; }

@@ -11,12 +11,12 @@ binds {
 
     // ─── noctalia-shell keybinds ───
     // https://docs.noctalia.dev/getting-started/keybinds/
-    Mod+Alt+N { spawn "~/.local/bin/obsidian-note.sh"; }
+    Mod+N hotkey-overlay-title="Obsidian: New Note (Sticky/Workstation/Fleeting)" { spawn "bash" "-c" "~/.zsh/scripts/obsidian-create-note.sh"; }
+    Mod+Alt+N hotkey-overlay-title="Obsidian: New Note (Sticky/Workstation/Fleeting)" { spawn "bash" "-c" "~/.zsh/scripts/obsidian-create-note.sh"; }
     
-    Mod+Alt+V { spawn "sh" "-c" "wl-paste >> ~/Documents/ObsidianVault/STICKY/$(date +'%Y-%m-%d %H:%M').md && notify-send 'Obsidian' 'Заметка создана!'"; }
+    Mod+Alt+V { spawn "sh" "-c" "wl-paste >> /data/obsidian/STICKY/$(date +'%Y-%m-%d %H:%M').md && notify-send 'Obsidian' 'Заметка создана!'"; }
     Mod+V hotkey-overlay-title="Clipboard History: Noctalia" { spawn-sh "qs -c noctalia-shell ipc call launcher clipboard"; }
     Mod+I hotkey-overlay-title="Insert Path/Note: Obsidian & Projects" { spawn "bash" "-c" "~/.zsh/scripts/path-picker-dmenu.sh"; }
-    Mod+Shift+O hotkey-overlay-title="Insert Path/Note: Obsidian & Projects" { spawn "bash" "-c" "~/.zsh/scripts/path-picker-dmenu.sh"; }
     Mod+Z hotkey-overlay-title="Open Zoxide Directory in VS Code" { spawn "bash" "-c" "res=$(zoxide query -l | noctalia-dmenu -p 'Zoxide:'); [ -n \"$res\" ] && code \"$res\""; }
     Mod+X hotkey-overlay-title="Open Workspace in VS Code" { spawn "bash" "-c" "res=$(ls ~/workspaces | noctalia-dmenu -p 'Workspace:'); [ -n \"$res\" ] && code ~/workspaces/\"$res\""; }
     Mod+F1 hotkey-overlay-title="CoolerControl: Toggle Mode" { spawn-sh "cooler-toggle"; }
@@ -27,7 +27,9 @@ binds {
     Mod+A                               hotkey-overlay-title="AI Assistant: AnythingLLM" { spawn "bash" "-c" "~/.zsh/scripts/anythingllm-assistant-toggle.sh"; }
     Mod+Alt+A                           hotkey-overlay-title="AI Assistant: Khoj WebApp" { spawn "bash" "-c" "~/.zsh/scripts/khoj-toggle.sh"; }
     Mod+Ctrl+A                          hotkey-overlay-title="AI Assistant: Local AI Hub" { spawn "bash" "-c" "~/.zsh/scripts/ai-launcher.sh"; }
-    Mod+Shift+Z {spawn "nu" "-c" "source $nu.config-path; open-focus-id obsidian obsidian";}
+    Mod+Shift+O                         hotkey-overlay-title="Obsidian: Companion Hub" { spawn-sh "qs -c noctalia-shell ipc call plugin:obsidian toggle"; }
+    Mod+Alt+F                           hotkey-overlay-title="Obsidian: Search Notes (Noctalia)" { spawn "bash" "-c" "obsidian-helper search-notes"; }
+    Mod+Alt+T                           hotkey-overlay-title="Obsidian: Explore Tags (Noctalia)" { spawn "bash" "-c" "obsidian-helper explore-tags"; }
     Mod+Shift+A {spawn "nu" "-c" "source $nu.config-path; open-focus-id code code";}
 
     Mod+Return                          hotkey-overlay-title="Open Terminal: Ghostty" { spawn "ghostty" "-e" "zellij"; }
@@ -140,7 +142,7 @@ binds {
     // ─── Layout Controls ───
     Mod+R  { switch-preset-column-width; }
     Mod+CTRL+F                          { fullscreen-window; }
-    Mod+Alt+F                           { expand-column-to-available-width; }
+    Mod+Ctrl+Alt+F                      { expand-column-to-available-width; }
     Mod+Shift+F                         { maximize-window-to-edges; }
     Mod+C                               { center-column; }
     Mod+CTRL+C                          { center-visible-columns; }
