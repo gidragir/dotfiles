@@ -92,6 +92,9 @@ user_pacman_packages:
   - biome
   - imv
   - sheldon
+
+# Dedicated GPU/AI inference packages (installed on-demand via setup_ollama.yml)
+ollama_packages:
   - ollama
   - ollama-cuda
 

@@ -45,6 +45,14 @@
       become: true
       tags: [user, packages]
 
+    - name: Install Ollama packages via pacman
+      community.general.pacman:
+        name: "{{ ollama_packages }}"
+        state: present
+        extra_args: "--needed"
+      become: true
+      tags: [ollama, ai]
+
 
 # ── Play 2: AUR and Cargo Packages (Requires Normal User) ────────────────────
 - name: Install AUR and Cargo Packages

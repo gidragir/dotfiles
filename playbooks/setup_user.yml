@@ -51,7 +51,6 @@
       loop:
         - "{{ ansible_facts.env.HOME }}/.zshrc"
         - "{{ ansible_facts.env.HOME }}/.cargo/config.toml"
-        - "{{ ansible_facts.env.HOME }}/.config/anythingllm-desktop/prompts"
         - "{{ ansible_facts.env.HOME }}/.config/atuin"
         - "{{ ansible_facts.env.HOME }}/.config/btop"
         - "{{ ansible_facts.env.HOME }}/.config/ghostty"
@@ -75,7 +74,7 @@
 
     - name: Run GNU Stow to link configurations
       ansible.builtin.shell:
-        cmd: stow -R -t "{{ ansible_facts.env.HOME }}" $(find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' ! -name 'playbooks' -exec basename {} \;)
+        cmd: stow -R -t "{{ ansible_facts.env.HOME }}" $(find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' ! -name 'playbooks' ! -name 'deploy' ! -name 'docs' ! -name 'scripts' ! -name 'evals' ! -name 'ollama' ! -name 'local-ai-stack' ! -name 'crates' -exec basename {} \;)
         chdir: /data/projects/dotfiles
       tags: [stow]
 
