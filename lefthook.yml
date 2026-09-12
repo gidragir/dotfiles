@@ -1,7 +1,22 @@
+# =============================================================================
+# Lefthook Git Pre-Commit Configuration for Dotfiles
+# Focus: Syntax verification, host configuration sanity checks
+# =============================================================================
 pre-commit:
   parallel: false
   commands:
-    build-anythingllm-skills:
-      glob: "anythingllm/**/agent-skills/**/*.ts"
-      run: mise run build:skills && git add anythingllm/.config/anythingllm-desktop/storage/plugins/agent-skills/**/handler.js
-      stage_fixed: true
+    check-shell:
+      glob: "{scripts/**/*.sh,zsh/.zsh/scripts/*.sh}"
+      run: bash -n {all_files}
+
+    check-python:
+      glob: "zsh/.zsh/scripts/*.py"
+      run: python3 -m py_compile zsh/.zsh/scripts/anything-ctl
+
+    check-niri:
+      glob: "niri/.config/niri/**/*.kdl"
+      run: niri validate -c niri/.config/niri/config.kdl
+
+    check-ansible:
+      glob: "playbooks/**/*.yml"
+      run: ansible-playbook --syntax-check playbooks/setup_system.yml playbooks/setup_user.yml playbooks/packages.yml

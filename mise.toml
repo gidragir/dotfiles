@@ -2,17 +2,44 @@
 bun = "latest"
 node = "lts"
 
-[tasks."build:skills"]
-description = "Build all AnythingLLM agent skills with Bun"
-dir = "anythingllm/.config/anythingllm-desktop/storage/plugins"
-run = "bun run build"
+[tasks."ai:status"]
+description = "Quick status check for Ollama, Headroom, Khoj, and Postgres"
+run = """
+echo "=== AI Services Status ==="
+systemctl --user is-active ollama.service &>/dev/null && echo "✓ Ollama: active (:11434)" || echo "✗ Ollama: inactive"
+systemctl --user is-active headroom-default.service &>/dev/null && echo "✓ Headroom: active (:8787)" || echo "✗ Headroom: inactive"
+docker ps --filter "name=khoj"
+curl -sf http://127.0.0.1:42110/api/health >/dev/null && echo "✓ Khoj Health: OK (:42110)" || echo "✗ Khoj Health: Failed"
+"""
 
-[tasks."watch:skills"]
-description = "Watch and build atomic-commits skill with Bun"
-dir = "anythingllm/.config/anythingllm-desktop/storage/plugins"
-run = "bun run watch"
+[tasks."ai:up"]
+description = "Start Khoj & Postgres stack in local-ai-stack submodule"
+dir = "local-ai-stack"
+run = "mise run up"
 
-[tasks."sync:prompts"]
-description = "Sync workspace prompts from dotfiles into AnythingLLM SQLite database"
-dir = "anythingllm/.config/anythingllm-desktop/storage/plugins"
-run = "bun run ./sync-prompts.ts"
+[tasks."ai:down"]
+description = "Stop Khoj & Postgres stack in local-ai-stack submodule"
+dir = "local-ai-stack"
+run = "mise run down"
+
+[tasks."ai:build:mcp"]
+description = "Build Host CLI MCP server in local-ai-stack submodule"
+dir = "local-ai-stack"
+run = "mise run build:mcp"
+
+[tasks."knowledge:l0"]
+description = "Inspect L0 abstract mental map of the dotfiles repository"
+run = "cat .agents/knowledge/dotfiles/L0_index.json"
+
+[tasks."knowledge:sync"]
+description = "Synchronize dotfiles Stow packages and update L1 subsystem docs using local Ollama AI"
+run = "bun run scripts/sync_knowledge.ts"
+
+[tasks."benchmark:tokens"]
+description = "Empirical token and latency benchmark comparing raw files vs OpenViking L0/L1"
+run = "bun run scripts/benchmark_tokens.ts"
+
+[tasks."build:context-init"]
+description = "Build context-init Rust CLI binary and copy to ~/.local/bin"
+dir = "crates/context-init"
+run = "cargo build --release && cp target/release/context-init ~/.local/bin/"
