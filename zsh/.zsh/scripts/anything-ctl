@@ -24,7 +24,10 @@ DB_PATH = Path.home() / ".config/anythingllm-desktop/storage/anythingllm.db"
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
 HEADROOM_URL = os.environ.get("HEADROOM_URL", "http://127.0.0.1:8787")
 DOTFILES_DIR = Path("/data/projects/dotfiles")
-PLUGINS_DIR = DOTFILES_DIR / "anythingllm/.config/anythingllm-desktop/storage/plugins"
+AI_STACK_DIR = Path("/data/projects/local-ai-stack")
+MCP_DIR = AI_STACK_DIR / "mcp/host-cli"
+SYNC_DIR = AI_STACK_DIR / "stacks/anythingllm"
+PLUGINS_DIR = MCP_DIR
 
 # Anomaly detection patterns
 CJK_REGEX = re.compile(r"[\u4e00-\u9fff\uac00-\ud7af\u3040-\u30ff]")
@@ -992,7 +995,7 @@ def cmd_test_search(args):
     directory = args.dir or "/data/obsidian"
     print_header(f"Testing bash-mcp-server search_files: query='{query}' dir='{directory}'")
 
-    mcp_script = PLUGINS_DIR / "bash-mcp-server.mjs"
+    mcp_script = MCP_DIR / "dist/bash-mcp-server.mjs"
     if not mcp_script.exists():
         print_error(f"MCP script not found at {mcp_script}")
         return
@@ -1074,13 +1077,13 @@ def cmd_test_prompt(args):
 
 def cmd_sync(args):
     print_header("Synchronizing AnythingLLM Workspaces & Prompts")
-    sync_script = PLUGINS_DIR / "sync-prompts.ts"
+    sync_script = SYNC_DIR / "sync-prompts.ts"
     if not sync_script.exists():
         print_error(f"sync-prompts.ts not found at {sync_script}")
         return
 
     cmd = ["mise", "exec", "bun", "--", "bun", "run", "sync-prompts.ts"]
-    subprocess.run(cmd, cwd=str(PLUGINS_DIR), check=True)
+    subprocess.run(cmd, cwd=str(SYNC_DIR), check=True)
 
 
 # ==============================================================================

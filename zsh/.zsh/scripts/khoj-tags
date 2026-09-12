@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# =============================================================================
+# Script  : khoj-tags
+# Purpose : Instant, autonomous tag search in Obsidian vault using ripgrep.
+# Usage   :
+#   khoj-tags <tag>           # Print matching files (or open FZF if interactive)
+#   khoj-tags <tag> --stdout  # Always print matching file paths to stdout
+#   khoj-tags                 # Interactive tag and note selector (FZF)
+# =============================================================================
+
+VAULT_DIR="${OBSIDIAN_VAULT_DIR:-/data/obsidian}"
+
+if [ ! -d "$VAULT_DIR" ]; then
+    echo "Error: Vault directory '$VAULT_DIR' not found." >&2
+    exit 1
+fi
+
+search_files_by_tag() {
+    local tag="$1"
+    if command -v rg >/dev/null 2>&1; then
+        rg -l \
+            --glob '*.md' \
+            --glob '!**/.obsidian/**' \
+            --glob '!**/.trash/**' \
+            --glob '!**/.git/**' \
+            --glob '!**/SYSTEM/TEMPLATE/**' \
+            --glob '!**/SYSTEM/SCRIPTS/**' \
+            -e "^[[:space:]]*-[[:space:]]*${tag}\b" \
+            -e "tags:.*${tag}\b" \
+            -e "#${tag}\b" \
+            "$VAULT_DIR" 2>/dev/null || true
+    else
+        python3 -c "
+import os, re, sys
+tag = '${tag}'
+vault = '${VAULT_DIR}'
+for root, dirs, files in os.walk(vault):
+    if any(x in root for x in ['.obsidian', '.trash', '.git', 'SYSTEM/TEMPLATE', 'SYSTEM/SCRIPTS']):
+        continue
+    for f in files:
+        if not f.endswith('.md'):
+            continue
+        p = os.path.join(root, f)
+        try:
+            with open(p, 'r', encoding='utf-8', errors='ignore') as fh:
+                content = fh.read()
+        except Exception:
+            continue
+        fm = re.match(r'^---\s*\n(.*?)\n---\s*\n', content, flags=re.DOTALL)
+        matched = False
+        if fm:
+            if re.search(r'(?:tags|tag):\s*(\[.*?\\b' + tag + r'\\b.*?\]|.*?\n\s*-\s*' + tag + r'\b)', fm.group(1), flags=re.IGNORECASE):
+                print(p)
+                matched = True
+        if not matched and re.search(r'#' + tag + r'\b', content):
+            print(p)
+"
+    fi
+}
+
+list_all_tags() {
+    python3 -c "
+import os, re
+
+vault = '${VAULT_DIR}'
+tags = set()
+for root, dirs, files in os.walk(vault):
+    if any(x in root for x in ['.obsidian', '.trash', '.git', 'SYSTEM/TEMPLATE', 'SYSTEM/SCRIPTS']):
+        continue
+    for f in files:
+        if not f.endswith('.md'):
+            continue
+        p = os.path.join(root, f)
+        try:
+            with open(p, 'r', encoding='utf-8', errors='ignore') as fh:
+                content = fh.read()
+        except Exception:
+            continue
+        fm = re.match(r'^---\s*\n(.*?)\n---\s*\n', content, flags=re.DOTALL)
+        if fm:
+            in_tags = False
+            for line in fm.group(1).splitlines():
+                if re.match(r'^(?:tags|tag):', line, re.IGNORECASE):
+                    in_tags = True
+                    arr = re.search(r'\[(.*?)\]', line)
+                    if arr:
+                        for t in arr.group(1).split(','):
+                            clean = t.strip(' \"\'')
+                            if clean: tags.add(clean)
+                        in_tags = False
+                    continue
+                if in_tags:
+                    m = re.match(r'^\s*-\s*([a-zA-Z0-9_\-\/]+)', line)
+                    if m:
+                        tags.add(m.group(1))
+                    elif re.match(r'^\w+:', line):
+                        in_tags = False
+        for m in re.finditer(r'(?:^|\s)#([a-zA-Zа-яА-Я0-9_\-\/]+)\b', content):
+            t = m.group(1)
+            if not re.match(r'^[0-9a-fA-F]{3,8}$', t) and not t.isdigit():
+                tags.add(t)
+
+for t in sorted(tags, key=lambda x: x.lower()):
+    print(t)
+"
+}
+
+open_interactive_note_selector() {
+    local tag="$1"
+    local files
+    files=$(search_files_by_tag "$tag")
+
+    if [ -z "$files" ]; then
+        echo "No notes found with tag: '$tag'"
+        exit 0
+    fi
+
+    local preview_cmd
+    if command -v bat >/dev/null 2>&1; then
+        preview_cmd="bat --style=numbers --color=always --line-range :200 {}"
+    else
+        preview_cmd="cat {}"
+    fi
+
+    local selected
+    selected=$(echo "$files" | fzf \
+        --prompt="Tag [${tag}] > " \
+        --header="Enter: Open in Neovim | Alt+O: Open in Obsidian" \
+        --preview="$preview_cmd" \
+        --preview-window="right:60%:wrap" \
+        --bind="alt-o:execute(rel=\$(python3 -c 'import os, sys, urllib.parse; print(urllib.parse.quote(os.path.relpath(sys.argv[1], \"$VAULT_DIR\"))) ' {}); xdg-open \"obsidian://open?vault=obsidian&file=\$rel\" >/dev/null 2>&1)+abort" \
+    )
+
+    if [ -n "$selected" ]; then
+        "${EDITOR:-nvim}" "$selected"
+    fi
+}
+
+# Parse options
+MODE="auto"
+TAG=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --stdout|-s)
+            MODE="stdout"
+            shift
+            ;;
+        --interactive|-i)
+            MODE="interactive"
+            shift
+            ;;
+        *)
+            if [ -z "$TAG" ]; then
+                TAG="$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Strip leading '#' if provided
+TAG="${TAG#\#}"
+
+if [ -n "$TAG" ]; then
+    if [ "$MODE" = "stdout" ] || [ ! -t 1 ]; then
+        search_files_by_tag "$TAG"
+    else
+        open_interactive_note_selector "$TAG"
+    fi
+else
+    # No tag provided: let user pick from all available tags
+    if [ ! -t 1 ]; then
+        list_all_tags
+        exit 0
+    fi
+
+    CHOSEN_TAG=$(list_all_tags | fzf --prompt="Select Tag > " --header="Pick a tag to list notes")
+    if [ -n "$CHOSEN_TAG" ]; then
+        open_interactive_note_selector "$CHOSEN_TAG"
+    fi
+fi

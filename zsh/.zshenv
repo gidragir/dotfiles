@@ -14,6 +14,7 @@ typeset -U path
 path=(
     "$HOME/.local/bin"
     "$PNPM_HOME"
+    "$PNPM_HOME/bin"
     "$HOME/.zsh/scripts"
     "$HOME/projects/dotfiles/zsh/.zsh/scripts"
     $path
