@@ -97,7 +97,10 @@
       --backend anyllm \
       --anyllm-provider openai \
       --env OPENAI_TARGET_API_URL=http://127.0.0.1:11434/v1 \
-      --memory \
+      --env HEADROOM_PROTECT_TOOL_RESULTS="search_files,read_file,write_file,execute_command,git_status,git_diff" \
+      --env HEADROOM_NO_CCR=1 \
+      --env DATABASE_URL=postgresql://headroom:headroom_password@127.0.0.1:5432/headroom_cache \
+      --protect-tool-results "search_files,read_file,write_file,execute_command,git_status,git_diff" \
       --code-aware \
       --port 8787
   ```

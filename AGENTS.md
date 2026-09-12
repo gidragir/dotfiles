@@ -41,15 +41,26 @@ dotfiles/
 │   ├── setup_virt.yml           # QEMU/KVM/libvirt, swtpm, UFW правила, Virtio-FS /srv/Shared
 │   ├── setup_rclone.yml         # Systemd user unit + timer для bisync Obsidian в Google Drive
 │   ├── setup_cooler_control.yml # Профили охлаждения и кривые вентиляторов
-│   └── setup_anythingllm.yml    # AnythingLLM Desktop, Headroom LLM proxy, MCP серверы, TS-скиллы, Obsidian
+│   └── setup_ollama.yml         # GPU-инференс Ollama (qwen2.5-coder, deepseek-r1, bge-m3)
 │
+├── local-ai-stack/              # 🧠 [Submodule] Выделенный проект локального AI-стека
+│   ├── stacks/khoj/             # Khoj AI + PostgreSQL (pgvector) с in-place патчами
+│   ├── stacks/headroom/         # Headroom proxy (:8787)
+│   ├── stacks/anythingllm/      # Workspace prompts и sync-prompts.ts
+│   ├── mcp/host-cli/            # Host CLI & Knowledge MCP сервер на TypeScript/Bun
+│   ├── mcp/anythingllm-skills/  # Пользовательские Agent Skills (atomic-commits)
+│   ├── evals/                   # Тестирование промптов через Promptfoo (eval:prompts)
+│   └── playbooks/               # Плейбуки настройки AI-стека (setup_ai_stack, setup_anythingllm)
+│
+├── crates/context-init/         # 🦀 [Submodule] Rust-утилита context-init
 ├── .agents/plugins/headroom/    # Antigravity плагин и MCP конфигурация Headroom
-
-├── docs/                        # Документация и траблшутинг (headroom_anythingllm_troubleshooting.md, virt.md, vivaldi.md)
-├── scripts/                     # Вспомогательные скрипты развертывания VM и тем
+├── .agents/plugins/host-cli/    # MCP конфигурация Host-CLI
+│
+├── docs/                        # Системная документация (virt.md, vivaldi.md, etc.)
+├── scripts/                     # Системные скрипты хоста (create_win11_vm.sh, setup_ollama.sh)
 │
 └── [GNU Stow Пакеты]            # Каждый каталог ниже зеркалирует структуру $HOME
-    ├── zsh/                     # ~/.zshrc, ~/.zshenv, ~/.zprofile, ~/.zsh/ (alias, binds, scripts: единое место для CLI-скриптов и автоматизаций)
+    ├── zsh/                     # ~/.zshrc, ~/.zshenv, ~/.zprofile, ~/.zsh/ (khoj-ctl, khoj-tags, anything-ctl)
     ├── niri/                    # ~/.config/niri/ (config.kdl + модули в cfg/)
     ├── nvim/                    # ~/.config/nvim/ (LazyVim конфигурация, stylua, lua/)
     ├── ghostty/                 # ~/.config/ghostty/ (терминал с поддержкой Wayland и Catppuccin)
@@ -67,6 +78,7 @@ dotfiles/
     ├── vivaldi/                 # ~/.config/vivaldi-stable.conf (флаги Wayland/GPU)
     ├── wireplumber/             # ~/.config/wireplumber/ (скрипты маршрутизации аудио)
     ├── anythingllm/             # ~/.config/anythingllm-desktop/ (MCP серверы, TS-скиллы, воркспейсы, промпты)
+    ├── ollama/                  # ~/.config/ollama/ (config.env), ~/.config/systemd/user/ollama.service (GPU-хосты)
     ├── antigravity/             # ~/.gemini/config/ (глобальные правила и скиллы Antigravity)
     ├── noctalia/                # ~/.config/noctalia/ (Noctalia Shell: бар, лаунчер, OSD, темы, виджеты)
     ├── btop/                    # ~/.config/btop/ (btop.conf: мониторинг ресурсов, кастомный макет и темы)
@@ -132,6 +144,16 @@ dotfiles/
 - **Композитор Niri:** Модульная конфигурация в `niri/.config/niri/cfg/*.kdl`. Оконные правила (`rules.kdl`) изолируют настройки, правила автозапуска лежат в `autostart.kdl`.
 - **Централизация скриптов автоматизации:** Все кастомные shell-скрипты, оконные хелперы (например, переключение/вызов окон в Niri), CLI-утилиты и скрипты интеграций хранятся **исключительно** в `zsh/.zsh/scripts/`. Каталог `~/.zsh/scripts` автоматически экспортируется в `$PATH` через `.zshenv`. Категорически запрещено создавать изолированные loose-скрипты в `~/.local/bin/` или вне репозитория dotfiles.
 
+### 5. Персональный AI-стек и трехуровневая архитектура моделей
+Подробный гайдлайн и архитектурная спецификация: [`docs/ai_stack.md`](file:///home/gidragir/projects/dotfiles/docs/ai_stack.md).
+- **Три рабочих контура:**
+  1. *Терминальный контур:* OpenCommit напрямую через локальный `ollama` (`qwen2.5-coder:14b` на `:11434`), алиас `gcai` (`git add -p && opencommit`). CLI-навигация по знаниям через `khoj-ctl` и `khoj-tags`.
+  2. *Контур разработки:* Antigravity IDE (Gemini Pro) + Headroom Proxy (`:8787`, CCR AST-сжатие логов/кода, кэш в PostgreSQL) + Host CLI MCP (`bash-mcp-server.mjs`) + Khoj MCP (`docker exec -i khoj khoj-mcp`).
+  3. *Контур знаний и RAG:* Obsidian (`/data/obsidian`) + Khoj Docker (`:42110`, живая индексация) + PostgreSQL 16 с расширением `pgvector` (`:5432`) + AnythingLLM (локальный архив с LanceDB и эмбеддингами `bge-m3:latest` на GPU).
+- **Аппаратные ограничения vRAM (16 ГБ):** Пакетные серверы типа vLLM запрещены из-за риска OOM десктопа Niri. Используется `ollama.service` (`q8_0` KV-кэш, Flash Attention, `OLLAMA_MAX_LOADED_MODELS=1`).
+- **Политика долговременной памяти (Context Poisoning Protection):** Флаг `--memory` в Headroom отключен. Память и заметки запрашиваются **строго через осознанные tool calls** (Khoj MCP, `search_files`, `khoj-ctl`), а не неявной инъекцией в системный промпт прокси.
+- **Защитные схемы MCP:** Аргументы инструментов в `bash-mcp-server.mjs` валидируются и приводятся к ожидаемым типам (Defensive Coercion), ошибки возвращаются в виде структурированных хинтов (`available_tools`).
+
 ---
 
 ## 🚀 4. Инструкция по установке и тестированию
@@ -160,6 +182,18 @@ bash setup_user.sh
 4. Настраивает структуру кэшей Rust, pnpm, uv.
 5. Запускает фоновый таймер rclone для Obsidian (`setup_rclone.yml`).
 
+### Этап персонального AI-стека (User)
+Развертывание локальных моделей, Khoj и Headroom (требуется активный Docker daemon):
+```bash
+ansible-playbook playbooks/setup_ai_stack.yml
+```
+Что делает:
+1. Запускает пользовательский сервис `ollama.service` и скачивает целевые модели (`qwen2.5:14b`, `qwen2.5-coder:14b`, `deepseek-r1:14b`, `bge-m3:latest`).
+2. Развертывает Docker Compose `deploy/khoj` (PostgreSQL 16 с `pgvector` и контейнер Khoj AI).
+3. Индексирует заметки Obsidian (`/data/obsidian`) через Khoj.
+4. Настраивает прокси Headroom с семантическим кэшем в PostgreSQL и апстримом в Ollama.
+5. Устанавливает и связывает `opencommit` с локальной моделью `qwen2.5-coder:14b` (алиас `gcai`).
+
 ### Проверка корректности окружения (Health Checks)
 После установки или внесения инфраструктурных изменений обязательно запустите диагностические скрипты:
 ```bash
@@ -168,6 +202,11 @@ bash check_setup.sh
 
 # 2. Проверка Docker-хранилища, XFS ftype и prjquota:
 sudo bash check.sh
+
+# 3. Комплексная проверка AI-стека (Ollama, Headroom, Khoj, Postgres):
+mise run ai:status
+# либо через CLI:
+khoj-ctl status
 ```
 
 ---
@@ -245,6 +284,32 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
    Либо через `spawn-sh "<script-name>.sh";` (так как `~/.zsh/scripts` находится в `$PATH`).
 5. **Запрет на unmanaged loose scripts:** Категорически запрещено создавать локальные скрипты в `~/.local/bin/` или `~` в обход репозитория. Любая автоматизация должна быть частью Stow-пакета `zsh` и закоммичена в Git.
 
+### Сценарий F: Управление и доработка AI-стека (Ollama, Khoj, Prompts, Evals)
+При модификации компонентов персонального AI-стека строго придерживайтесь следующих шагов:
+1. **Промпты и воркспейсы AnythingLLM:**
+   - Редактируйте файлы в `anythingllm/.config/anythingllm-desktop/prompts/*.md`.
+   - Применяйте позитивные императивные инструкции (`/writing-for-agents`), избегайте симуляций и запретов без альтернатив.
+   - Синхронизируйте промпты в базу данных SQLite:
+     ```bash
+     mise run sync:prompts
+     ```
+2. **Оценка и тестирование промптов (Promptfoo):**
+   - Тестовые сценарии и ассерты хранятся в `evals/promptfooconfig.yaml` и `evals/prompts/`.
+   - Запуск тестов локально:
+     ```bash
+     mise run eval:prompts   # Выполнить регрессионный прогон через Ollama
+     mise run eval:view      # Открыть дашборд результатов в браузере
+     ```
+3. **MCP-серверы и защитное программирование (Defensive Coercion):**
+   - При добавлении или изменении инструментов в `bash-mcp-server.mjs` обязательно регистрируйте типы аргументов в `TOOL_SCHEMAS`.
+   - Используйте функцию `normalizeArgs`, чтобы ошибки типизации компактных моделей (14B) приводились к ожидаемым типам вместо падения.
+   - Возвращайте структурированные сообщения об ошибках со списком `available_tools` для самокоррекции SLM.
+4. **Конфигурация базы знаний Khoj и поиск по Obsidian:**
+   - Изменения конфигурации или промптов вносятся в `deploy/khoj/`.
+   - Проверка статуса и перезапуск: `khoj-ctl status` / `khoj-ctl restart`.
+   - Принудительная синхронизация заметок: `khoj-ctl sync`.
+   - Тестирование поиска по тегам: `khoj-ctl tags <tag>` или `khoj-tags <tag>`.
+
 ---
 
 ## 🛡️ 6. Гигиена репозитория и безопасность
@@ -253,6 +318,7 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
    - Категорически запрещено коммитить приватные SSH ключи (`~/.ssh/id_*`), GPG/age ключи, `rclone.conf`, токены API и пароли.
    - Для управления секретами используются `sops` и `age`.
    - Локальные переменные окружения выносятся в `.zshenv.local` или `*.local` (игнорируются в Git).
+   - **Конфигурация и секреты проектов (`mise.local.toml`):** Любые локальные переменные, токены и секреты во всех проектах должны определяться исключительно в локальном файле `mise.local.toml` (для менеджера окружения `mise`), который обязательно добавляется в `.gitignore`. Никогда не хардкодить чувствительные данные напрямую в коде, плейбуках или файлах конфигурации.
 2. **Артефакты сборки и кэши:**
    - Бинарники Cargo (`cargo/.cargo/bin/`), кэши сборки (`.global-cache`, `.package-cache*`), роли Ansible (`.ansible/`) занесены в `.gitignore`.
    - Не добавляйте большие бинарные файлы или дампы памяти в репозиторий.
@@ -265,11 +331,17 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 
 - [ ] **Не ломайте симлинки Stow:** Никогда не редактируйте файлы напрямую в `~/.config/...`, если это симлинк! Всегда вносите изменения в исходный файл в `/data/projects/dotfiles/...`.
 - [ ] **Все скрипты автоматизации строго в dotfiles:** Никаких разовых скриптов в `~/.local/bin/` или вне репозитория! Все пользовательские CLI-утилиты, хелперы для Niri и скрипты автоматизации создаются в `zsh/.zsh/scripts/`, имеют права `+x`, линкуются через Stow и коммитятся в Git.
+- [ ] **Никаких секретов напрямую — только `mise.local.toml`:** Все чувствительные переменные, токены и приватные настройки выносятся строго в `mise.local.toml` (с добавлением в `.gitignore`), запрещено писать секреты открытым текстом в репозиторий.
 - [ ] **Соблюдайте тему оформления:** Единый визуальный стиль системы — **Catppuccin Frappe**. Все новые терминальные утилиты, темы SDDM, Limine, Ghostty и Neovim должны соответствовать этой палитре.
 - [ ] **Сохраняйте целостность кэшей:** Не меняйте пути кэшей в `setup_user.yml`, так как они завязаны на Dual-NVMe разметку дисков.
 - [ ] **Оптимизация контекста через Headroom:** При анализе объемных терминальных выводов, логов сборки или результатов масштабного поиска (>100 строк) используйте MCP-инструмент `headroom_compress` для сжатия контекста с сохранением оригинала (CCR).
+- [ ] **Никакой неявной инъекции памяти в Headroom:** Не включайте флаг `--memory` в Headroom Proxy. Извлечение заметок и памяти должно выполняться исключительно осознанными вызовами инструментов (Khoj MCP, `search_files`, `khoj-ctl`) во избежание зависаний SSE и "отравления контекста" (Context Poisoning).
+- [ ] **Контроль бюджета vRAM (16 ГБ):** Не запускайте конкурирующие серверы инференса (vLLM) параллельно с Ollama. Модели инференса и эмбеддингов (`bge-m3:latest`) обслуживаются сервисом `ollama.service` с лимитом `OLLAMA_MAX_LOADED_MODELS=1`.
+- [ ] **Декларативность моделей AI:** Все локальные модели Ollama объявляются в `playbooks/setup_ollama.yml` и `playbooks/setup_ai_stack.yml`.
+- [ ] **Защитное программирование MCP:** При реализации или обновлении MCP-инструментов обеспечьте приведение типов аргументов и осмысленные подсказки со списком доступных инструментов (`available_tools`) для самокоррекции моделей 14B.
 - [ ] **Осторожность с дисками:** Никогда не запускайте скрипты разметки диска (`setup_system.yml`, `patrition_delete.sh`) без явного указания и подтверждения от пользователя.
-- [ ] **Ведение базы грабель и траблшутинга:** При обнаружении скрытых багов, специфичных нюансов API или интеграций (AnythingLLM, Ollama, Headroom, Niri) обязательно фиксируйте и пополняйте документацию в [`docs/headroom_anythingllm_troubleshooting.md`](file:///data/projects/dotfiles/docs/headroom_anythingllm_troubleshooting.md), чтобы предотвращать повторные ошибки в будущем.
-- [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `check_setup.sh`.
+- [ ] **Ведение базы грабель и траблшутинга:** При обнаружении скрытых багов, специфичных нюансов API или интеграций (Khoj, AnythingLLM, Ollama, Headroom, Niri) обязательно фиксируйте и пополняйте документацию в [`docs/ai_stack.md`](file:///data/projects/dotfiles/docs/ai_stack.md) и [`docs/headroom_anythingllm_troubleshooting.md`](file:///data/projects/dotfiles/docs/headroom_anythingllm_troubleshooting.md).
+- [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `check_setup.sh`, а для AI-сервисов — `mise run ai:status` или `khoj-ctl status`.
+
 
 
