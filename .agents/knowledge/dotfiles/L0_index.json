@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project": "dotfiles",
+  "description": "Declarative Infrastructure-as-Code & configuration for CachyOS (Niri Wayland) Workstation",
+  "root_path": "/data/projects/dotfiles",
+  "updated_at": "2026-09-12",
+  "subsystems": [
+    {
+      "id": "wm_niri",
+      "name": "Niri Wayland Compositor",
+      "summary": "Scrollable-tiling Wayland compositor with modular KDL configs in niri/.config/niri/cfg/",
+      "l1_path": "subsystems/wm_niri.md",
+      "tags": [
+        "wayland",
+        "niri",
+        "kdl",
+        "keybinds",
+        "window-rules",
+        "noctalia"
+      ]
+    },
+    {
+      "id": "storage_nvme",
+      "name": "Dual-NVMe Storage Architecture",
+      "summary": "NVMe 0: System/Home; NVMe 1: /var/lib/docker (XFS prjquota), /var/lib/libvirt (ext4), /data/projects & /data/sync (Btrfs zstd)",
+      "l1_path": "subsystems/storage_nvme.md",
+      "tags": [
+        "nvme",
+        "btrfs",
+        "xfs",
+        "ext4",
+        "fstab",
+        "docker",
+        "libvirt"
+      ]
+    },
+    {
+      "id": "ai_stack",
+      "name": "Personal AI Stack & Memory",
+      "summary": "Ollama (:11434, 16GB vRAM budget), Khoj AI (:42110, pgvector :5432), Headroom Proxy (:8787), AnythingLLM Desktop, OpenCommit",
+      "l1_path": "subsystems/ai_stack.md",
+      "tags": [
+        "ollama",
+        "khoj",
+        "headroom",
+        "anythingllm",
+        "postgres",
+        "pgvector",
+        "mcp"
+      ]
+    },
+    {
+      "id": "playbooks",
+      "name": "Ansible Orchestration",
+      "summary": "Single source of truth for packages (playbooks/vars/packages.yml); modular system, user, ai_stack playbooks",
+      "l1_path": "subsystems/playbooks.md",
+      "tags": [
+        "ansible",
+        "packages",
+        "setup_system",
+        "setup_user",
+        "setup_ai_stack"
+      ]
+    },
+    {
+      "id": "dev_runtimes",
+      "name": "Development Toolchains & Runtimes",
+      "summary": "Mise version manager, Rust (mold, sccache, cargo-binstall), Node/TS (bun, pnpm, biome), Python (uv)",
+      "l1_path": "subsystems/dev_runtimes.md",
+      "tags": [
+        "mise",
+        "rust",
+        "mold",
+        "sccache",
+        "pnpm",
+        "bun",
+        "uv",
+        "python"
+      ]
+    },
+    {
+      "id": "shell_ux",
+      "name": "Terminal & Shell UX Flow",
+      "summary": "Modal UX: Ghostty, Zsh Vi-mode, Neovim (v), fzf-tab, zoxide, television, superfile; all scripts in zsh/.zsh/scripts/",
+      "l1_path": "subsystems/shell_ux.md",
+      "tags": [
+        "zsh",
+        "ghostty",
+        "vi-mode",
+        "nvim",
+        "fzf",
+        "zoxide",
+        "scripts"
+      ]
+    }
+  ],
+  "stow_packages": [
+    "antigravity",
+    "atuin",
+    "btop",
+    "cargo",
+    "crates",
+    "ghostty",
+    "hypr",
+    "k3d",
+    "k9s",
+    "local-ai-stack",
+    "mise",
+    "niri",
+    "noctalia",
+    "nvim",
+    "ollama",
+    "rofi",
+    "sheldon",
+    "starship",
+    "superfile",
+    "television",
+    "vivaldi",
+    "wireplumber",
+    "zellij",
+    "zsh"
+  ],
+  "core_rules": [
+    "SSOT for all packages is playbooks/vars/packages.yml. Never invoke pacman/paru directly in tasks.",
+    "Custom shell scripts and helpers MUST be placed in zsh/.zsh/scripts/ (auto-exported to PATH via .zshenv).",
+    "AUR packages (paru) must NEVER be run as root.",
+    "vRAM budget is strict (16 GB): only 1 model active in Ollama at a time (OLLAMA_MAX_LOADED_MODELS=1).",
+    "Long-term memory is explicit tool calls only (no implicit prompt injection / context poisoning)."
+  ]
+}
