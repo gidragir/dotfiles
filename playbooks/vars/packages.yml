@@ -57,6 +57,7 @@ cli_essential_packages:
   - carapace-bin
   - television
   - btop
+  - glow
 
 # Official pacman packages for the user (installed via pacman, requires sudo)
 user_pacman_packages:

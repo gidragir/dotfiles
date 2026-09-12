@@ -25,6 +25,8 @@ binds {
 
     // ─── Applications ───
     Mod+A                               hotkey-overlay-title="AI Assistant: AnythingLLM" { spawn "bash" "-c" "~/.zsh/scripts/anythingllm-assistant-toggle.sh"; }
+    Mod+Alt+A                           hotkey-overlay-title="AI Assistant: Khoj WebApp" { spawn "bash" "-c" "~/.zsh/scripts/khoj-toggle.sh"; }
+    Mod+Ctrl+A                          hotkey-overlay-title="AI Assistant: Local AI Hub" { spawn "bash" "-c" "~/.zsh/scripts/ai-launcher.sh"; }
     Mod+Shift+Z {spawn "nu" "-c" "source $nu.config-path; open-focus-id obsidian obsidian";}
     Mod+Shift+A {spawn "nu" "-c" "source $nu.config-path; open-focus-id code code";}
 

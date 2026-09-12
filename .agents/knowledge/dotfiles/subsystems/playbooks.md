@@ -28,6 +28,7 @@ All packages must be declared in `playbooks/vars/packages.yml`:
 - **`playbooks/packages.yml`**: Added `ollama_packages` for GPU/AI inference packages.
 - **`playbooks/setup_user.yml`**: Updated GNU Stow command to exclude additional directories (`deploy`, `docs`, `scripts`, `evals`, `ollama`, `local-ai-stack`, `crates`).
 - **`playbooks/vars/packages.yml`**: Added `ollama_packages` variable for dedicated GPU/AI inference packages.
+- **`playbooks/vars/packages.yml`**: Added `glow` to `cli_essential_packages`.
 
 ## Hotkeys
 - **Super + A**: Open Alfred (if configured).
@@ -42,3 +43,4 @@ All packages must be declared in `playbooks/vars/packages.yml`:
 - **GNU Stow**: Excludes directories like `deploy`, `docs`, `scripts`, `evals`, `ollama`, `local-ai-stack`, and `crates` during symlinking.
 - **Ollama**: Installed via `setup_ollama.yml` with CUDA support for GPU acceleration.
 - **Screen Lock**: Added hotkey `Super + L` for locking the screen.
+- **CLI Tools**: Added `glow` to `cli_essential_packages` for markdown preview.

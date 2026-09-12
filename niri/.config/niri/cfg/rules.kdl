@@ -4,8 +4,10 @@
     }
 
     window-rule {
-        match app-id="vivaldi"
+        match app-id=r#"^vivaldi-stable$"#
         exclude title="[Ss]ettings"
+        exclude title=r#"127\.0\.0\.1"#
+        exclude title=r#"(?i)khoj"#
         open-maximized-to-edges true
     }
 
@@ -52,15 +54,29 @@
     }
 
     window-rule {
-        match app-id="anythingllm-desktop" title="AnythingLLM Assistant"
+        match app-id="anythingllm-desktop"
         open-floating true
-        default-floating-position x=20 y=20 relative-to="top-right"
+        default-floating-position x=485 y=100 relative-to="top-left"
+        default-column-width { fixed 950; }
+        default-window-height { fixed 850; }
     }
 
     window-rule {
-        match app-id="anythingllm-desktop"
-        exclude title="AnythingLLM Assistant"
-        default-column-width { proportion 0.4; }
+        match app-id=r#"^vivaldi-127\.0\.0\.1"#
+        match title=r#"127\.0\.0\.1"#
+        match title=r#"(?i)Khoj"#
+        open-floating true
+        default-floating-position x=485 y=100 relative-to="top-left"
+        default-column-width { fixed 950; }
+        default-window-height { fixed 850; }
+    }
+
+    window-rule {
+        match title=r#"^(Khoj Quick Chat|Khoj Tags Browser|AI Stack Status|Anything-CTL)$"#
+        open-floating true
+        default-floating-position x=485 y=150 relative-to="top-left"
+        default-column-width { fixed 950; }
+        default-window-height { fixed 750; }
     }
 
     window-rule {

@@ -25,7 +25,9 @@
             "io.github.tdesktop_x64.TDesktop",
             "steam",
             "vivaldi-cinhimbnkkaeohfgghhklpknlkffjgod-Default",
-            "obsidian"
+            "obsidian",
+            "antigravity",
+            "virt-manager"
         ],
         "position": "center",
         "screenshotAnnotationTool": "",
@@ -193,6 +195,41 @@
                 {
                     "id": "Spacer",
                     "width": 20
+                },
+                {
+                    "colorizeSystemIcon": "none",
+                    "colorizeSystemText": "none",
+                    "generalTooltipText": "🧠 AI Assistant Hub\n• ЛКМ: AnythingLLM\n• ПКМ: Khoj WebApp\n• СКМ: Local AI Меню",
+                    "hideMode": "alwaysExpanded",
+                    "icon": "brain",
+                    "iconPosition": "left",
+                    "id": "CustomButton",
+                    "ipcIdentifier": "ai-hub",
+                    "leftClickExec": "/home/gidragir/.zsh/scripts/anythingllm-assistant-toggle.sh",
+                    "leftClickUpdateText": false,
+                    "maxTextLength": {
+                        "horizontal": 10,
+                        "vertical": 10
+                    },
+                    "middleClickExec": "/home/gidragir/.zsh/scripts/ai-launcher.sh",
+                    "middleClickUpdateText": false,
+                    "parseJson": false,
+                    "rightClickExec": "/home/gidragir/.zsh/scripts/khoj-toggle.sh",
+                    "rightClickUpdateText": false,
+                    "showExecTooltip": false,
+                    "showIcon": true,
+                    "showTextTooltip": true,
+                    "textCollapse": "",
+                    "textCommand": "",
+                    "textIntervalMs": 3000,
+                    "textStream": false,
+                    "wheelDownExec": "",
+                    "wheelDownUpdateText": false,
+                    "wheelExec": "",
+                    "wheelMode": "unified",
+                    "wheelUpExec": "",
+                    "wheelUpUpdateText": false,
+                    "wheelUpdateText": false
                 },
                 {
                     "blacklist": [

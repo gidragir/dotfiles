@@ -30,6 +30,9 @@ Configuration root: `niri/.config/niri/` -> deployed via GNU Stow to `~/.config/
 ## New Configurations & Hotkeys
 - Added `cfg/keybinds.kdl` entry for Mod+Shift+Return to open a floating terminal.
 - Updated `cfg/rules.kdl` to include new application-specific rules for better integration.
+- Added new keybinds for AI assistants:
+  - Mod+Alt+A: Khoj WebApp
+  - Mod+Ctrl+A: Local AI Hub
 
 ## Additional Notes
 - Ensure all paths in configuration files are relative to the user's home directory to maintain portability across different setups.

@@ -118,23 +118,28 @@ open_interactive_note_selector() {
     fi
 
     local preview_cmd
-    if command -v bat >/dev/null 2>&1; then
-        preview_cmd="bat --style=numbers --color=always --line-range :200 {}"
+    if command -v glow >/dev/null 2>&1; then
+        preview_cmd="cd \"$VAULT_DIR\" && glow -s dark -w \${FZF_PREVIEW_COLUMNS:-80} {}"
+    elif command -v bat >/dev/null 2>&1; then
+        preview_cmd="cd \"$VAULT_DIR\" && bat --style=numbers --color=always --line-range :200 {}"
     else
-        preview_cmd="cat {}"
+        preview_cmd="cd \"$VAULT_DIR\" && cat {}"
     fi
 
-    local selected
-    selected=$(echo "$files" | fzf \
+    local rel_files
+    rel_files=$(echo "$files" | sed "s|^${VAULT_DIR}/||")
+
+    local selected_rel
+    selected_rel=$(echo "$rel_files" | fzf \
         --prompt="Tag [${tag}] > " \
         --header="Enter: Open in Neovim | Alt+O: Open in Obsidian" \
         --preview="$preview_cmd" \
-        --preview-window="right:60%:wrap" \
-        --bind="alt-o:execute(rel=\$(python3 -c 'import os, sys, urllib.parse; print(urllib.parse.quote(os.path.relpath(sys.argv[1], \"$VAULT_DIR\"))) ' {}); xdg-open \"obsidian://open?vault=obsidian&file=\$rel\" >/dev/null 2>&1)+abort" \
+        --preview-window="right:65%:wrap" \
+        --bind="alt-o:execute(rel=\$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' {}); xdg-open \"obsidian://open?vault=obsidian&file=\$rel\" >/dev/null 2>&1)+abort" \
     )
 
-    if [ -n "$selected" ]; then
-        "${EDITOR:-nvim}" "$selected"
+    if [ -n "$selected_rel" ]; then
+        "${EDITOR:-nvim}" "$VAULT_DIR/$selected_rel"
     fi
 }
 
@@ -177,7 +182,7 @@ else
         exit 0
     fi
 
-    CHOSEN_TAG=$(list_all_tags | fzf --prompt="Select Tag > " --header="Pick a tag to list notes")
+    CHOSEN_TAG=$(list_all_tags | fzf --prompt="Select Tag > " --header="Pick a tag to list notes" --preview="$0 {} --stdout | sed \"s|^$VAULT_DIR/||\" | head -n 25" --preview-window="right:45%:wrap")
     if [ -n "$CHOSEN_TAG" ]; then
         open_interactive_note_selector "$CHOSEN_TAG"
     fi

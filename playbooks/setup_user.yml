@@ -70,6 +70,8 @@
         - "{{ ansible_facts.env.HOME }}/.config/wireplumber"
         - "{{ ansible_facts.env.HOME }}/.config/zellij"
         - "{{ ansible_facts.env.HOME }}/.gemini/config/rules"
+        - "{{ ansible_facts.env.HOME }}/.opencommit"
+        - "{{ ansible_facts.env.HOME }}/.opencommit_migrations"
       tags: [stow]
 
     - name: Run GNU Stow to link configurations

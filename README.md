@@ -219,6 +219,7 @@ dotfiles/
 ├── antigravity/.gemini/      -> ~/.gemini/config
 ├── noctalia/.config/         -> ~/.config/noctalia
 ├── btop/.config/btop/        -> ~/.config/btop
+├── opencommit/               -> ~/.opencommit, ~/.opencommit_migrations
 └── git/                      -> ~/.gitconfig
 ```
 
