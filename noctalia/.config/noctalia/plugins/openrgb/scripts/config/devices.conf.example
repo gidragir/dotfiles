@@ -1,0 +1,52 @@
+# ─── OpenRGB devices configuration ───────────────────────────────────────────
+# Copy this file to devices.conf and fill in your hardware.
+# devices.conf is gitignored — it is machine-specific.
+#
+# Entry format:
+#   "by-name:<exact OpenRGB device name>[:<mode>]"
+#   "by-index:<N>[:<mode>]"
+#
+# Mode is OPTIONAL (default: Static for color, off for apply-off by-index).
+#
+# ⚠ Mode persistence:
+#   "Static"  — writes color to controller NVRAM → survives process exit  ✓
+#   "Direct"  — real-time mode → reverts when openrgb process exits       ✗
+#   For one-shot CLI color setting always use Static.
+#
+# Tip: run `openrgb --list-devices` to discover device indices, zones and modes.
+
+OPENRGB_DEVICES=(
+    # "by-name:Kingston Fury DDR5 DRAM:Static"   # DRAM
+    # "by-index:1:Static"                         # GPU
+    # "by-index:2:Static"                         # Mouse (ROG Chakram X)
+    # "by-index:3:Static"                         # Motherboard (ARGB headers/fans)
+)
+
+# ─── ratbagctl mouse (optional) ──────────────────────────────────────────────
+# Uncomment if you have a mouse managed by libratbag.
+# RATBAG_DEVICE_MATCH is a case-insensitive substring matched against
+# the output of `ratbagctl list`.
+#
+# Note: if your mouse is also visible in OpenRGB, the global openrgb -c command
+# already covers it. ratbagctl gives additional per-zone control.
+
+# RATBAG_DEVICE_MATCH="CHAKRAM"
+# RATBAG_LED_COUNT=3
+
+# ─── Per-profile color overrides (optional) ──────────────────────────────────
+# Entries WITHOUT a .orp file: appear as virtual color presets in the profile list.
+# Entries WITH  a .orp file:   color is pushed to OPENRGB_DEVICES alongside profile load.
+# Key = profile name (without .orp), Value = hex color (no #).
+#
+# declare -A PROFILE_COLORS=(
+#     ["red"]="FF0000"
+#     ["green"]="00FF00"
+#     ["cyan"]="00FFFF"
+#     ["purple"]="B000FF"
+#     ["orange"]="FF8800"
+#     ["white"]="FFFFFF"
+# )
+
+# ─── State directory override (optional) ─────────────────────────────────────
+# Defaults to ~/.config/OpenRGB — only change if you keep profiles elsewhere.
+# OPENRGB_STATE_DIR="$HOME/.config/OpenRGB"

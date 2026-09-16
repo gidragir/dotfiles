@@ -1,0 +1,32 @@
+{
+  "id": "openrgb",
+  "name": "RGB Control",
+  "version": "1.1.0",
+  "minNoctaliaVersion": "3.9.0",
+  "author": "gidragir",
+  "license": "MIT",
+  "description": "Control RGB lighting, switch presets, and manage profiles via OpenRGB.",
+  "tags": ["Hardware", "RGB", "Lighting", "System", "Utility"],
+  "entryPoints": {
+    "main": "Main.qml",
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "panelPosition": "follow_launcher",
+      "pollIntervalSec": 10,
+      "quickColors": [
+        { "name": "Red",    "hex": "FF0000" },
+        { "name": "Cyan",   "hex": "00FFFF" },
+        { "name": "Purple", "hex": "B000FF" },
+        { "name": "Green",  "hex": "00FF00" },
+        { "name": "Orange", "hex": "FF8800" },
+        { "name": "White",  "hex": "FFFFFF" }
+      ]
+    }
+  }
+}
