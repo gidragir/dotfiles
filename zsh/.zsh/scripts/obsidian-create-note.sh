@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Script   : obsidian-create-note.sh
-# Purpose  : Create Obsidian notes with type selection (STICKY, WORKSTATION, FLEETING)
-#            and corresponding templates via noctalia-dmenu.
-# Keybinds : Mod+Alt+N or Mod+N (in niri/cfg/keybinds.kdl)
+# Script      : obsidian-create-note.sh
+# Description : Create Obsidian notes with type selection (STICKY, WORKSTATION, FLEETING) and templates via noctalia-dmenu
+# Usage       : obsidian-create-note.sh [NOTE_TYPE] [NOTE_TITLE]
+# Dependencies: noctalia-dmenu, date
+# Keybinds    : Mod+N, Mod+Alt+N
 # =============================================================================
 set -euo pipefail
 
@@ -16,7 +17,7 @@ NOTE_TYPE="${1:-}"
 if [ -z "$NOTE_TYPE" ]; then
     # Меню выбора типа через noctalia-dmenu
     MENU_ITEMS="📌 STICKY — Стикер / Быстрая мысль\n🖥️ WORKSTATION — Рабочая станция / Контекст\n💡 FLEETING — Мимолётная заметка / Идея"
-    CHOSEN=$(echo -e "$MENU_ITEMS" | noctalia-dmenu -p "Тип заметки:" || true)
+    CHOSEN=$(echo -e "$MENU_ITEMS" | noctalia-dmenu.sh -p "Тип заметки:" || true)
 
     if [ -z "$CHOSEN" ]; then
         exit 0
@@ -47,7 +48,7 @@ if [ -z "$NOTE_TITLE" ]; then
     sleep 0.25
     DEFAULT_OPT="📅 Использовать дату и время ($(date '+%Y-%m-%d %H:%M'))"
     HINT_OPT="✍️ Введите свой заголовок выше и нажмите Enter"
-    TITLE_INPUT=$(echo -e "${DEFAULT_OPT}\n${HINT_OPT}" | noctalia-dmenu -c -p "Заголовок для ${NOTE_TYPE}:" || true)
+    TITLE_INPUT=$(echo -e "${DEFAULT_OPT}\n${HINT_OPT}" | noctalia-dmenu.sh -c -p "Заголовок для ${NOTE_TYPE}:" || true)
 
     if [ -z "$TITLE_INPUT" ]; then
         # Отменено пользователем (Escape)

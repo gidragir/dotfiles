@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Wrapper for Noctalia Dmenu plugin CLI
+# Script      : noctalia-dmenu.sh
+# Description : Wrapper for Noctalia Dmenu plugin CLI
+# Usage       : <command> | noctalia-dmenu [options]
+# Dependencies: noctalia
+# Keybinds    : None
 # =============================================================================
 set -euo pipefail
 

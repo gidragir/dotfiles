@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Obsidian Helper Wrapper for Noctalia Obsidian Plugin
+# Script      : obsidian-helper.sh
+# Description : Obsidian Helper Wrapper for Noctalia Obsidian Plugin
+# Usage       : obsidian-helper [arguments]
+# Dependencies: noctalia
+# Keybinds    : None
 # =============================================================================
 set -euo pipefail
 

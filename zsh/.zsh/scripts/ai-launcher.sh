@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Script   : ai-launcher.sh
-# Purpose  : Interactive AI Hub selector for Noctalia & Niri Wayland.
-#            Provides quick launcher for AnythingLLM, Khoj, and AI toolchain.
+# Script      : ai-launcher.sh
+# Description : Interactive AI Hub selector for Noctalia & Niri Wayland
+# Usage       : ai-launcher.sh
 # Dependencies: noctalia-dmenu, ghostty, niri, jq, notify-send
+# Keybinds    : None
 # =============================================================================
 set -euo pipefail
 
-SCRIPTS_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/../.zsh/scripts"
-if [[ ! -d "$SCRIPTS_DIR" ]]; then
-    SCRIPTS_DIR="$HOME/.zsh/scripts"
-fi
+SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 MENU_ITEMS=(
     "🧠 AnythingLLM Desktop (Assistant / Window)"
@@ -26,7 +24,7 @@ MENU_ITEMS=(
 menu_input=$(printf "%s\n" "${MENU_ITEMS[@]}")
 
 # Вызов noctalia-dmenu
-selected=$(echo "$menu_input" | "$SCRIPTS_DIR/noctalia-dmenu" -p "🧠 Local AI Hub:")
+selected=$(echo "$menu_input" | "$SCRIPTS_DIR/noctalia-dmenu.sh" -p "🧠 Local AI Hub:")
 
 if [[ -z "$selected" ]]; then
     exit 0
@@ -47,7 +45,7 @@ case "$selected" in
                 read -r -p "Khoj > " query || break
                 [[ -z "$query" ]] && break
                 echo ""
-                /home/gidragir/.zsh/scripts/khoj-ctl chat "$query"
+                "'"$SCRIPTS_DIR"'/khoj-ctl.sh" chat "$query"
                 echo ""
             done
             echo "Сессия завершена."
@@ -55,16 +53,16 @@ case "$selected" in
         ' &
         ;;
     *"Khoj Obsidian Tags"*)
-        ghostty --title="Khoj Tags Browser" -e "$SCRIPTS_DIR/khoj-tags" &
+        ghostty --title="Khoj Tags Browser" -e "$SCRIPTS_DIR/khoj-tags.sh" &
         ;;
     *"Sync Notes & Reindex Khoj"*)
         notify-send -a "Khoj AI" "Khoj Sync" "Запущена синхронизация и индексация заметок..." -t 3000
-        "$SCRIPTS_DIR/khoj-ctl" sync
+        "$SCRIPTS_DIR/khoj-ctl.sh" sync
         notify-send -a "Khoj AI" "Khoj Sync" "Синхронизация заметок завершена!" -t 3000
         ;;
     *"AI Stack Health & VRAM Monitor"*)
         ghostty --title="AI Stack Status" -e bash -c '
-            /home/gidragir/.zsh/scripts/khoj-ctl status
+            "'"$SCRIPTS_DIR"'/khoj-ctl.sh" status
             echo ""
             nvidia-smi
             echo ""
@@ -73,7 +71,7 @@ case "$selected" in
         ;;
     *"AnythingLLM Inspection"*)
         ghostty --title="Anything-CTL" -e bash -c '
-            /home/gidragir/.zsh/scripts/anything-ctl info
+            "'"$SCRIPTS_DIR"'/anything-ctl.sh" info
             echo ""
             read -p "Нажмите Enter для закрытия..."
         ' &

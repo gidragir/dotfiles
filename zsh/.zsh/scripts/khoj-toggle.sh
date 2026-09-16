@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Script   : khoj-toggle.sh
-# Purpose  : Smart window focus/toggle for Khoj AI assistant under Niri Wayland.
-#            Dynamically pulls floating WebApp or main window to active workspace.
-# Workflow :
-#   1. Ensure Khoj container is active (auto-start if stopped)
-#   2. Focus & move existing "Khoj" window to current workspace
-#   3. Else launch Khoj as a standalone lightweight WebApp via Vivaldi
-# Dependencies: niri, jq, docker, vivaldi-stable
+# Script      : khoj-toggle.sh
+# Description : Smart window focus/toggle for Khoj AI assistant under Niri Wayland
+# Usage       : khoj-toggle.sh
+# Dependencies: docker, niri, jq, vivaldi-stable, notify-send
+# Keybinds    : Mod+Alt+A
 # =============================================================================
 set -euo pipefail
 

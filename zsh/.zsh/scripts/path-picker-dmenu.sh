@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Script   : path-picker-dmenu.sh
-# Purpose  : Interactive fuzzy picker for Obsidian notes (/data/obsidian) and
-#            development projects (/data/projects) using noctalia-dmenu.
-# Keybinds : Mod+I or Mod+Shift+O (in niri/cfg/keybinds.kdl)
-# Actions  :
-#   1. Step 1: Select note or project folder via noctalia-dmenu
-#   2. Step 2 (if note): Select action (Insert Path / @agent read / Paste Content)
-# Dependencies: noctalia-dmenu, fd, stat, jq, wl-copy, wtype, niri
+# Script      : path-picker-dmenu.sh
+# Description : Interactive fuzzy picker for Obsidian notes and projects using noctalia-dmenu
+# Usage       : path-picker-dmenu.sh
+# Dependencies: noctalia-dmenu, fd, find, stat, jq, wl-copy, wtype, niri
+# Keybinds    : Mod+I
 # =============================================================================
 set -euo pipefail
 
@@ -59,7 +56,7 @@ if [ -z "$(echo "$full_list" | tr -d '[:space:]')" ]; then
 fi
 
 # 3. Вызов noctalia-dmenu (Шаг 1: выбор заметки или проекта)
-selected_display=$(echo "$full_list" | cut -f1 | noctalia-dmenu -p "Select Note or Project:")
+selected_display=$(echo "$full_list" | cut -f1 | noctalia-dmenu.sh -p "Select Note or Project:")
 if [ -z "$selected_display" ]; then
     exit 0
 fi
@@ -76,7 +73,7 @@ if [ -d "$target_path" ]; then
     to_insert="$target_path"
 else
     # Если выбрана markdown-заметка — вызываем быстрое меню действий (Шаг 2)
-    action=$(echo -e "📌 Insert Path\n🤖 @agent прочитай\n📄 Paste File Content" | noctalia-dmenu -p "Action:")
+    action=$(echo -e "📌 Insert Path\n🤖 @agent прочитай\n📄 Paste File Content" | noctalia-dmenu.sh -p "Action:")
     case "$action" in
         "📌 Insert Path")
             to_insert="$target_path"

@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Script   : clipboard-picker.sh
-# Purpose  : Interactive clipboard history picker with pinning & image preview
-#            using Cliphist and Rofi under Wayland (Niri).
-# Keybinds : Mod+V (configured in niri/cfg/keybinds.kdl)
-# Controls :
-#   - Enter         : Paste selected item into active window (Ctrl+Shift+V or Ctrl+V)
-#   - Alt + P       : Pin / unpin selected item
-#   - Alt + D       : Delete selected item from history
-#   - Alt + W       : Wipe entire unpinned clipboard history
-#   - Alt + A       : Preview image using imv
+# Script      : clipboard-picker.sh
+# Description : Interactive clipboard history picker with pinning & image preview
+#               using Cliphist and Rofi under Wayland (Niri).
+# Usage       : clipboard-picker.sh
 # Dependencies: rofi, cliphist, imv, wl-copy, wtype, ripgrep, niri
+# Keybinds    : Mod+V (configured in niri/cfg/keybinds.kdl)
+# Controls    :
+#   - Enter        : Paste selected item into active window (Ctrl+Shift+V or Ctrl+V)
+#   - Alt + P      : Pin / unpin selected item
+#   - Alt + D      : Delete selected item from history
+#   - Alt + W      : Wipe entire unpinned clipboard history
+#   - Alt + A      : Preview image using imv
 # =============================================================================
+set -euo pipefail
 
 tmp_dir="/tmp/cliphist"
 pinned_file="$HOME/.config/cliphist/pinned"

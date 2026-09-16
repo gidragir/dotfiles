@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Script   : anythingllm-assistant-toggle.sh
-# Purpose  : Smart window focus/toggle for AnythingLLM Desktop under Niri Wayland.
-#            Dynamically pulls floating overlay or main window to active workspace.
-# Keybinds : Mod+A (configured in niri/cfg/keybinds.kdl)
-# Workflow :
-#   1. Focus & move "AnythingLLM Assistant" floating overlay to current workspace
-#   2. Else focus & move main "anythingllm-desktop" window to current workspace
-#   3. Else launch AnythingLLM Desktop AppImage in background
-# Dependencies: niri, jq
+# Script      : anythingllm-assistant-toggle.sh
+# Description : Smart window focus/toggle for AnythingLLM Desktop under Niri Wayland
+# Usage       : anythingllm-assistant-toggle.sh
+# Dependencies: niri, jq, desktop/appimage
+# Keybinds    : Mod+A
 # =============================================================================
 set -euo pipefail
 

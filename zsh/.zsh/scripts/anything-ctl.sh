@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-anything-ctl — Production CLI diagnostic, benchmark, DB manager, and control tool
-for AnythingLLM Desktop + Ollama + Headroom stack on CachyOS.
-Part of dotfiles (zsh/.zsh/scripts/anything-ctl).
+Description : Production CLI diagnostic, benchmark, DB manager, and control tool
+              for AnythingLLM Desktop + Ollama + Headroom stack on CachyOS.
+Usage       : anything-ctl <command> [arguments...]
+Dependencies: python3 (standard library: sqlite3, urllib, argparse, subprocess)
+Keybinds    : None
 """
 
 import argparse

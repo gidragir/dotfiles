@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Script   : path-picker.sh
-# Purpose  : Interactive fuzzy picker for Obsidian notes (/data/obsidian) and
-#            development projects (/data/projects) using Rofi under Wayland (Niri).
-# Keybinds : Mod+I or Mod+Shift+O (configured in niri/cfg/keybinds.kdl)
-# Actions  :
-#   - Enter         : Insert absolute path into active window
-#   - Alt + Enter   : Insert agent command (@agent прочитай "/data/obsidian/...")
-#   - Ctrl + Enter  : Insert full markdown note content directly
-# Dependencies: rofi, fd, stat, jq, wl-copy, wtype, niri
+# Script      : path-picker.sh
+# Description : Interactive fuzzy picker for Obsidian notes and projects using Rofi (fallback version for path-picker-dmenu.sh)
+# Usage       : path-picker.sh
+# Dependencies: rofi, fd, find, stat, jq, wl-copy, wtype, niri
+# Keybinds    : Mod+I
 # =============================================================================
 set -euo pipefail
 
@@ -70,7 +66,7 @@ selected_idx=$(
     echo "$full_list" | cut -f1 | rofi -dmenu \
         -format "i" \
         -p "Вставить путь" \
-        -theme ~/.config/rofi/main.rasi \
+        -theme "${XDG_CONFIG_HOME:-$HOME/.config}/rofi/main.rasi" \
         -i \
         -kb-accept-custom "" \
         -kb-accept-alt "" \

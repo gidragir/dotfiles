@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
+# =============================================================================
+# Script      : khoj-ctl.sh
+# Description : CLI control & interaction utility for Khoj AI assistant
+# Usage       : khoj-ctl <command> [arguments...]
+# Dependencies: docker, curl, python3
+# Keybinds    : None
+# =============================================================================
 set -euo pipefail
 
-# =============================================================================
-# Script  : khoj-ctl
-# Purpose : CLI control & interaction utility for Khoj AI assistant
-# =============================================================================
-
+SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KHOJ_HOST="${KHOJ_HOST:-http://127.0.0.1:42110}"
 CONTAINER_NAME="khoj"
 
@@ -253,10 +256,17 @@ for i, item in enumerate(data, 1):
 }
 
 cmd_tags() {
-    if command -v khoj-tags >/dev/null 2>&1; then
+    if command -v khoj-tags.sh >/dev/null 2>&1; then
+        khoj-tags.sh "$@"
+    elif command -v khoj-tags >/dev/null 2>&1; then
         khoj-tags "$@"
+    elif [ -x "$SCRIPTS_DIR/khoj-tags.sh" ]; then
+        "$SCRIPTS_DIR/khoj-tags.sh" "$@"
+    elif [ -x "$SCRIPTS_DIR/khoj-tags" ]; then
+        "$SCRIPTS_DIR/khoj-tags" "$@"
     else
-        "$(dirname "$0")/khoj-tags" "$@"
+        echo "Error: khoj-tags.sh not found in PATH or $SCRIPTS_DIR" >&2
+        exit 1
     fi
 }
 

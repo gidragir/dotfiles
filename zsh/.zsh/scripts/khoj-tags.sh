@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
+# =============================================================================
+# Script      : khoj-tags.sh
+# Description : Instant, autonomous tag search in Obsidian vault using ripgrep
+# Usage       : khoj-tags [<tag>] [--stdout] [--interactive]
+# Dependencies: rg (or python3), fzf, glow (or bat/cat)
+# Keybinds    : Alt+O (open note in Obsidian from fzf), Enter (open in Neovim)
+# =============================================================================
 set -euo pipefail
 
-# =============================================================================
-# Script  : khoj-tags
-# Purpose : Instant, autonomous tag search in Obsidian vault using ripgrep.
-# Usage   :
-#   khoj-tags <tag>           # Print matching files (or open FZF if interactive)
-#   khoj-tags <tag> --stdout  # Always print matching file paths to stdout
-#   khoj-tags                 # Interactive tag and note selector (FZF)
-# =============================================================================
-
+SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VAULT_DIR="${OBSIDIAN_VAULT_DIR:-/data/obsidian}"
 
 if [ ! -d "$VAULT_DIR" ]; then
