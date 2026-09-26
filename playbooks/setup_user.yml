@@ -70,8 +70,8 @@
         - "{{ ansible_facts.env.HOME }}/.config/wireplumber"
         - "{{ ansible_facts.env.HOME }}/.config/zellij"
         - "{{ ansible_facts.env.HOME }}/.gemini/config/rules"
-        - "{{ ansible_facts.env.HOME }}/.opencommit"
-        - "{{ ansible_facts.env.HOME }}/.opencommit_migrations"
+        - "{{ ansible_facts.env.HOME }}/.config/OpenRGB/off.orp"
+        - "{{ ansible_facts.env.HOME }}/.config/systemd/user/openrgb-profile.service"
       tags: [stow]
 
     - name: Run GNU Stow to link configurations
@@ -257,6 +257,14 @@
         enabled: yes
         state: started
       become: true
+      tags: [systemd]
+
+    - name: Enable and start openrgb-profile user service
+      ansible.builtin.systemd:
+        name: openrgb-profile.service
+        enabled: yes
+        state: started
+        scope: user
       tags: [systemd]
 
     # ── 6. Default MIME Associations (Text & Markdown → Neovim) ─────────────

@@ -21,7 +21,10 @@ token
 .zshenv.local
 mise.local.toml
 
-# AnythingLLM runtime & dependencies
-anythingllm/**/node_modules/
-anythingllm/**/*.db*
-anythingllm/**/*.log
+# Dynamic AI scripts symlinks (managed by ai-dotfiles)
+zsh/.zsh/scripts/ai-*.sh
+zsh/.zsh/scripts/anything*.sh
+zsh/.zsh/scripts/khoj*.sh
+zsh/.zsh/scripts/manage-hindsight.sh
+zsh/.zsh/scripts/sync-knowledge.sh
+

@@ -41,26 +41,23 @@ dotfiles/
 │   ├── setup_virt.yml           # QEMU/KVM/libvirt, swtpm, UFW правила, Virtio-FS /srv/Shared
 │   ├── setup_rclone.yml         # Systemd user unit + timer для bisync Obsidian в Google Drive
 │   ├── setup_cooler_control.yml # Профили охлаждения и кривые вентиляторов
-│   └── setup_ollama.yml         # GPU-инференс Ollama (qwen2.5-coder, deepseek-r1, bge-m3)
-│
-├── local-ai-stack/              # 🧠 [Submodule] Выделенный проект локального AI-стека
-│   ├── stacks/khoj/             # Khoj AI + PostgreSQL (pgvector) с in-place патчами
-│   ├── stacks/headroom/         # Headroom proxy (:8787)
-│   ├── stacks/anythingllm/      # Workspace prompts и sync-prompts.ts
-│   ├── mcp/host-cli/            # Host CLI & Knowledge MCP сервер на TypeScript/Bun
-│   ├── mcp/anythingllm-skills/  # Пользовательские Agent Skills (atomic-commits)
-│   ├── evals/                   # Тестирование промптов через Promptfoo (eval:prompts)
-│   └── playbooks/               # Плейбуки настройки AI-стека (setup_ai_stack, setup_anythingllm)
+├── ai-dotfiles/                 # 🧠 [Repo] Единая декларативная AI-инфраструктура (~/projects/ai-dotfiles)
+│   ├── infra/playbooks/         # Плейбуки настройки AI-стека (setup_ollama, setup_khoj, setup_hermes)
+│   ├── infra/stacks/            # Docker Compose стеки (khoj, hindsight)
+│   ├── infra/stow/              # GNU Stow пакеты (hermes, ollama, opencommit)
+│   ├── services/hermes/         # Hermes Idea Pipeline (18 MCP инструментов, профили, плагины)
+│   ├── services/host-cli/       # Host CLI MCP сервер на TypeScript/Bun
+│   └── scripts/                 # Автономные CLI-утилиты (ai-status.sh, khoj-ctl.sh, etc.)
 │
 ├── crates/context-init/         # 🦀 [Submodule] Rust-утилита context-init
 ├── .agents/plugins/headroom/    # Antigravity плагин и MCP конфигурация Headroom
 ├── .agents/plugins/host-cli/    # MCP конфигурация Host-CLI
 │
 ├── docs/                        # Системная документация (virt.md, vivaldi.md, etc.)
-├── scripts/                     # Системные скрипты хоста (create_win11_vm.sh, setup_ollama.sh)
+├── scripts/                     # Системные скрипты хоста (create_win11_vm.sh)
 │
 └── [GNU Stow Пакеты]            # Каждый каталог ниже зеркалирует структуру $HOME
-    ├── zsh/                     # ~/.zshrc, ~/.zshenv, ~/.zprofile, ~/.zsh/ (khoj-ctl, khoj-tags, anything-ctl)
+    ├── zsh/                     # ~/.zshrc, ~/.zshenv, ~/.zprofile, ~/.zsh/ (системные скрипты и оконные хелперы)
     ├── niri/                    # ~/.config/niri/ (config.kdl + модули в cfg/)
     ├── nvim/                    # ~/.config/nvim/ (LazyVim конфигурация, stylua, lua/)
     ├── ghostty/                 # ~/.config/ghostty/ (терминал с поддержкой Wayland и Catppuccin)
@@ -148,11 +145,11 @@ dotfiles/
 ### 5. Персональный AI-стек и трехуровневая архитектура моделей
 Подробный гайдлайн и архитектурная спецификация: [`docs/ai_stack.md`](file:///home/gidragir/projects/dotfiles/docs/ai_stack.md).
 - **Три рабочих контура:**
-  1. *Терминальный контур:* OpenCommit напрямую через локальный `ollama` (`qwen2.5-coder:14b` на `:11434`), алиас `gcai` (`git add -p && opencommit`). CLI-навигация по знаниям через `khoj-ctl` и `khoj-tags`.
+  1. *Терминальный контур:* OpenCommit напрямую через локальный `ollama` (`qwen2.5-coder:14b` на `:11434`), алиас `gcai` (`git add -p && opencommit`). CLI-навигация по знаниям через `khoj-ctl.sh` и `khoj-tags.sh`.
   2. *Контур разработки:* Antigravity IDE (Gemini Pro) + Headroom Proxy (`:8787`, CCR AST-сжатие логов/кода, кэш в PostgreSQL) + Host CLI MCP (`bash-mcp-server.mjs`) + Khoj MCP (`docker exec -i khoj khoj-mcp`).
   3. *Контур знаний и RAG:* Obsidian (`/data/obsidian`) + Khoj Docker (`:42110`, живая индексация) + PostgreSQL 16 с расширением `pgvector` (`:5432`) + AnythingLLM (локальный архив с LanceDB и эмбеддингами `bge-m3:latest` на GPU).
 - **Аппаратные ограничения vRAM (16 ГБ):** Пакетные серверы типа vLLM запрещены из-за риска OOM десктопа Niri. Используется `ollama.service` (`q8_0` KV-кэш, Flash Attention, `OLLAMA_MAX_LOADED_MODELS=1`).
-- **Политика долговременной памяти (Context Poisoning Protection):** Флаг `--memory` в Headroom отключен. Память и заметки запрашиваются **строго через осознанные tool calls** (Khoj MCP, `search_files`, `khoj-ctl`), а не неявной инъекцией в системный промпт прокси.
+- **Политика долговременной памяти (Context Poisoning Protection):** Флаг `--memory` в Headroom отключен. Память и заметки запрашиваются **строго через осознанные tool calls** (Khoj MCP, `search_files`, `khoj-ctl.sh`), а не неявной инъекцией в системный промпт прокси.
 - **Защитные схемы MCP:** Аргументы инструментов в `bash-mcp-server.mjs` валидируются и приводятся к ожидаемым типам (Defensive Coercion), ошибки возвращаются в виде структурированных хинтов (`available_tools`).
 
 ---
@@ -207,7 +204,7 @@ sudo bash check.sh
 # 3. Комплексная проверка AI-стека (Ollama, Headroom, Khoj, Postgres):
 mise run ai:status
 # либо через CLI:
-khoj-ctl status
+khoj-ctl.sh status
 ```
 
 ---
@@ -307,9 +304,25 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
    - Возвращайте структурированные сообщения об ошибках со списком `available_tools` для самокоррекции SLM.
 4. **Конфигурация базы знаний Khoj и поиск по Obsidian:**
    - Изменения конфигурации или промптов вносятся в `deploy/khoj/`.
-   - Проверка статуса и перезапуск: `khoj-ctl status` / `khoj-ctl restart`.
-   - Принудительная синхронизация заметок: `khoj-ctl sync`.
-   - Тестирование поиска по тегам: `khoj-ctl tags <tag>` или `khoj-tags <tag>`.
+   - Проверка статуса и перезапуск: `khoj-ctl.sh status` / `khoj-ctl.sh restart`.
+   - Принудительная синхронизация заметок: `khoj-ctl.sh sync`.
+   - Тестирование поиска по тегам: `khoj-ctl.sh tags <tag>` или `khoj-tags.sh <tag>`.
+
+### Сценарий G: Оркестрация задач и субагенты (Subagent-Driven Development)
+В Antigravity 2.0 используется оркестраторная модель работы с изоляцией контекста. Профиль каждого агента определен в `.agents/agents/*.md`.
+1. **Защита основного контекста (Context Protection):**
+   - Запрещено выполнять «тяжелый» ресерч (grep по всей кодовой базе, чтение десятков файлов, длинные логи тестов) в основном диалоге.
+   - Делегируйте такие задачи субагенту `researcher` (модель `flash`).
+2. **Матрица моделей и ролей:**
+   - `researcher` (Flash) — поиск путей, файлов, чтение конфигов и выжимка фактов.
+   - `implementer` (Inherit/Flash) — написание кода строго под один пункт плана без отвлечений.
+   - `code-reviewer` (Pro) — глубокий двухэтапный аудит качества кода, стандартов безопасности и AGENTS.md.
+   - `tester-validator` (Flash) — запуск линтеров, сборки и синтаксических проверок.
+   - `system-architect` (Pro) — аудит системных рисков (NVMe, fstab, Btrfs, UFW, QEMU, Wayland/Niri).
+3. **Методология Subagent-Driven Development:**
+   - Перед сложной задачей сформируйте план (`implementation_plan.md`).
+   - Для каждого шага: сбор контекста (`researcher`) → реализация (`implementer`) → ревью (`code-reviewer`) → автопроверка (`tester-validator`).
+   - Используйте навык `.agents/skills/subagent-driven-development/SKILL.md`.
 
 ---
 
@@ -336,13 +349,13 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - [ ] **Соблюдайте тему оформления:** Единый визуальный стиль системы — **Catppuccin Frappe**. Все новые терминальные утилиты, темы SDDM, Limine, Ghostty и Neovim должны соответствовать этой палитре.
 - [ ] **Сохраняйте целостность кэшей:** Не меняйте пути кэшей в `setup_user.yml`, так как они завязаны на Dual-NVMe разметку дисков.
 - [ ] **Оптимизация контекста через Headroom:** При анализе объемных терминальных выводов, логов сборки или результатов масштабного поиска (>100 строк) используйте MCP-инструмент `headroom_compress` для сжатия контекста с сохранением оригинала (CCR).
-- [ ] **Никакой неявной инъекции памяти в Headroom:** Не включайте флаг `--memory` в Headroom Proxy. Извлечение заметок и памяти должно выполняться исключительно осознанными вызовами инструментов (Khoj MCP, `search_files`, `khoj-ctl`) во избежание зависаний SSE и "отравления контекста" (Context Poisoning).
+- [ ] **Никакой неявной инъекции памяти в Headroom:** Не включайте флаг `--memory` в Headroom Proxy. Извлечение заметок и памяти должно выполняться исключительно осознанными вызовами инструментов (Khoj MCP, `search_files`, `khoj-ctl.sh`) во избежание зависаний SSE и "отравления контекста" (Context Poisoning).
 - [ ] **Контроль бюджета vRAM (16 ГБ):** Не запускайте конкурирующие серверы инференса (vLLM) параллельно с Ollama. Модели инференса и эмбеддингов (`bge-m3:latest`) обслуживаются сервисом `ollama.service` с лимитом `OLLAMA_MAX_LOADED_MODELS=1`.
 - [ ] **Декларативность моделей AI:** Все локальные модели Ollama объявляются в `playbooks/setup_ollama.yml` и `playbooks/setup_ai_stack.yml`.
 - [ ] **Защитное программирование MCP:** При реализации или обновлении MCP-инструментов обеспечьте приведение типов аргументов и осмысленные подсказки со списком доступных инструментов (`available_tools`) для самокоррекции моделей 14B.
 - [ ] **Осторожность с дисками:** Никогда не запускайте скрипты разметки диска (`setup_system.yml`, `patrition_delete.sh`) без явного указания и подтверждения от пользователя.
 - [ ] **Ведение базы грабель и траблшутинга:** При обнаружении скрытых багов, специфичных нюансов API или интеграций (Khoj, AnythingLLM, Ollama, Headroom, Niri) обязательно фиксируйте и пополняйте документацию в [`docs/ai_stack.md`](file:///data/projects/dotfiles/docs/ai_stack.md) и [`docs/headroom_anythingllm_troubleshooting.md`](file:///data/projects/dotfiles/docs/headroom_anythingllm_troubleshooting.md).
-- [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `check_setup.sh`, а для AI-сервисов — `mise run ai:status` или `khoj-ctl status`.
+- [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `check_setup.sh`, а для AI-сервисов — `mise run ai:status` или `khoj-ctl.sh status`.
 
 
 

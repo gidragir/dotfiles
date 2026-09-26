@@ -96,7 +96,7 @@ Configures the personal 3-contour AI stack (Ollama, Headroom, Khoj, PostgreSQL p
 - **Khoj Knowledge Engine (`deploy/khoj`):** Docker Compose deployment with PostgreSQL 16 + `pgvector`, real-time Obsidian vault indexing (`/data/obsidian`), and Khoj MCP
 - **Headroom Proxy:** Port `8787` systemd user daemon with AST-compression and PostgreSQL semantic cache
 - **Terminal Commits:** OpenCommit configured for local Ollama inference via `gcai` alias (`git add -p && opencommit`)
-- **CLI Utilities:** `khoj-ctl` for knowledge base queries and sync, `khoj-tags` for tag extraction
+- **CLI Utilities:** `khoj-ctl.sh` for knowledge base queries and sync, `khoj-tags.sh` for tag extraction
 - **Prompt Testing:** Promptfoo test suites in `evals/` (`mise run eval:prompts`)
 
 ```bash
@@ -106,7 +106,7 @@ ansible-playbook playbooks/setup_ai_stack.yml
 # Check status:
 mise run ai:status
 # or:
-khoj-ctl status
+khoj-ctl.sh status
 ```
 
 ### 7. 🤖 AnythingLLM Desktop & Agent Toolchains (`playbooks/setup_anythingllm.yml`)
@@ -161,11 +161,10 @@ The terminal environment is built on Zsh in [`zsh/`](file:///home/alatau/project
   - `k3d-create [name]`: Bootstraps a local k3d cluster with port forwarding and local Nexus Registry mapping
   - `k8s-install-argocd`: Automated installation and wait helper for ArgoCD
 - **Universal Archive Extractor (`extract` / `x`)**: Unpacks `.tar.gz`, `.zip`, `.7z`, `.tar.zst`, `.rar`, and other archive formats with a single command
-- **Automation Scripts & Window Helpers (`zsh/.zsh/scripts/`)**:
-  - `anything-ctl`: Полнофункциональная CLI-утилита для AnythingLLM Desktop, Ollama и Headroom (инспекция SQLite базы, аудит диалогов, переключение моделей воркспейсов, бенчмаркинг TTFT/tps, тесты вызова инструментов)
-  - `anythingllm-assistant-toggle.sh`: Умный перенос и фокус плавающего окна AnythingLLM Assistant на активный воркспейс/монитор в Niri (`Mod+A`)
+- **Automation Scripts & Window Helpers (`zsh/.zsh/scripts/` & `ai-dotfiles/scripts/`)**:
   - `clipboard-picker.sh`: Меню истории буфера обмена через rofi (`Mod+V`)
-  - `cooler-toggle`: Быстрое переключение профилей охлаждения CoolerControl (`Mod+F1`)
+  - `cooler-toggle.sh`: Быстрое переключение профилей охлаждения CoolerControl (`Mod+F1`)
+  - `ai-dotfiles/scripts/`: Единый набор AI-утилит (`ai-status.sh`, `khoj-ctl.sh`, `anything-ctl.sh`, `sync-knowledge.sh`, `khoj-tags.sh`, etc.)
 
 
 ---
