@@ -4,8 +4,6 @@ A native Obsidian companion plugin for [Noctalia Shell](https://github.com/nocta
 
 Track today's tasks directly in the top bar, quickly capture notes and to-dos without leaving your workflow, explore tags, and manage vault synchronization from a sleek flyout hub.
 
-![Obsidian Companion Preview](preview.png)
-
 ## Features
 
 - 📌 **Live Bar Indicator**:
@@ -27,7 +25,14 @@ Track today's tasks directly in the top bar, quickly capture notes and to-dos wi
   - Vault path, daily notes folder, preferred editor, badge modes (`pending`, `fraction`, `icon-only`), and refresh intervals.
   - Complete English and Russian translations (`en`, `ru`).
 
----
+## Requirements
+
+- Noctalia Shell 3.9.0 or newer.
+- `bash`, `python3`, and `systemctl` on `PATH`.
+- Optional: `rclone` for vault sync, `rg` and `fzf` for note search, and `noctalia-dmenu.sh` for interactive note type selection.
+
+The plugin is Linux-specific. Editor, Obsidian desktop, Ghostty, and Khoj integrations are optional actions and are used only when their commands are available.
+
 
 ## Installation
 

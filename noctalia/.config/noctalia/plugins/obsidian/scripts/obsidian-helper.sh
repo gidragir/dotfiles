@@ -607,8 +607,10 @@ for n in notes:
         if [[ -n "$rel_path" && -f "$vault/$rel_path" ]]; then
             cmd_open_note "$vault/$rel_path" "neovim"
         fi
-    elif [[ -x "$HOME/.zsh/scripts/khoj-tags" ]]; then
-        ghostty --title="Obsidian Tag Explorer" -e "$HOME/.zsh/scripts/khoj-tags" &
+    elif command -v khoj-tags.sh >/dev/null 2>&1; then
+        ghostty --title="Obsidian Tag Explorer" -e khoj-tags.sh &
+    elif command -v khoj-tags >/dev/null 2>&1; then
+        ghostty --title="Obsidian Tag Explorer" -e khoj-tags &
     else
         ghostty --title="Obsidian Tags" -e bash -c "grep -rohnP '#[a-zA-Z0-9_\-\/]+' '$DEFAULT_VAULT' --exclude-dir='.obsidian' | sort -u | fzf" &
     fi

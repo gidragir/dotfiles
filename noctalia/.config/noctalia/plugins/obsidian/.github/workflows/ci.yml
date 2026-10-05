@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install validation tools
+        run: sudo apt-get update && sudo apt-get install -y jq shellcheck
+
+      - name: Validate manifest and entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq empty manifest.json
+          while IFS= read -r entry_point; do
+            test -f "$entry_point"
+          done < <(jq -r '.entryPoints | to_entries[] | .value' manifest.json)
+          jq empty settings.json
+
+      - name: Check shell scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t scripts < <(find scripts -type f -name '*.sh' -print)
+          ((${#scripts[@]} > 0))
+          bash -n "${scripts[@]}"
+          shellcheck --severity=error "${scripts[@]}"
+
+      - name: Run vault smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          vault="$(mktemp -d)"
+          trap 'rm -rf "$vault"' EXIT
+          mkdir -p "$vault/DAILY"
+          printf '# CI\n\n## Tasks\n- [ ] Check plugin\n' > "$vault/DAILY/$(date +%F).md"
+          scripts/obsidian-helper.sh status "$vault" DAILY | jq -e '.totalTasks == 1 and .pendingTasks == 1'
+          created_note="$(scripts/create-note.sh STICKY 'CI note' "$vault")"
+          test "$created_note" = "$vault/STICKY/CI note.md"
+          test -f "$created_note"
+          scripts/obsidian-helper.sh capture 'CI capture' task "$vault" DAILY >/dev/null
+          scripts/obsidian-helper.sh status "$vault" DAILY | jq -e '.totalTasks == 2'

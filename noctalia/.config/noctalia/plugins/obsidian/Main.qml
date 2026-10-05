@@ -47,6 +47,7 @@ Item {
     || pluginApi?.manifest?.metadata?.defaultSettings?.refreshIntervalSec || 15
 
   readonly property string helperScript: (pluginApi?.pluginDir || "") + "/scripts/obsidian-helper.sh"
+    readonly property string noteCreatorScript: (pluginApi?.pluginDir || "") + "/scripts/create-note.sh"
 
   // Process to fetch status JSON
   Process {
@@ -209,9 +210,7 @@ Item {
   }
 
   function createNote(type) {
-    var cmd = "~/.zsh/scripts/obsidian-create-note.sh";
-    if (type && type.trim()) cmd += " " + type.trim();
-    Quickshell.execDetached(["bash", "-c", cmd]);
+    Quickshell.execDetached(["bash", noteCreatorScript, type || "", "", root.vaultPath]);
   }
 
   Timer {
