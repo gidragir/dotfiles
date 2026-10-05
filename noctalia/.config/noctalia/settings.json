@@ -27,7 +27,8 @@
             "vivaldi-cinhimbnkkaeohfgghhklpknlkffjgod-Default",
             "obsidian",
             "antigravity",
-            "virt-manager"
+            "virt-manager",
+            "hermes-desktop"
         ],
         "position": "center",
         "screenshotAnnotationTool": "",
@@ -198,6 +199,39 @@
                 },
                 {
                     "defaultSettings": {
+                        "panelPosition": "follow_launcher",
+                        "pollIntervalSec": 10,
+                        "quickColors": [
+                            {
+                                "hex": "FF0000",
+                                "name": "Red"
+                            },
+                            {
+                                "hex": "00FFFF",
+                                "name": "Cyan"
+                            },
+                            {
+                                "hex": "B000FF",
+                                "name": "Purple"
+                            },
+                            {
+                                "hex": "00FF00",
+                                "name": "Green"
+                            },
+                            {
+                                "hex": "FF8800",
+                                "name": "Orange"
+                            },
+                            {
+                                "hex": "FFFFFF",
+                                "name": "White"
+                            }
+                        ]
+                    },
+                    "id": "plugin:openrgb"
+                },
+                {
+                    "defaultSettings": {
                         "badgeMode": "pending",
                         "dailyFolder": "DAILY",
                         "dailyFormat": "YYYY-MM-DD",
@@ -212,39 +246,47 @@
                     "id": "plugin:obsidian"
                 },
                 {
+                    "defaultSettings": {
+                        "autoConnect": true,
+                        "panelPosition": "follow_launcher",
+                        "pollIntervalSec": 5
+                    },
+                    "id": "plugin:virt-manager"
+                },
+                {
                     "colorizeSystemIcon": "none",
                     "colorizeSystemText": "none",
-                    "generalTooltipText": "🧠 AI Assistant Hub\n• ЛКМ: AnythingLLM\n• ПКМ: Khoj WebApp\n• СКМ: Local AI Меню",
+                    "generalTooltipText": "⚡ Hermes AI Hub\n• ЛКМ: Hermes Desktop (Toggle)\n• ПКМ: Kanban Board (:9119)\n• СКМ: Меню профилей (Refiner/Thinker/Gemini)\n• Скролл: Захват идеи в Triage",
                     "hideMode": "alwaysExpanded",
-                    "icon": "brain",
+                    "icon": "message-chatbot",
                     "iconPosition": "left",
                     "id": "CustomButton",
-                    "ipcIdentifier": "ai-hub",
-                    "leftClickExec": "/home/gidragir/.zsh/scripts/anythingllm-assistant-toggle.sh",
-                    "leftClickUpdateText": false,
+                    "ipcIdentifier": "hermes-hub",
+                    "leftClickExec": "hermes-desktop-toggle.sh",
+                    "leftClickUpdateText": true,
                     "maxTextLength": {
-                        "horizontal": 10,
-                        "vertical": 10
+                        "horizontal": 14,
+                        "vertical": 14
                     },
-                    "middleClickExec": "/home/gidragir/.zsh/scripts/ai-launcher.sh",
-                    "middleClickUpdateText": false,
+                    "middleClickExec": "ai-launcher.sh",
+                    "middleClickUpdateText": true,
                     "parseJson": false,
-                    "rightClickExec": "/home/gidragir/.zsh/scripts/khoj-toggle.sh",
+                    "rightClickExec": "vivaldi-stable --new-window --app=http://127.0.0.1:9119/#/kanban",
                     "rightClickUpdateText": false,
                     "showExecTooltip": false,
                     "showIcon": true,
                     "showTextTooltip": true,
                     "textCollapse": "",
-                    "textCommand": "",
-                    "textIntervalMs": 3000,
+                    "textCommand": "hermes-bar-status.sh",
+                    "textIntervalMs": 4000,
                     "textStream": false,
-                    "wheelDownExec": "",
-                    "wheelDownUpdateText": false,
+                    "wheelDownExec": "hermes-capture-idea.sh",
+                    "wheelDownUpdateText": true,
                     "wheelExec": "",
                     "wheelMode": "unified",
-                    "wheelUpExec": "",
-                    "wheelUpUpdateText": false,
-                    "wheelUpdateText": false
+                    "wheelUpExec": "hermes-capture-idea.sh",
+                    "wheelUpUpdateText": true,
+                    "wheelUpdateText": true
                 },
                 {
                     "blacklist": [
@@ -290,7 +332,7 @@
                     "textColor": "none"
                 },
                 {
-                    "applyToAllMonitors": false,
+                    "applyToAllMonitors": true,
                     "displayMode": "onhover",
                     "iconColor": "none",
                     "id": "Brightness",
@@ -317,7 +359,7 @@
         "backlightDeviceMappings": [
         ],
         "brightnessStep": 5,
-        "enableDdcSupport": false,
+        "enableDdcSupport": true,
         "enforceMinimum": true
     },
     "calendar": {
@@ -563,17 +605,17 @@
         "bluetoothRssiPollIntervalMs": 60000,
         "bluetoothRssiPollingEnabled": false,
         "disableDiscoverability": false,
-        "networkPanelView": "wifi",
+        "networkPanelView": "ethernet",
         "wifiDetailsViewMode": "grid"
     },
     "nightLight": {
-        "autoSchedule": true,
+        "autoSchedule": false,
         "dayTemp": "6500",
         "enabled": false,
         "forced": false,
         "manualSunrise": "06:30",
         "manualSunset": "18:30",
-        "nightTemp": "4000"
+        "nightTemp": "4913"
     },
     "noctaliaPerformance": {
         "disableDesktopWidgets": true,
