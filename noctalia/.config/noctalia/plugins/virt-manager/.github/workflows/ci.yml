@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install validation tools
+        run: sudo apt-get update && sudo apt-get install -y jq shellcheck
+
+      - name: Validate manifest and entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq empty manifest.json
+          while IFS= read -r entry_point; do
+            test -f "$entry_point"
+          done < <(jq -r '.entryPoints | to_entries[] | .value' manifest.json)
+
+      - name: Check shell scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t scripts < <(find scripts -type f -name '*.sh' -print)
+          ((${#scripts[@]} > 0))
+          bash -n "${scripts[@]}"
+          shellcheck --severity=error "${scripts[@]}"
+
+      - name: Run mock smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          MOCK_VIRSH=1 MOCK_DOMAINS='ci-vm,dev-vm' scripts/virt-helper.sh list \
+            | jq -e 'length == 2 and .[0].name == "ci-vm" and .[1].name == "dev-vm"'
+          MOCK_LAUNCH=1 scripts/virt-helper.sh launch ci-vm

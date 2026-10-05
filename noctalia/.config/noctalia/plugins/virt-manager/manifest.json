@@ -1,0 +1,26 @@
+{
+  "id": "virt-manager",
+  "name": "Virtual Machines",
+  "version": "1.0.0",
+  "minNoctaliaVersion": "3.9.0",
+  "author": "gidragir",
+  "license": "MIT",
+  "repository": "https://github.com/gidragir/noctalia-virt-manager",
+  "description": "Monitor active KVM/QEMU virtual machines and connect via virt-viewer.",
+  "tags": ["Virtualization", "KVM", "QEMU", "System", "Utility"],
+  "entryPoints": {
+    "main": "Main.qml",
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "panelPosition": "follow_launcher",
+      "pollIntervalSec": 5,
+      "autoConnect": true
+    }
+  }
+}
