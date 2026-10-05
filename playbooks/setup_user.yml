@@ -69,8 +69,8 @@
         - "{{ ansible_facts.env.HOME }}/.config/vivaldi-stable.conf"
         - "{{ ansible_facts.env.HOME }}/.config/wireplumber"
         - "{{ ansible_facts.env.HOME }}/.config/zellij"
-        - "{{ ansible_facts.env.HOME }}/.gemini/config/rules"
         - "{{ ansible_facts.env.HOME }}/.config/OpenRGB/off.orp"
+        - "{{ ansible_facts.env.HOME }}/.config/systemd/user/openrgb.service"
         - "{{ ansible_facts.env.HOME }}/.config/systemd/user/openrgb-profile.service"
       tags: [stow]
 
@@ -259,12 +259,15 @@
       become: true
       tags: [systemd]
 
-    - name: Enable and start openrgb-profile user service
+    - name: Enable and start openrgb user services
       ansible.builtin.systemd:
-        name: openrgb-profile.service
+        name: "{{ item }}"
         enabled: yes
         state: started
         scope: user
+      loop:
+        - openrgb.service
+        - openrgb-profile.service
       tags: [systemd]
 
     # ── 6. Default MIME Associations (Text & Markdown → Neovim) ─────────────

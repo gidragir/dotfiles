@@ -352,3 +352,58 @@
       become_user: "{{ real_user }}"
       changed_when: false
       failed_when: false
+
+    # ── 9. OpenRGB Hardware Access (I2C & RAM SMBus) ──────────────────────────
+    - name: Configure kernel modules autoload for OpenRGB
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/i2c.conf
+        content: |
+          # Load I2C drivers for OpenRGB access to RAM and Motherboard SMBus
+          i2c-dev
+          i2c-i801
+          ee1004
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Blacklist spd5118 module to allow OpenRGB DDR5 DRAM control
+      ansible.builtin.copy:
+        dest: /etc/modprobe.d/openrgb-ram.conf
+        content: |
+          # Blacklist spd5118 so it does not block SMBus access to DDR5 RGB controllers
+          blacklist spd5118
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Enable software I2C for NVIDIA DisplayPort DDC/CI (ddcutil)
+      ansible.builtin.copy:
+        dest: /etc/modprobe.d/nvidia-ddc.conf
+        content: |
+          # Force software I2C over DisplayPort AUX for reliable DDC/CI (ddcutil)
+          options nvidia NVreg_RegistryDwords=RMUseSwI2c=0x01;RMI2cSpeed=100
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Install system-sleep hook to restart OpenRGB on resume
+      ansible.builtin.copy:
+        dest: /usr/lib/systemd/system-sleep/openrgb-resume
+        content: |
+          #!/bin/sh
+          # Restart OpenRGB user service on wake so USB HID devices (mice, keyboards)
+          # re-enumerated by xHCI during resume are re-acquired without dead descriptors.
+          case "$1" in
+              post)
+                  for u in $(users | tr ' ' '\n' | sort -u); do
+                      uid=$(id -u "$u" 2>/dev/null)
+                      if [ -n "$uid" ]; then
+                          systemctl --no-block --user -M "$u@" restart openrgb.service 2>/dev/null || true
+                      fi
+                  done
+                  ;;
+          esac
+        owner: root
+        group: root
+        mode: '0755'
+

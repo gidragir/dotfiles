@@ -15,6 +15,7 @@ system_packages:
   - libvirt
   - qemu-desktop
   - virt-manager
+  - virt-viewer
   - edk2-ovmf
   - swtpm
   - dnsmasq
@@ -93,6 +94,8 @@ user_pacman_packages:
   - biome
   - imv
   - sheldon
+  - ddcutil
+  - wlsunset
 
 # Dedicated GPU/AI inference packages (installed on-demand via setup_ollama.yml)
 ollama_packages:
