@@ -1,0 +1,21 @@
+// Layout, screenshots, compositor control, and session actions
+binds {
+Mod+R { switch-preset-column-width; }
+Mod+CTRL+F { fullscreen-window; }
+Mod+Ctrl+Alt+F { expand-column-to-available-width; }
+Mod+Shift+F { maximize-window-to-edges; }
+Mod+C { center-column; }
+Mod+CTRL+C { center-visible-columns; }
+Mod+Minus { set-column-width "-10%"; }
+Mod+Equal { set-column-width "+10%"; }
+Mod+Shift+Minus { set-window-height "-10%"; }
+Mod+Shift+Equal { set-window-height "+10%"; }
+Mod+T { toggle-window-floating; }
+Mod+F { maximize-column; }
+Mod+W { toggle-column-tabbed-display; }
+Mod+Shift+S { screenshot; }
+Mod+ESCAPE allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+CTRL+ALT+Delete { quit; }
+Mod+Shift+P { power-off-monitors; }
+Mod+O repeat=false { toggle-overview; }
+}
