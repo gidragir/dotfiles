@@ -1,0 +1,13 @@
+[Unit]
+Description=OpenRGB Auto Profile Loader (Off)
+After=openrgb.service
+Wants=openrgb.service
+PartOf=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/openrgb -p off.orp
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical-session.target
