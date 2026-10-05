@@ -1,3 +1,0 @@
-[submodule "crates/context-init"]
-	path = crates/context-init
-	url = git@github.com:gidragir/context-init.git
