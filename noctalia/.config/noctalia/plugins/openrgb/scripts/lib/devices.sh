@@ -60,7 +60,7 @@ _ratbag_set_color() {
 
   local dev_id
   dev_id="$(ratbagctl list 2>/dev/null \
-    | grep -i "$RATBAG_DEVICE_MATCH" \
+    | rg -i "$RATBAG_DEVICE_MATCH" \
     | awk -F':' '{print $1}' \
     | head -n1 || true)"
   [[ -z "$dev_id" ]] && return 0
@@ -79,6 +79,18 @@ _ratbag_set_color() {
   fi
 }
 
+# --- Internal: recover OpenRGB from dead/deleted hidraw file descriptors after sleep/reconnect ---
+_heal_stale_openrgb() {
+  local pid
+  pid="$(pgrep -n openrgb 2>/dev/null || true)"
+  [[ -z "$pid" ]] && return 0
+
+  if ls -l "/proc/$pid/fd" 2>/dev/null | rg -q "hidraw.*deleted"; then
+    systemctl --user restart openrgb.service >/dev/null 2>&1 || true
+    sleep 0.5
+  fi
+}
+
 # --- Internal: parse "kind:val[:mode[:extra]]" entry ---
 # Sets globals: _kind, _val, _mode, _extra
 _parse_device_entry() {
@@ -90,10 +102,35 @@ _parse_device_entry() {
   IFS=':' read -r _kind _val _mode _extra <<< "$entry"
 }
 
+_is_device_active() {
+  local kind="$1"
+  local val="$2"
+  local active_list="$3"
+
+  [[ -z "$active_list" ]] && return 0
+
+  case "$kind" in
+    by-index)
+      echo "$active_list" | rg -q "^${val}:"
+      ;;
+    by-name)
+      echo "$active_list" | rg -qi "${val}"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 # devices_apply_off — set all devices to off/black
 devices_apply_off() {
+  _heal_stale_openrgb
+
   # Mouse: independent daemon, run in background for immediate response
   _ratbag_set_color "000000" &
+
+  local active_list
+  active_list="$(openrgb -l 2>/dev/null || true)"
 
   # Build a SINGLE openrgb invocation for all devices simultaneously
   local -a cmd=(openrgb -c 000000)
@@ -103,6 +140,9 @@ devices_apply_off() {
   for dev in "${_devs[@]+"${_devs[@]}"}"; do
     local _kind _val _mode _extra
     _parse_device_entry "$dev"
+    if ! _is_device_active "$_kind" "$_val" "$active_list"; then
+      continue
+    fi
     case "$_kind" in
       by-name|by-index)
         if [[ -n "$_mode" ]]; then
@@ -134,8 +174,13 @@ devices_apply_color() {
   local hex="${1:-000000}"
   hex="${hex#"#"}"  # strip leading '#' if present
 
+  _heal_stale_openrgb
+
   # Mouse: independent daemon, run in background for immediate response
   _ratbag_set_color "$hex" &
+
+  local active_list
+  active_list="$(openrgb -l 2>/dev/null || true)"
 
   # Build a SINGLE openrgb invocation for all devices simultaneously:
   # -c sets global color (GPU and any unlisted device)
@@ -147,6 +192,9 @@ devices_apply_color() {
   for dev in "${_devs[@]+"${_devs[@]}"}"; do
     local _kind _val _mode _extra
     _parse_device_entry "$dev"
+    if ! _is_device_active "$_kind" "$_val" "$active_list"; then
+      continue
+    fi
     case "$_kind" in
       by-name|by-index)
         local mode="${_mode:-Direct}"  # Direct is default for color commands

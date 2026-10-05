@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install validation tools
+        run: sudo apt-get update && sudo apt-get install -y jq shellcheck
+
+      - name: Validate manifest and entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq empty manifest.json
+          while IFS= read -r entry_point; do
+            test -f "$entry_point"
+          done < <(jq -r '.entryPoints | to_entries[] | .value' manifest.json)
+          jq empty settings.json 2>/dev/null || true
+
+      - name: Check shell scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t scripts < <(find scripts -type f -name '*.sh' -print)
+          ((${#scripts[@]} > 0))
+          bash -n "${scripts[@]}"
+          shellcheck --severity=error "${scripts[@]}"
+
+      - name: Run hardware-free smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          state_dir="$(mktemp -d)"
+          trap 'rm -rf "$state_dir"' EXIT
+          OPENRGB_STATE_DIR="$state_dir" scripts/openrgb-helper.sh list \
+            | jq -e '.current == "off" and (.profiles | index("off")) != null'
