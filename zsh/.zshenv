@@ -17,6 +17,8 @@ path=(
     "$PNPM_HOME/bin"
     "$HOME/.zsh/scripts"
     "$HOME/projects/dotfiles/zsh/.zsh/scripts"
+    "/data/projects/dotfiles/local-ai-stack/scripts"
+    "$HOME/projects/dotfiles/local-ai-stack/scripts"
     $path
 )
 
@@ -28,9 +30,12 @@ export FZF_BASE="/usr/share/fzf"
 export EDITOR="nvim"
 export VISUAL="nvim"
 
-# ── Headroom Context Optimization Proxy ──────────────────────────────────────
+# ── Headroom Context Optimization Proxy & FX CLI ─────────────────────────────
 export ANTHROPIC_BASE_URL="http://127.0.0.1:8787"
 export OPENAI_BASE_URL="http://127.0.0.1:8787/v1"
+export OPENAI_API_KEY="ollama"
+export FX_PROVIDER="openai"
+export FX_MODEL="qwen2.5-coder:14b"
 
 # ── Local Secrets & Environment (Git-Ignored) ──────────────────────────────────
 [[ -f "$HOME/.zshenv.local" ]] && source "$HOME/.zshenv.local"

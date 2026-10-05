@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# gamescope-run: Wrapper script for launching games in 16:9 on a 21:9 ultrawide monitor (3440x1440)
+# Centers the game rendering at native 2560x1440 with sharp scaling and pillarboxing.
+
+GAME_W="${GAME_W:-2560}"
+GAME_H="${GAME_H:-1440}"
+SCREEN_W="${SCREEN_W:-3440}"
+SCREEN_H="${SCREEN_H:-1440}"
+REFRESH="${REFRESH:-144}"
+
+exec gamescope \
+    -w "$GAME_W" -h "$GAME_H" \
+    -W "$SCREEN_W" -H "$SCREEN_H" \
+    -r "$REFRESH" \
+    -S fit \
+    -b \
+    --force-grab-cursor \
+    -- "$@"

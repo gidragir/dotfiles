@@ -1,0 +1,1 @@
+/data/projects/ai-dotfiles/scripts/hermes-desktop-toggle.sh
