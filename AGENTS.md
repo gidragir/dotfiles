@@ -20,14 +20,16 @@
 
 ```
 dotfiles/
-├── setup_system.sh              # [Root] Системный бутстраппер (диски, системные пакеты, SDDM/Limine)
-├── setup_user.sh                # [User] Пользовательский бутстраппер (AUR, stow, mise, rust, timers)
-├── check.sh                     # Диагностика Docker XFS / prjquota / storage
-├── check_setup.sh               # Полная валидация окружения (точки монтирования, кэши, symlinks)
-├── patrition_delete.sh          # ⚠️ ДЕСТРУКТИВНЫЙ скрипт очистки /dev/nvme1n1 (не запускать без спроса!)
-├── setup_wallpaper_engine.sh    # Утилита настройки динамических обоев
-├── mise.toml                    # Корневые задачи сборки проекта (mise run build:skills)
-├── lefthook.yml                 # Git хуки автоматической компиляции TS-скиллов
+├── scripts/                     # Системные скрипты и утилиты хоста
+│   ├── setup_system.sh          # [Root] Системный бутстраппер (диски, системные пакеты, SDDM/Limine)
+│   ├── setup_user.sh            # [User] Пользовательский бутстраппер (AUR, stow, mise, rust, timers)
+│   ├── check.sh                 # Диагностика Docker XFS / prjquota / storage
+│   ├── check_setup.sh           # Полная валидация окружения (точки монтирования, кэши, symlinks)
+│   ├── patrition_delete.sh      # ⚠️ ДЕСТРУКТИВНЫЙ скрипт очистки /dev/nvme1n1 (не запускать без спроса!)
+│   ├── setup_wallpaper_engine.sh# Утилита настройки динамических обоев
+│   └── create_win11_vm.sh       # Скрипт развертывания Windows 11 VM в KVM
+├── mise.toml                    # Задачи сборки и проверки окружения (mise run ai:status, etc.)
+├── lefthook.yml                 # Git хуки качества и линтинга
 │
 ├── playbooks/                   # Модульные Ansible-плейбуки
 │   ├── vars/
@@ -41,6 +43,7 @@ dotfiles/
 │   ├── setup_virt.yml           # QEMU/KVM/libvirt, swtpm, UFW правила, Virtio-FS /srv/Shared
 │   ├── setup_rclone.yml         # Systemd user unit + timer для bisync Obsidian в Google Drive
 │   ├── setup_cooler_control.yml # Профили охлаждения и кривые вентиляторов
+│   └── setup_wallpaper_engine.yml # Установка и сервис Wallpaper Engine для Wayland
 ├── ai-dotfiles/                 # 🧠 [Repo] Единая декларативная AI-инфраструктура (~/projects/ai-dotfiles)
 │   ├── infra/playbooks/         # Плейбуки настройки AI-стека (setup_ollama, setup_khoj, setup_hermes)
 │   ├── infra/stacks/            # Docker Compose стеки (khoj, hindsight)
@@ -49,12 +52,15 @@ dotfiles/
 │   ├── services/host-cli/       # Host CLI MCP сервер на TypeScript/Bun
 │   └── scripts/                 # Автономные CLI-утилиты (ai-status.sh, khoj-ctl.sh, etc.)
 │
-├── crates/context-init/         # 🦀 [Submodule] Rust-утилита context-init
-├── .agents/plugins/headroom/    # Antigravity плагин и MCP конфигурация Headroom
-├── .agents/plugins/host-cli/    # MCP конфигурация Host-CLI
+├── .agents/                     # 🤖 Antigravity Workspace Customizations
+│   ├── agents/                  # Роли и промпты субагентов (researcher, implementer, etc.)
+│   ├── knowledge/dotfiles/      # Архитектурная база знаний L0/L1 (ADR, CLI, подсистемы)
+│   ├── plugins/                 # Antigravity плагины (headroom, host-cli)
+│   ├── rules/                   # Поведенческие правила (CLAUDE.md)
+│   └── skills/                  # Специализированные навыки (hardware-troubleshooting, etc.)
 │
-├── docs/                        # Системная документация (virt.md, vivaldi.md, etc.)
-├── scripts/                     # Системные скрипты хоста (create_win11_vm.sh)
+├── deploy/                      # Локальные стеки деплоя (deploy/khoj/)
+├── tests/                       # Тесты инфраструктуры (e2e_virt_manager_test.sh)
 │
 └── [GNU Stow Пакеты]            # Каждый каталог ниже зеркалирует структуру $HOME
     ├── zsh/                     # ~/.zshrc, ~/.zshenv, ~/.zprofile, ~/.zsh/ (системные скрипты и оконные хелперы)
@@ -74,12 +80,9 @@ dotfiles/
     ├── television/              # ~/.config/television/ (быстрый fuzzy-finder / previewer)
     ├── vivaldi/                 # ~/.config/vivaldi-stable.conf (флаги Wayland/GPU)
     ├── wireplumber/             # ~/.config/wireplumber/ (скрипты маршрутизации аудио)
-    ├── anythingllm/             # ~/.config/anythingllm-desktop/ (MCP серверы, TS-скиллы, воркспейсы, промпты)
-    ├── ollama/                  # ~/.config/ollama/ (config.env), ~/.config/systemd/user/ollama.service (GPU-хосты)
-    ├── antigravity/             # ~/.gemini/config/ (глобальные правила и скиллы Antigravity)
     ├── noctalia/                # ~/.config/noctalia/ (Noctalia Shell: бар, лаунчер, OSD, темы, виджеты)
     ├── btop/                    # ~/.config/btop/ (btop.conf: мониторинг ресурсов, кастомный макет и темы)
-    ├── opencommit/              # ~/.opencommit, ~/.opencommit_migrations (конфигурация AI-генерации коммитов)
+    ├── openrgb/                 # ~/.config/OpenRGB/ (off.orp), ~/.config/systemd/user/ (openrgb сервисы)
     └── zellij/                  # ~/.config/zellij/ (терминальный мультиплексор)
 ```
 
@@ -143,14 +146,26 @@ dotfiles/
 - **Централизация скриптов автоматизации:** Все кастомные shell-скрипты, оконные хелперы (например, переключение/вызов окон в Niri), CLI-утилиты и скрипты интеграций хранятся **исключительно** в `zsh/.zsh/scripts/`. Каталог `~/.zsh/scripts` автоматически экспортируется в `$PATH` через `.zshenv`. Категорически запрещено создавать изолированные loose-скрипты в `~/.local/bin/` или вне репозитория dotfiles.
 
 ### 5. Персональный AI-стек и трехуровневая архитектура моделей
-Подробный гайдлайн и архитектурная спецификация: [`docs/ai_stack.md`](file:///home/gidragir/projects/dotfiles/docs/ai_stack.md).
+Единая декларативная AI-инфраструктура хоста вынесена в репозиторий [`ai-dotfiles`](file:///data/projects/dotfiles/ai-dotfiles):
 - **Три рабочих контура:**
-  1. *Терминальный контур:* OpenCommit напрямую через локальный `ollama` (`qwen2.5-coder:14b` на `:11434`), алиас `gcai` (`git add -p && opencommit`). CLI-навигация по знаниям через `khoj-ctl.sh` и `khoj-tags.sh`.
-  2. *Контур разработки:* Antigravity IDE (Gemini Pro) + Headroom Proxy (`:8787`, CCR AST-сжатие логов/кода, кэш в PostgreSQL) + Host CLI MCP (`bash-mcp-server.mjs`) + Khoj MCP (`docker exec -i khoj khoj-mcp`).
-  3. *Контур знаний и RAG:* Obsidian (`/data/obsidian`) + Khoj Docker (`:42110`, живая индексация) + PostgreSQL 16 с расширением `pgvector` (`:5432`) + AnythingLLM (локальный архив с LanceDB и эмбеддингами `bge-m3:latest` на GPU).
+  1. *Терминальный контур:* OpenCommit напрямую через локальный `ollama` (`qwen2.5:14b-ctx64k` на `:11434`), алиас `gcai` (`git add -p && opencommit`).
+  2. *Контур разработки:* Antigravity IDE (Gemini Pro) + Headroom Proxy (`:8787`, CCR AST-сжатие логов/кода, кэш в PostgreSQL) + Host CLI MCP (TypeScript/Bun) + Khoj MCP (`docker exec -i khoj khoj-mcp`).
+  3. *Контур знаний и RAG:* Obsidian (`/data/obsidian`) + Khoj Docker (`:42110`, живая индексация) + PostgreSQL 16 с расширением `pgvector` (`:5432`) + Hindsight Long-Term Memory (`:9999`).
 - **Аппаратные ограничения vRAM (16 ГБ):** Пакетные серверы типа vLLM запрещены из-за риска OOM десктопа Niri. Используется `ollama.service` (`q8_0` KV-кэш, Flash Attention, `OLLAMA_MAX_LOADED_MODELS=1`).
 - **Политика долговременной памяти (Context Poisoning Protection):** Флаг `--memory` в Headroom отключен. Память и заметки запрашиваются **строго через осознанные tool calls** (Khoj MCP, `search_files`, `khoj-ctl.sh`), а не неявной инъекцией в системный промпт прокси.
-- **Защитные схемы MCP:** Аргументы инструментов в `bash-mcp-server.mjs` валидируются и приводятся к ожидаемым типам (Defensive Coercion), ошибки возвращаются в виде структурированных хинтов (`available_tools`).
+- **Защитные схемы MCP:** Аргументы инструментов в Host CLI MCP (`services/host-cli/`) валидируются через Zod и приводятся к ожидаемым типам (Defensive Coercion), ошибки возвращаются в виде структурированных хинтов (`available_tools`).
+
+### 6. Аппаратная специфика: Аудио (WirePlumber 0.5) и Подсветка (OpenRGB / HID)
+- **WirePlumber 0.5 Routing & Sleep Invariants:**
+  - Синтаксис строго SPA-JSON (`wireplumber.conf.d/*.conf`). Lua-скрипты в WirePlumber 0.5 устарели и игнорируются.
+  - Автопереключение профилей гарнитуры выключено: `"bluetooth.autoswitch-to-headset-profile" = false` в `10-seamless-routing.conf` (предотвращает принудительное переключение в монофонический HFP/HSP при доступе приложений к микрофону).
+  - Запрет засыпания нод: свойство `session.suspend-timeout-seconds = 0` обязательно для правил, матчащих `api.alsa.*` и `api.bluez5.*` в `30-disable-idle-suspend.conf` (устраняет задержки и зависания аудиопотоков).
+- **OpenRGB & USB HID Архитектура:**
+  - **Systemd Targets:** Пользовательские юниты `openrgb.service` и `openrgb-profile.service` должны привязываться строго к `graphical-session.target`. Привязка к `default.target` / `multi-user.target` создает ordering cycle, при котором systemd аварийно сбрасывает старт сервиса профиля.
+  - **Изоляция аргументов в CLI OpenRGB:** Опции `-z` (зоны) внутри одного вызова `openrgb` загрязняют последующие устройства в цепочке `-d`. Категорически запрещено передавать временные размеры зон (`-sz`) или `-z` внутри регулярной смены цвета в `devices.conf` / `devices.sh`. Размеры ARGB-заголовков материнской платы персистентно хранятся в `Configuration.json`.
+  - **Zombie-дескрипторы после сна (Hotplug Limit):** Демон `openrgb --server` не имеет udev hotplug-монитора. При сне ПК или USB-ресбросе ядро удаляет старые ноды (`/dev/hidraw2 (deleted)`) и создает новые (`/dev/hidraw3`). Для исключения отправки команд в мертвые дескрипторы используется:
+    1. Автоматический self-healing в `devices.sh` (`_heal_stale_openrgb()`, проверяющий `/proc/<pid>/fd/` на `hidraw.*deleted`).
+    2. Системный sleep-хук `/usr/lib/systemd/system-sleep/openrgb-resume` (из `playbooks/setup_system.yml`), перезапускающий `openrgb.service` при выходе из сна.
 
 ---
 
@@ -159,7 +174,7 @@ dotfiles/
 ### Системный этап (Root)
 Запускается на чистой системе CachyOS:
 ```bash
-sudo bash setup_system.sh
+sudo bash scripts/setup_system.sh
 ```
 Что делает:
 1. Клонирует репозиторий при необходимости в `/data/projects/dotfiles`.
@@ -171,7 +186,7 @@ sudo bash setup_system.sh
 ### Пользовательский этап (User)
 Запускается от обычного пользователя (не root):
 ```bash
-bash setup_user.sh
+bash scripts/setup_user.sh
 ```
 Что делает:
 1. Устанавливает коллекцию `kewlfft.aur` в Ansible Galaxy.
@@ -180,31 +195,17 @@ bash setup_user.sh
 4. Настраивает структуру кэшей Rust, pnpm, uv.
 5. Запускает фоновый таймер rclone для Obsidian (`setup_rclone.yml`).
 
-### Этап персонального AI-стека (User)
-Развертывание локальных моделей, Khoj и Headroom (требуется активный Docker daemon):
-```bash
-ansible-playbook playbooks/setup_ai_stack.yml
-```
-Что делает:
-1. Запускает пользовательский сервис `ollama.service` и скачивает целевые модели (`qwen2.5:14b`, `qwen2.5-coder:14b`, `deepseek-r1:14b`, `bge-m3:latest`).
-2. Развертывает Docker Compose `deploy/khoj` (PostgreSQL 16 с `pgvector` и контейнер Khoj AI).
-3. Индексирует заметки Obsidian (`/data/obsidian`) через Khoj.
-4. Настраивает прокси Headroom с семантическим кэшем в PostgreSQL и апстримом в Ollama.
-5. Устанавливает и связывает `opencommit` с локальной моделью `qwen2.5-coder:14b` (алиас `gcai`).
-
 ### Проверка корректности окружения (Health Checks)
 После установки или внесения инфраструктурных изменений обязательно запустите диагностические скрипты:
 ```bash
 # 1. Проверка пользовательского окружения, кэшей и монтирования:
-bash check_setup.sh
+bash scripts/check_setup.sh
 
 # 2. Проверка Docker-хранилища, XFS ftype и prjquota:
-sudo bash check.sh
+sudo bash scripts/check.sh
 
 # 3. Комплексная проверка AI-стека (Ollama, Headroom, Khoj, Postgres):
 mise run ai:status
-# либо через CLI:
-khoj-ctl.sh status
 ```
 
 ---
@@ -282,31 +283,21 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
    Либо через `spawn-sh "<script-name>.sh";` (так как `~/.zsh/scripts` находится в `$PATH`).
 5. **Запрет на unmanaged loose scripts:** Категорически запрещено создавать локальные скрипты в `~/.local/bin/` или `~` в обход репозитория. Любая автоматизация должна быть частью Stow-пакета `zsh` и закоммичена в Git.
 
-### Сценарий F: Управление и доработка AI-стека (Ollama, Khoj, Prompts, Evals)
-При модификации компонентов персонального AI-стека строго придерживайтесь следующих шагов:
-1. **Промпты и воркспейсы AnythingLLM:**
-   - Редактируйте файлы в `anythingllm/.config/anythingllm-desktop/prompts/*.md`.
-   - Применяйте позитивные императивные инструкции (`/writing-for-agents`), избегайте симуляций и запретов без альтернатив.
-   - Синхронизируйте промпты в базу данных SQLite:
-     ```bash
-     mise run sync:prompts
-     ```
-2. **Оценка и тестирование промптов (Promptfoo):**
-   - Тестовые сценарии и ассерты хранятся в `evals/promptfooconfig.yaml` и `evals/prompts/`.
-   - Запуск тестов локально:
-     ```bash
-     mise run eval:prompts   # Выполнить регрессионный прогон через Ollama
-     mise run eval:view      # Открыть дашборд результатов в браузере
-     ```
+### Сценарий F: Управление и доработка AI-стека (Ollama, Khoj, Hindsight, Hermes)
+Архитектура AI-инфраструктуры хоста сосредоточена в [`ai-dotfiles`](file:///data/projects/dotfiles/ai-dotfiles):
+1. **Кастомные Modelfiles и модели Ollama:**
+   - Все декларативные Modelfiles версионируются в `ai-dotfiles/infra/modelfiles/`.
+   - Сборка и оверлеи выполняются через `mise run model:build:<name>`.
+2. **Docker Compose стеки (Khoj, Hindsight):**
+   - Конфигурации стеков хранятся в `ai-dotfiles/infra/stacks/` (`khoj`, `hindsight`).
+   - Управление и статус проверяются через `mise run ai:status`.
 3. **MCP-серверы и защитное программирование (Defensive Coercion):**
-   - При добавлении или изменении инструментов в `bash-mcp-server.mjs` обязательно регистрируйте типы аргументов в `TOOL_SCHEMAS`.
-   - Используйте функцию `normalizeArgs`, чтобы ошибки типизации компактных моделей (14B) приводились к ожидаемым типам вместо падения.
-   - Возвращайте структурированные сообщения об ошибках со списком `available_tools` для самокоррекции SLM.
+   - Host CLI MCP сервер реализован на TypeScript/Bun в `ai-dotfiles/services/host-cli/`.
+   - Для всех инструментов используется валидация Zod.
+   - Ошибки типизации компактных моделей (14B) нормализуются с возвратом структурированных подсказок со списком `available_tools`.
 4. **Конфигурация базы знаний Khoj и поиск по Obsidian:**
-   - Изменения конфигурации или промптов вносятся в `deploy/khoj/`.
-   - Проверка статуса и перезапуск: `khoj-ctl.sh status` / `khoj-ctl.sh restart`.
-   - Принудительная синхронизация заметок: `khoj-ctl.sh sync`.
-   - Тестирование поиска по тегам: `khoj-ctl.sh tags <tag>` или `khoj-tags.sh <tag>`.
+   - Деплой и манифесты находятся в `deploy/khoj/` и `ai-dotfiles/infra/stacks/khoj/`.
+   - Индексация заметок Obsidian (`/data/obsidian`) осуществляется автоматически контейнером Khoj.
 
 ### Сценарий G: Оркестрация задач и субагенты (Subagent-Driven Development)
 В Antigravity 2.0 используется оркестраторная модель работы с изоляцией контекста. Профиль каждого агента определен в `.agents/agents/*.md`.
@@ -349,13 +340,12 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - [ ] **Соблюдайте тему оформления:** Единый визуальный стиль системы — **Catppuccin Frappe**. Все новые терминальные утилиты, темы SDDM, Limine, Ghostty и Neovim должны соответствовать этой палитре.
 - [ ] **Сохраняйте целостность кэшей:** Не меняйте пути кэшей в `setup_user.yml`, так как они завязаны на Dual-NVMe разметку дисков.
 - [ ] **Оптимизация контекста через Headroom:** При анализе объемных терминальных выводов, логов сборки или результатов масштабного поиска (>100 строк) используйте MCP-инструмент `headroom_compress` для сжатия контекста с сохранением оригинала (CCR).
-- [ ] **Никакой неявной инъекции памяти в Headroom:** Не включайте флаг `--memory` в Headroom Proxy. Извлечение заметок и памяти должно выполняться исключительно осознанными вызовами инструментов (Khoj MCP, `search_files`, `khoj-ctl.sh`) во избежание зависаний SSE и "отравления контекста" (Context Poisoning).
+- [ ] **Никакой неявной инъекции памяти в Headroom:** Не включайте флаг `--memory` в Headroom Proxy. Извлечение заметок и памяти должно выполняться исключительно осознанными вызовами инструментов (Khoj MCP, `search_files`) во избежание зависаний SSE и "отравления контекста" (Context Poisoning).
 - [ ] **Контроль бюджета vRAM (16 ГБ):** Не запускайте конкурирующие серверы инференса (vLLM) параллельно с Ollama. Модели инференса и эмбеддингов (`bge-m3:latest`) обслуживаются сервисом `ollama.service` с лимитом `OLLAMA_MAX_LOADED_MODELS=1`.
-- [ ] **Декларативность моделей AI:** Все локальные модели Ollama объявляются в `playbooks/setup_ollama.yml` и `playbooks/setup_ai_stack.yml`.
-- [ ] **Защитное программирование MCP:** При реализации или обновлении MCP-инструментов обеспечьте приведение типов аргументов и осмысленные подсказки со списком доступных инструментов (`available_tools`) для самокоррекции моделей 14B.
-- [ ] **Осторожность с дисками:** Никогда не запускайте скрипты разметки диска (`setup_system.yml`, `patrition_delete.sh`) без явного указания и подтверждения от пользователя.
-- [ ] **Ведение базы грабель и траблшутинга:** При обнаружении скрытых багов, специфичных нюансов API или интеграций (Khoj, AnythingLLM, Ollama, Headroom, Niri) обязательно фиксируйте и пополняйте документацию в [`docs/ai_stack.md`](file:///data/projects/dotfiles/docs/ai_stack.md) и [`docs/headroom_anythingllm_troubleshooting.md`](file:///data/projects/dotfiles/docs/headroom_anythingllm_troubleshooting.md).
-- [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `check_setup.sh`, а для AI-сервисов — `mise run ai:status` или `khoj-ctl.sh status`.
+- [ ] **Декларативность моделей AI:** Все локальные модели Ollama объявляются в `ai-dotfiles/infra/playbooks/setup_ollama.yml`.
+- [ ] **Защитное программирование MCP:** При реализации или обновлении MCP-инструментов обеспечьте Zod-валидацию аргументов и осмысленные подсказки со списком доступных инструментов (`available_tools`) для самокоррекции моделей 14B.
+- [ ] **Осторожность с дисками:** Никогда не запускайте скрипты разметки диска (`playbooks/setup_system.yml`, `scripts/patrition_delete.sh`) без явного указания и подтверждения от пользователя.
+- [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `scripts/check_setup.sh`, а для AI-сервисов — `mise run ai:status`.
 
 
 

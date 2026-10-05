@@ -13,7 +13,7 @@ All installation scripts support **both direct execution via `curl`** and local 
 Formats the target NVMe drive, installs system packages via Pacman, configures the `/data` mount points (Btrfs, XFS, ext4), and sets up Docker and libvirt user groups and services.
 
 ```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/setup_system.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/scripts/setup_system.sh)"
 ```
 
 > ⚠️ **IMPORTANT**: After the script finishes, **log out and back in** (or reboot) to apply new group memberships (`docker`, `libvirt`, `kvm`).
@@ -23,14 +23,14 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/m
 Configures the user environment: development runtimes via [mise](https://mise.jdx.sh/), AUR packages via `paru`, Cargo tools, dotfiles via GNU Stow, and background `rclone` sync timers.
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/setup_user.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/scripts/setup_user.sh)"
 ```
 
 ---
 
 ## 🛠 Utility & Specialized Playbooks (`playbooks/`)
 
-The [`playbooks/`](file:///home/alatau/projects/dotfiles/playbooks) directory contains modular Ansible playbooks for selective execution and maintenance:
+The [`playbooks/`](file:///data/projects/dotfiles/playbooks) directory contains modular Ansible playbooks for selective execution and maintenance:
 
 ### 1. 🦀 Rust Development Stack (`playbooks/setup_rust.yml`)
 Installs and isolates an optimized Rust toolchain:
@@ -90,37 +90,38 @@ Configures SDDM and Limine with Catppuccin Frappe theme:
 ansible-playbook -K playbooks/setup_display_manager.yml
 ```
 
-### 6. 🤖 Personal AI Stack & Knowledge Engine (`playbooks/setup_ai_stack.yml`)
-Configures the personal 3-contour AI stack (Ollama, Headroom, Khoj, PostgreSQL pgvector, OpenCommit):
-- **Ollama (`playbooks/setup_ollama.yml`):** GPU-accelerated local inference (`qwen2.5-coder:14b`, `qwen2.5:14b`, `deepseek-r1:14b`, `bge-m3:latest`) with Flash Attention and `q8_0` KV cache
-- **Khoj Knowledge Engine (`deploy/khoj`):** Docker Compose deployment with PostgreSQL 16 + `pgvector`, real-time Obsidian vault indexing (`/data/obsidian`), and Khoj MCP
-- **Headroom Proxy:** Port `8787` systemd user daemon with AST-compression and PostgreSQL semantic cache
-- **Terminal Commits:** OpenCommit configured for local Ollama inference via `gcai` alias (`git add -p && opencommit`)
-- **CLI Utilities:** `khoj-ctl.sh` for knowledge base queries and sync, `khoj-tags.sh` for tag extraction
-- **Prompt Testing:** Promptfoo test suites in `evals/` (`mise run eval:prompts`)
-
+### 6. ❄️ CoolerControl Fan Curves (`playbooks/setup_cooler_control.yml`)
+Configures system cooling daemon, fan curves, and profiles (Quiet, Gaming, Work):
 ```bash
-# Full AI stack deployment:
-ansible-playbook playbooks/setup_ai_stack.yml
-
-# Check status:
-mise run ai:status
-# or:
-khoj-ctl.sh status
+ansible-playbook -K playbooks/setup_cooler_control.yml
 ```
 
-### 7. 🤖 AnythingLLM Desktop & Agent Toolchains (`playbooks/setup_anythingllm.yml`)
-Configures AnythingLLM Desktop with LanceDB vector storage, Ollama `bge-m3:latest` embeddings, MCP servers, and prompt synchronization:
+### 7. 🔄 Rclone Obsidian Bisync Timer (`playbooks/setup_rclone.yml`)
+Configures systemd user service and timer for bidirectional sync of Obsidian vaults via `rclone bisync`:
 ```bash
-ansible-playbook playbooks/setup_anythingllm.yml
+ansible-playbook playbooks/setup_rclone.yml
 ```
+
+### 8. 🖼️ Wallpaper Engine for Wayland (`playbooks/setup_wallpaper_engine.yml`)
+Configures `linux-wallpaperengine` for Niri Wayland sessions with systemd user unit:
+```bash
+ansible-playbook -K playbooks/setup_wallpaper_engine.yml
+```
+
+### 9. 🧠 Sovereign AI Infrastructure (`ai-dotfiles/`)
+Centralized AI stack and agent orchestration are tracked in [`ai-dotfiles`](file:///data/projects/dotfiles/ai-dotfiles):
+- **Ollama Engine (`infra/playbooks/setup_ollama.yml`):** GPU-accelerated local SLMs (`qwen2.5:14b-ctx64k`, `qwen2.5-coder:14b`, `bge-m3:latest`) with 64K context and `q8_0` KV cache
+- **Khoj & Hindsight Stacks (`infra/stacks/`):** Docker Compose stacks for Obsidian vault RAG (`:42110`) and agent long-term memory (`:9999`)
+- **Hermes Idea Pipeline (`services/hermes/`):** Multi-agent idea refinement and Kanban board orchestration
+- **Host CLI MCP (`services/host-cli/`):** TypeScript/Bun MCP server for system interactions and repository knowledge navigation
+- **Task Runner (`mise.toml`):** Orchestrates AI diagnostics and workflows (`mise run ai:status`, `mise run knowledge:l0`)
 
 ---
 
 
 ## 💻 Terminal & Zsh Integration (`zsh/`)
 
-The terminal environment is built on Zsh in [`zsh/`](file:///home/alatau/projects/dotfiles/zsh) with deep tool integration:
+The terminal environment is built on Zsh in [`zsh/`](file:///data/projects/dotfiles/zsh) with deep tool integration:
 
 ### 1. Vi-mode & Dynamic Cursor
 - Full Vi keymap enabled (`bindkey -v`)
@@ -161,11 +162,13 @@ The terminal environment is built on Zsh in [`zsh/`](file:///home/alatau/project
   - `k3d-create [name]`: Bootstraps a local k3d cluster with port forwarding and local Nexus Registry mapping
   - `k8s-install-argocd`: Automated installation and wait helper for ArgoCD
 - **Universal Archive Extractor (`extract` / `x`)**: Unpacks `.tar.gz`, `.zip`, `.7z`, `.tar.zst`, `.rar`, and other archive formats with a single command
-- **Automation Scripts & Window Helpers (`zsh/.zsh/scripts/` & `ai-dotfiles/scripts/`)**:
+- **Automation Scripts & Window Helpers (`zsh/.zsh/scripts/`)**:
   - `clipboard-picker.sh`: Меню истории буфера обмена через rofi (`Mod+V`)
   - `cooler-toggle.sh`: Быстрое переключение профилей охлаждения CoolerControl (`Mod+F1`)
-  - `ai-dotfiles/scripts/`: Единый набор AI-утилит (`ai-status.sh`, `khoj-ctl.sh`, `anything-ctl.sh`, `sync-knowledge.sh`, `khoj-tags.sh`, etc.)
-
+  - `noctalia-dmenu.sh`: Dmenu-провайдер для лаунчера Noctalia
+  - `virt-helper.sh`: Управление виртуальными машинами QEMU/KVM
+  - `hermes-desktop-toggle.sh` / `hermes-capture-idea.sh`: Быстрый вызов и интейк идей Hermes
+  - `sync-env.sh`: Синхронизация переменных окружения и профилей
 
 ---
 
@@ -180,7 +183,7 @@ The terminal environment is built on Zsh in [`zsh/`](file:///home/alatau/project
 | `swap` | 8 GB | Swap / hibernation support |
 | `/home` | ~891 GB | User data, configs, toolchains, games (`~/Games`) |
 
-### NVMe 1 — Data (`setup_system.sh` partitions automatically)
+### NVMe 1 — Data (`scripts/setup_system.sh` partitions automatically)
 
 | Label | Mount Point | FS | Mount Options | Purpose |
 |-------|-------------|------|------------|---------|
@@ -198,7 +201,7 @@ The repository layout mirrors `$HOME`:
 
 ```
 dotfiles/
-├── zsh/                      -> ~/.zshrc, ~/.zshenv, ~/.zsh/
+├── zsh/                      -> ~/.zshrc, ~/.zshenv, ~/.zprofile, ~/.zsh/
 ├── nvim/.config/nvim/        -> ~/.config/nvim
 ├── starship/.config/         -> ~/.config/starship.toml
 ├── niri/.config/niri/        -> ~/.config/niri
@@ -211,44 +214,46 @@ dotfiles/
 ├── superfile/.config/        -> ~/.config/superfile
 ├── television/.config/       -> ~/.config/television
 ├── vivaldi/.config/          -> ~/.config/vivaldi-stable.conf
+├── wireplumber/.config/      -> ~/.config/wireplumber
 ├── zellij/.config/zellij/    -> ~/.config/zellij
 ├── cargo/.cargo/             -> ~/.cargo/config.toml
-├── anythingllm/.config/      -> ~/.config/anythingllm-desktop
-├── ollama/.config/           -> ~/.config/ollama, ~/.config/systemd/user (GPU hosts)
-├── antigravity/.gemini/      -> ~/.gemini/config
 ├── noctalia/.config/         -> ~/.config/noctalia
 ├── btop/.config/btop/        -> ~/.config/btop
-├── opencommit/               -> ~/.opencommit, ~/.opencommit_migrations
-└── git/                      -> ~/.gitconfig
+├── openrgb/.config/          -> ~/.config/OpenRGB, ~/.config/systemd/user
+├── atuin/.config/            -> ~/.config/atuin
+└── sheldon/.config/          -> ~/.config/sheldon
 ```
 
 To add a new application configuration to Stow:
 ```bash
 mv ~/.config/myapp ~/projects/dotfiles/myapp/.config/
-cd ~/projects/dotfiles && stow myapp
+cd ~/projects/dotfiles && stow -t ~ myapp
 ```
 
 ---
 
 ## 🔍 Audit & Diagnostic Scripts
 
-The repository includes built-in diagnostic scripts to verify system setup:
+The repository includes built-in diagnostic scripts in `scripts/` to verify system setup:
 
-1. **[`check.sh`](file:///home/alatau/projects/dotfiles/check.sh)**:
+1. **[`scripts/check.sh`](file:///data/projects/dotfiles/scripts/check.sh)**:
    Docker storage verification. Validates `/var/lib/docker` mount point, XFS `ftype=1` flag, `prjquota` mount options, `/etc/fstab` entries, parses `/etc/docker/daemon.json`, and performs a test container execution.
    ```bash
-   sudo bash check.sh
+   sudo bash scripts/check.sh
    ```
 
-2. **[`check_setup.sh`](file:///home/alatau/projects/dotfiles/check_setup.sh)**:
+2. **[`scripts/check_setup.sh`](file:///data/projects/dotfiles/scripts/check_setup.sh)**:
    Comprehensive environment check-list. Verifies mount points (`/data/projects`, `/data/sync`, `/var/lib/docker`, `/var/lib/libvirt/images`), cache directories (`.pnpm-store`, `.uv-cache`, `.sccache`), Cargo symlinks, CLI tools availability, and `rclone` background timers status.
    ```bash
-   bash check_setup.sh
+   bash scripts/check_setup.sh
    ```
 
-3. **[`patrition_delete.sh`](file:///home/alatau/projects/dotfiles/patrition_delete.sh)**:
+3. **[`scripts/patrition_delete.sh`](file:///data/projects/dotfiles/scripts/patrition_delete.sh)**:
    Standalone utility for destructive disk wiping of `/dev/nvme1n1` (`wipefs`, `sgdisk --zap-all`, `dd zero`). 
    > ⚠️ **WARNING**: Use only when completely re-partitioning the second NVMe drive!
+
+4. **[`scripts/create_win11_vm.sh`](file:///data/projects/dotfiles/scripts/create_win11_vm.sh)**:
+   Automated QEMU/KVM Windows 11 VM deployment script with TPM 2.0, VirtIO drivers, and shared virtio-fs configuration.
 
 ---
 
@@ -260,8 +265,8 @@ Audit findings for maintaining a clean public dotfiles repository:
    - `cargo/.cargo/.global-cache` (binary cache file ~80 KB)
    - `cargo/.cargo/.package-cache` and `.package-cache-mutate`
    - Local binaries in `cargo/.cargo/bin/`, `registry/`, `git/`, `binstall/`
-   - *Solution*: All runtime artifacts and binary caches are ignored in [.gitignore](file:///home/alatau/projects/dotfiles/.gitignore).
+   - *Solution*: All runtime artifacts and binary caches are ignored in [.gitignore](file:///data/projects/dotfiles/.gitignore).
 2. **Ansible Galaxy Cache (`.ansible/`)**:
-   - The `.ansible/` directory contains downloaded Ansible Galaxy roles and collections (e.g. `kewlfft.aur`). Excluded in [.gitignore](file:///home/alatau/projects/dotfiles/.gitignore).
+   - The `.ansible/` directory contains downloaded Ansible Galaxy roles and collections (e.g. `kewlfft.aur`). Excluded in [.gitignore](file:///data/projects/dotfiles/.gitignore).
 3. **Sensitive Files (Secrets & Credentials)**:
    - SSH keys (`id_rsa`, `id_ed25519`), API tokens, private `rclone.conf` configs, and Atuin/Zsh history files must not be committed. History files are stored in `XDG_STATE_HOME` (`~/.local/state/zsh/history`), and secrets should be managed via `sops` / `age`.
