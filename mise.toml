@@ -33,11 +33,11 @@ run = "cat .agents/knowledge/dotfiles/L0_index.json"
 
 [tasks."knowledge:sync"]
 description = "Synchronize dotfiles Stow packages and update L1 subsystem docs using local Ollama AI"
-run = "bun run scripts/sync_knowledge.ts"
+run = "bun run local-ai-stack/scripts/sync_knowledge.ts"
 
 [tasks."benchmark:tokens"]
 description = "Empirical token and latency benchmark comparing raw files vs OpenViking L0/L1"
-run = "bun run scripts/benchmark_tokens.ts"
+run = "bun run local-ai-stack/scripts/benchmark_tokens.ts"
 
 [tasks."build:context-init"]
 description = "Build context-init Rust CLI binary and copy to ~/.local/bin"

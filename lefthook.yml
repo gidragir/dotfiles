@@ -6,12 +6,8 @@ pre-commit:
   parallel: false
   commands:
     check-shell:
-      glob: "{scripts/**/*.sh,zsh/.zsh/scripts/*.sh}"
+      glob: "{scripts/**/*.sh,zsh/.zsh/scripts/*.sh,local-ai-stack/scripts/*.sh}"
       run: bash -n {all_files}
-
-    check-python:
-      glob: "zsh/.zsh/scripts/*.py"
-      run: python3 -m py_compile zsh/.zsh/scripts/anything-ctl
 
     check-niri:
       glob: "niri/.config/niri/**/*.kdl"
