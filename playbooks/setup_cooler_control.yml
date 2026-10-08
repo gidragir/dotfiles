@@ -39,7 +39,7 @@
     # Path to a previously-created Access Token (see note #1 above).
     # Defaults to the path your existing, working cooler.zsh already reads.
     cc_token_file: "{{ real_home }}/.config/coolercontrol/token"
-    cc_zsh_alias_path: "{{ real_home }}/projects/dotfiles/zsh/.zsh/alias/cooler.zsh"
+    cc_zsh_alias_path: "{{ real_home }}/projects/dotfiles/home/dot_zsh/alias/cooler.zsh"
     # Set to false if you'd rather manage cctv installation yourself.
     cc_install_cctv: true
 

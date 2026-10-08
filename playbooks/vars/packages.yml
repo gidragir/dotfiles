@@ -5,6 +5,10 @@
 # on the hosts.
 # =============================================================================
 
+# Host Profile Default ('desktop' | 'laptop')
+# Can be overridden via ansible-playbook extra vars: -e "host_profile=laptop"
+host_profile: desktop
+
 # System-level packages (installed via pacman, requires sudo)
 system_packages:
   - base-devel
@@ -41,6 +45,7 @@ unwanted_packages:
 
 # Essential CLI tools for shell environment (pacman / AUR)
 cli_essential_packages:
+  - chezmoi
   - sheldon
   - starship
   - zoxide
@@ -67,6 +72,7 @@ user_pacman_packages:
   - jq
   - yq
   - chromium
+  - chezmoi
   - stow
   - git
   - ripgrep
@@ -86,7 +92,6 @@ user_pacman_packages:
   - helm
   - starship
   - atuin
-  - openrgb
   - piper
   - libratbag
   - zellij
@@ -121,6 +126,16 @@ aur_packages:
   - noctalia-qs
   - noctalia
   - noctalia-shell
+
+# Desktop-specific AUR packages (installed conditionally when host_profile == 'desktop')
+desktop_aur_packages:
+  - openrgb
+  - coolercontrold-bin
+  - coolercontrol-bin
+
+# Laptop-specific AUR/system packages (installed conditionally when host_profile == 'laptop')
+laptop_aur_packages:
+  - brightnessctl
 
 # Cargo utilities (installed via cargo binstall, MUST run as normal user)
 cargo_packages:

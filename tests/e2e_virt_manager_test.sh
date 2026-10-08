@@ -33,10 +33,10 @@ CLR_DIM="\033[2m"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-REPO_PLUGIN_DIR="${REPO_ROOT}/noctalia/.config/noctalia/plugins/virt-manager"
+REPO_PLUGIN_DIR="${REPO_ROOT}/linked/noctalia/plugins/virt-manager"
 REPO_PACKAGES_YML="${REPO_ROOT}/playbooks/vars/packages.yml"
-REPO_CLI_WRAPPER="${REPO_ROOT}/zsh/.zsh/scripts/virt-helper.sh"
-REPO_PLUGINS_JSON="${REPO_ROOT}/noctalia/.config/noctalia/plugins.json"
+REPO_CLI_WRAPPER="${REPO_ROOT}/home/dot_zsh/scripts/virt-helper.sh"
+REPO_PLUGINS_JSON="${REPO_ROOT}/linked/noctalia/plugins.json"
 
 # --- Test Execution Flags ---
 TARGET_MODE="auto" # auto | repo | mock
@@ -937,32 +937,36 @@ print('true' if 'virt-viewer' in sys_pkgs else 'false')
     fi
 
     # --------------------------------------------------------------------------
-    # Area 7: Stow dry-run simulation
+    # Area 7: Dotfiles & Chezmoi Integration
     # --------------------------------------------------------------------------
-    echo -e "\n  ${CLR_BOLD}Feature 7: GNU Stow Package Integration${CLR_RESET}"
+    echo -e "\n  ${CLR_BOLD}Feature 7: Dotfiles & Chezmoi Package Integration${CLR_RESET}"
 
-    # T1.7.1: stow -nv -t ~ noctalia exits code 0
-    local stow_out
-    local stow_exit=0
-    stow_out=$(cd "${REPO_ROOT}" && stow -nv -t ~ noctalia 2>&1) || stow_exit=$?
-    if [[ $stow_exit -eq 0 ]]; then
-        record_pass "T1.7.1" "stow -nv -t ~ noctalia exits with code 0"
+    # T1.7.1: chezmoi verify exits code 0
+    local cz_exit=0
+    local cz_out
+    cz_out=$(chezmoi verify 2>&1) || cz_exit=$?
+    if [[ $cz_exit -eq 0 ]]; then
+        record_pass "T1.7.1" "chezmoi verify exits with code 0 (no configuration drift)"
     else
-        record_fail "T1.7.1" "stow -nv -t ~ noctalia exits with code 0" "Exit code $stow_exit: $stow_out"
+        record_fail "T1.7.1" "chezmoi verify exits with code 0" "Exit code $cz_exit: $cz_out"
     fi
 
-    # T1.7.2: No collision or conflict errors in stow simulation
-    if ! echo "$stow_out" | grep -Ei "conflict|neither a link nor a directory" >/dev/null; then
-        record_pass "T1.7.2" "stow dry-run reports zero conflicts or collisions"
+    # T1.7.2: Noctalia symlink in ~/.config points to repository linked/noctalia
+    local noc_target
+    noc_target=$(readlink -f "${HOME}/.config/noctalia" 2>/dev/null || echo "")
+    local expected_noc
+    expected_noc=$(readlink -f "${REPO_ROOT}/linked/noctalia" 2>/dev/null || echo "")
+    if [[ -n "$noc_target" && "$noc_target" == "$expected_noc" ]]; then
+        record_pass "T1.7.2" "~/.config/noctalia correctly symlinks to repo linked/noctalia"
     else
-        record_fail "T1.7.2" "stow dry-run reports zero conflicts" "Conflicts detected: $stow_out"
+        record_fail "T1.7.2" "~/.config/noctalia symlink check" "Target '$noc_target' does not match expected '$expected_noc'"
     fi
 
-    # T1.7.3: Directory structure mirrors $HOME layout
-    if [[ -d "${REPO_ROOT}/noctalia/.config/noctalia" ]]; then
-        record_pass "T1.7.3" "noctalia stow package mirrors ~/.config/noctalia path layout"
+    # T1.7.3: Directory structure mirrors noctalia layout
+    if [[ -d "${REPO_ROOT}/linked/noctalia" ]]; then
+        record_pass "T1.7.3" "noctalia linked package exists in repository"
     else
-        record_fail "T1.7.3" "noctalia stow package mirrors path layout" "noctalia/.config/noctalia missing"
+        record_fail "T1.7.3" "noctalia linked package exists" "linked/noctalia missing"
     fi
 
     # T1.7.4: Helper script has executable bit set
@@ -974,7 +978,7 @@ print('true' if 'virt-viewer' in sys_pkgs else 'false')
 
     # T1.7.5: No temporary or stray files in noctalia package
     local stray_files
-    stray_files=$(find "${REPO_ROOT}/noctalia" -name "*~" -o -name "*.swp" -o -name ".DS_Store" | wc -l)
+    stray_files=$(fd -H ".*~|\.swp$|\.DS_Store" "${REPO_ROOT}/linked/noctalia" 2>/dev/null | wc -l)
     if [[ $stray_files -eq 0 ]]; then
         record_pass "T1.7.5" "No forbidden temporary or editor backup files in noctalia tree"
     else

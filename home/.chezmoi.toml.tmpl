@@ -1,0 +1,12 @@
+{{- if ne .chezmoi.osRelease.id "cachyos" -}}
+{{-   fail "Unsupported OS: this configuration requires CachyOS Linux" -}}
+{{- end -}}
+
+{{- $chassis := promptChoiceOnce . "chassis" "Select host chassis type" (list "desktop" "laptop") "desktop" -}}
+
+sourceDir = {{ .chezmoi.workingTree | quote }}
+mode = "symlink"
+
+[data]
+    chassis = {{ $chassis | quote }}
+    os = "cachyos"

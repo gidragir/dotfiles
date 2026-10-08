@@ -1,6 +1,6 @@
 # 🚀 CachyOS Niri: Ultimate Developer Setup & Dotfiles
 
-Automated setup scripts and Ansible playbooks for configuring a **CachyOS (Niri)** installation. Transforms a bare system into an optimized development environment for Rust, TypeScript, Python, Kubernetes, and DevOps — with a Zsh + Neovim workflow, dotfiles management via GNU Stow, native Docker, QEMU/KVM virtualization, and an optimized dual-NVMe storage layout.
+Automated setup scripts and Ansible playbooks for configuring a **CachyOS (Niri)** installation. Transforms a bare system into an optimized development environment for Rust, TypeScript, Python, Kubernetes, and DevOps — with a Zsh + Neovim workflow, dotfiles management via Chezmoi (supporting desktop and laptop profiles), native Docker, QEMU/KVM virtualization, and an optimized dual-NVMe storage layout.
 
 ---
 
@@ -20,7 +20,7 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/m
 
 ### 2. User Setup (run as normal user)
 
-Configures the user environment: development runtimes via [mise](https://mise.jdx.sh/), AUR packages via `paru`, Cargo tools, dotfiles via GNU Stow, and background `rclone` sync timers.
+Configures the user environment: development runtimes via [mise](https://mise.jdx.sh/), AUR packages via `paru`, Cargo tools, dotfiles via Chezmoi, and background `rclone` sync timers.
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/scripts/setup_user.sh)"
@@ -119,9 +119,9 @@ Centralized AI stack and agent orchestration are tracked in [`ai-dotfiles`](file
 ---
 
 
-## 💻 Terminal & Zsh Integration (`zsh/`)
+## 💻 Terminal & Zsh Integration (`~/.zsh/`)
 
-The terminal environment is built on Zsh in [`zsh/`](file:///data/projects/dotfiles/zsh) with deep tool integration:
+The terminal environment is built on Zsh in [`home/dot_zsh/`](file:///data/projects/dotfiles/home/dot_zsh) (deployed to `~/.zsh/`) with deep tool integration:
 
 ### 1. Vi-mode & Dynamic Cursor
 - Full Vi keymap enabled (`bindkey -v`)
@@ -142,7 +142,7 @@ The terminal environment is built on Zsh in [`zsh/`](file:///data/projects/dotfi
 - `export` / `unset [Tab]`: Environment variable values preview
 - `git add` / `diff` / `restore [Tab]`: Interactive `git diff` preview for selected files
 
-### 4. Keybindings & ZLE Widgets (`zsh/.zsh/binds/main.zsh`)
+### 4. Keybindings & ZLE Widgets (`~/.zsh/binds/main.zsh`)
 - `Alt + S`: Fast `sudo` prefix toggle at start of line (`sudo-command-line`, supports EN and RU layouts)
 - `Ctrl + K` / `Ctrl + T` / `F2` / `Alt + R`: Native `fzf` file and directory selector widget with live `eza`/`bat` preview (inserts selected path into command line; `ESC` cancels cleanly without cluttering terminal output)
 - `Ctrl + X Ctrl + L`: Automatic Russian ↔ English layout fix on current command buffer (`switch-language-buffer`)
@@ -150,7 +150,7 @@ The terminal environment is built on Zsh in [`zsh/`](file:///data/projects/dotfi
 - `Alt + .`: Insert last argument of previous command in insert mode (viins)
 - `Ctrl + A` / `Ctrl + E`: Navigate to start/end of line in insert mode without switching to Normal mode
 
-### 5. Aliases & Shell Utilities (`zsh/.zsh/alias/`)
+### 5. Aliases & Shell Utilities (`~/.zsh/alias/`)
 - **Modern Unix Replacements**: `ll` (`eza -l`), `la` (`eza -la`), `tree` (`eza --tree`)
 - **Superfile File Manager (`spf`)**: `spf()` wrapper that automatically `cd`s into the last visited directory upon exit
 - **Television + Superfile (`spft`)**: Fuzzy search files/folders via `tv` (Television) and immediately open in Superfile
@@ -162,7 +162,7 @@ The terminal environment is built on Zsh in [`zsh/`](file:///data/projects/dotfi
   - `k3d-create [name]`: Bootstraps a local k3d cluster with port forwarding and local Nexus Registry mapping
   - `k8s-install-argocd`: Automated installation and wait helper for ArgoCD
 - **Universal Archive Extractor (`extract` / `x`)**: Unpacks `.tar.gz`, `.zip`, `.7z`, `.tar.zst`, `.rar`, and other archive formats with a single command
-- **Automation Scripts & Window Helpers (`zsh/.zsh/scripts/`)**:
+- **Automation Scripts & Window Helpers (`~/.zsh/scripts/`)**:
   - `clipboard-picker.sh`: Меню истории буфера обмена через rofi (`Mod+V`)
   - `cooler-toggle.sh`: Быстрое переключение профилей охлаждения CoolerControl (`Mod+F1`)
   - `noctalia-dmenu.sh`: Dmenu-провайдер для лаунчера Noctalia
@@ -194,40 +194,67 @@ The terminal environment is built on Zsh in [`zsh/`](file:///data/projects/dotfi
 
 ---
 
-## ⚙️ Configuration Management (GNU Stow)
+## ⚙️ Configuration Management (Chezmoi)
 
-All configuration files are managed in `/data/projects/dotfiles` (symlinked to `~/projects/dotfiles`).
-The repository layout mirrors `$HOME`:
+All user configurations are declaratively managed via **Chezmoi** from `/data/projects/dotfiles/home` (with the repository dotfiles root configured via `.chezmoiroot = home`).
+Chezmoi operates in `mode = "symlink"` mode for native zero-latency live-editing, and provides multi-host profiling for Workstation (`desktop`) and Laptop (`laptop`) machines.
+
+### Directory Structure
 
 ```
 dotfiles/
-├── zsh/                      -> ~/.zshrc, ~/.zshenv, ~/.zprofile, ~/.zsh/
-├── nvim/.config/nvim/        -> ~/.config/nvim
-├── starship/.config/         -> ~/.config/starship.toml
-├── niri/.config/niri/        -> ~/.config/niri
-├── ghostty/.config/ghostty/  -> ~/.config/ghostty
-├── hypr/.config/hypr/        -> ~/.config/hypr
-├── k3d/.config/k3d/          -> ~/.config/k3d
-├── k9s/.config/k9s/          -> ~/.config/k9s
-├── mise/.config/mise/        -> ~/.config/mise
-├── rofi/.config/rofi/        -> ~/.config/rofi
-├── superfile/.config/        -> ~/.config/superfile
-├── television/.config/       -> ~/.config/television
-├── vivaldi/.config/          -> ~/.config/vivaldi-stable.conf
-├── wireplumber/.config/      -> ~/.config/wireplumber
-├── zellij/.config/zellij/    -> ~/.config/zellij
-├── cargo/.cargo/             -> ~/.cargo/config.toml
-├── noctalia/.config/         -> ~/.config/noctalia
-├── btop/.config/btop/        -> ~/.config/btop
-├── openrgb/.config/          -> ~/.config/OpenRGB, ~/.config/systemd/user
-├── atuin/.config/            -> ~/.config/atuin
-└── sheldon/.config/          -> ~/.config/sheldon
+├── .chezmoiroot                 # Directs chezmoi to use home/ as the dotfiles root
+├── home/
+│   ├── .chezmoi.toml.tmpl       # Host initialization template (chassis detection: desktop | laptop)
+│   ├── .chezmoiignore           # Profile filtering and ai-dotfiles isolation
+│   ├── dot_zshrc                -> ~/.zshrc
+│   ├── dot_zshenv.tmpl          -> ~/.zshenv (desktop AI proxy vs standalone)
+│   ├── dot_zprofile             -> ~/.zprofile
+│   ├── dot_cargo/               -> ~/.cargo/config.toml
+│   ├── dot_config/
+│   │   ├── niri/
+│   │   │   └── cfg/
+│   │   │       └── display.kdl.tmpl # DP-2 + HDMI-A-1 (desktop) vs eDP-1 (laptop)
+│   │   ├── nvim/                -> ~/.config/nvim (LazyVim, live symlink)
+│   │   ├── ghostty/             -> ~/.config/ghostty (live symlink)
+│   │   ├── starship.toml        -> ~/.config/starship.toml
+│   │   ├── symlink_noctalia.tmpl-> ~/.config/noctalia (links to linked/noctalia/)
+│   │   ├── hypr/                -> ~/.config/hypr (hypridle, hyprlock)
+│   │   ├── k3d/                 -> ~/.config/k3d
+│   │   ├── k9s/                 -> ~/.config/k9s
+│   │   ├── mise/                -> ~/.config/mise
+│   │   ├── rofi/                -> ~/.config/rofi
+│   │   ├── superfile/           -> ~/.config/superfile
+│   │   ├── television/          -> ~/.config/television
+│   │   ├── vivaldi-stable.conf  -> ~/.config/vivaldi-stable.conf
+│   │   ├── wireplumber/         -> ~/.config/wireplumber (0.5 SPA-JSON)
+│   │   ├── zellij/              -> ~/.config/zellij
+│   │   ├── btop/                -> ~/.config/btop
+│   │   ├── OpenRGB/             -> ~/.config/OpenRGB (desktop only)
+│   │   ├── systemd/user/        -> ~/.config/systemd/user (openrgb user units, desktop only)
+│   │   ├── atuin/               -> ~/.config/atuin
+│   │   └── sheldon/             -> ~/.config/sheldon
+│   └── dot_zsh/                 -> ~/.zsh/ (alias, binds, scripts)
+└── linked/
+    └── noctalia/                # Atomic state app directory symlinked into ~/.config/noctalia
 ```
 
-To add a new application configuration to Stow:
+### Essential Chezmoi Commands
+
 ```bash
-mv ~/.config/myapp ~/projects/dotfiles/myapp/.config/
-cd ~/projects/dotfiles && stow -t ~ myapp
+# Verify synchronization status (0 drift):
+chezmoi status
+chezmoi verify
+
+# Inspect pending changes against home directory:
+chezmoi diff
+
+# Apply configurations:
+chezmoi apply
+
+# Test templates without modifying files:
+chezmoi execute-template --override-data '{"chassis":"desktop"}' < home/dot_config/niri/cfg/display.kdl.tmpl
+chezmoi execute-template --override-data '{"chassis":"laptop"}' < home/dot_config/niri/cfg/display.kdl.tmpl
 ```
 
 ---
@@ -261,10 +288,10 @@ The repository includes built-in diagnostic scripts in `scripts/` to verify syst
 
 Audit findings for maintaining a clean public dotfiles repository:
 
-1. **Cargo Runtime Artifacts & Caching (`cargo/.cargo/`)**:
-   - `cargo/.cargo/.global-cache` (binary cache file ~80 KB)
-   - `cargo/.cargo/.package-cache` and `.package-cache-mutate`
-   - Local binaries in `cargo/.cargo/bin/`, `registry/`, `git/`, `binstall/`
+1. **Cargo Runtime Artifacts & Caching (`home/dot_cargo/` / `~/.cargo/`)**:
+   - `~/.cargo/.global-cache` (binary cache file ~80 KB)
+   - `~/.cargo/.package-cache` and `.package-cache-mutate`
+   - Local binaries in `~/.cargo/bin/`, `registry/`, `git/`, `binstall/`
    - *Solution*: All runtime artifacts and binary caches are ignored in [.gitignore](file:///data/projects/dotfiles/.gitignore).
 2. **Ansible Galaxy Cache (`.ansible/`)**:
    - The `.ansible/` directory contains downloaded Ansible Galaxy roles and collections (e.g. `kewlfft.aur`). Excluded in [.gitignore](file:///data/projects/dotfiles/.gitignore).

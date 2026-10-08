@@ -1,0 +1,31 @@
+// ────────────── Output Configuration ──────────────
+// Rendered by chezmoi per host profile (.chassis from ~/.config/chezmoi/chezmoi.toml).
+// Run `niri msg outputs` to get the correct name for your displays.
+// https://github.com/YaLTeR/niri/wiki/Configuration:-Outputs
+{{- if eq .chassis "desktop" }}
+
+// output "DP-2" {
+//     mode "1920x1080@143.981"
+//     focus-at-startup
+//     scale 1
+// }
+
+output "DP-2" {
+    mode "3440x1440@143.965"
+    variable-refresh-rate
+    scale 1
+}
+
+output "HDMI-A-1" {
+    mode "1920x1080@143.981"
+    scale 1
+}
+{{- else if eq .chassis "laptop" }}
+
+output "eDP-1" {
+    mode "1920x1080@60"
+    scale 1
+}
+{{- end }}
+
+include optional=true "env/display.kdl"

@@ -2,15 +2,15 @@
 __pycache__
 
 # Cargo runtime files & binaries
-cargo/.cargo/bin/
-cargo/.cargo/binstall/
-cargo/.cargo/binstall.toml
-cargo/.cargo/.crates.toml
-cargo/.cargo/.crates2.json
-cargo/.cargo/registry/
-cargo/.cargo/git/
-cargo/.cargo/.global-cache
-cargo/.cargo/.package-cache*
+home/dot_cargo/bin/
+home/dot_cargo/binstall/
+home/dot_cargo/binstall.toml
+home/dot_cargo/.crates.toml
+home/dot_cargo/.crates2.json
+home/dot_cargo/registry/
+home/dot_cargo/git/
+home/dot_cargo/.global-cache
+home/dot_cargo/.package-cache*
 
 # Local Ansible Galaxy collections and roles cache
 .ansible/
@@ -22,9 +22,9 @@ token
 mise.local.toml
 
 # Dynamic AI scripts symlinks (managed by ai-dotfiles)
-zsh/.zsh/scripts/ai-*.sh
-zsh/.zsh/scripts/anything*.sh
-zsh/.zsh/scripts/khoj*.sh
-zsh/.zsh/scripts/manage-hindsight.sh
-zsh/.zsh/scripts/sync-knowledge.sh
+home/dot_zsh/scripts/ai-*.sh
+home/dot_zsh/scripts/anything*.sh
+home/dot_zsh/scripts/khoj*.sh
+home/dot_zsh/scripts/manage-hindsight.sh
+home/dot_zsh/scripts/sync-knowledge.sh
 

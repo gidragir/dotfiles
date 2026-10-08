@@ -11,25 +11,27 @@
   connection: local
   become: false
   gather_facts: true
+  vars_files:
+    - vars/packages.yml
 
   tasks:
 
 
-    # ── 2. Configure Projects symlink & GNU Stow (Dotfiles) ───────────────────
+    # ── 2. Configure Projects symlink & Chezmoi (Dotfiles) ───────────────────
     - name: Create projects symlink
       ansible.builtin.file:
         src: /data/projects
         dest: "{{ ansible_facts.env.HOME }}/projects"
         state: link
         force: yes
-      tags: [stow]
+      tags: [dotfiles, chezmoi]
 
     - name: Clone dotfiles repository
       ansible.builtin.git:
         repo: https://github.com/gidragir/dotfiles.git
         dest: /data/projects/dotfiles
         update: no
-      tags: [stow]
+      tags: [dotfiles, chezmoi]
 
     - name: Ensure target config directories exist
       ansible.builtin.file:
@@ -42,56 +44,25 @@
         - "{{ ansible_facts.env.HOME }}/.config/systemd/user"
         - "{{ ansible_facts.env.HOME }}/.config/wireplumber"
         - "{{ ansible_facts.env.HOME }}/.local/state/zsh"
-      tags: [stow]
+      tags: [dotfiles, chezmoi]
 
-    - name: Remove existing config files to avoid stow conflicts
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - "{{ ansible_facts.env.HOME }}/.zshrc"
-        - "{{ ansible_facts.env.HOME }}/.cargo/config.toml"
-        - "{{ ansible_facts.env.HOME }}/.config/atuin"
-        - "{{ ansible_facts.env.HOME }}/.config/btop"
-        - "{{ ansible_facts.env.HOME }}/.config/ghostty"
-        - "{{ ansible_facts.env.HOME }}/.config/hypr"
-        - "{{ ansible_facts.env.HOME }}/.config/k3d"
-        - "{{ ansible_facts.env.HOME }}/.config/k9s"
-        - "{{ ansible_facts.env.HOME }}/.config/mise"
-        - "{{ ansible_facts.env.HOME }}/.config/niri"
-        - "{{ ansible_facts.env.HOME }}/.config/noctalia"
-        - "{{ ansible_facts.env.HOME }}/.config/nvim"
-        - "{{ ansible_facts.env.HOME }}/.config/rofi"
-        - "{{ ansible_facts.env.HOME }}/.config/sheldon"
-        - "{{ ansible_facts.env.HOME }}/.config/starship.toml"
-        - "{{ ansible_facts.env.HOME }}/.config/superfile"
-        - "{{ ansible_facts.env.HOME }}/.config/television"
-        - "{{ ansible_facts.env.HOME }}/.config/vivaldi-stable.conf"
-        - "{{ ansible_facts.env.HOME }}/.config/wireplumber"
-        - "{{ ansible_facts.env.HOME }}/.config/zellij"
-        - "{{ ansible_facts.env.HOME }}/.config/OpenRGB/off.orp"
-        - "{{ ansible_facts.env.HOME }}/.config/systemd/user/openrgb.service"
-        - "{{ ansible_facts.env.HOME }}/.config/systemd/user/openrgb-profile.service"
-      tags: [stow]
-
-    - name: Run GNU Stow to link configurations
-      ansible.builtin.shell:
-        cmd: stow -R -t "{{ ansible_facts.env.HOME }}" $(find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' ! -name 'playbooks' ! -name 'deploy' ! -name 'docs' ! -name 'scripts' ! -name 'evals' ! -name 'ollama' ! -name 'local-ai-stack' ! -name 'crates' -exec basename {} \;)
-        chdir: /data/projects/dotfiles
-      tags: [stow]
+    - name: Apply dotfiles configuration via chezmoi
+      ansible.builtin.command:
+        cmd: chezmoi apply --source /data/projects/dotfiles --force
+      tags: [dotfiles, chezmoi]
 
     - name: Clear legacy WirePlumber stream target state
       ansible.builtin.file:
         path: "{{ ansible_facts.env.HOME }}/.local/state/wireplumber/stream-properties"
         state: absent
-      tags: [stow, audio]
+      tags: [dotfiles, chezmoi, audio]
 
     - name: Restart WirePlumber service to apply new settings
       ansible.builtin.systemd:
         name: wireplumber
         state: restarted
         scope: user
-      tags: [stow, audio]
+      tags: [dotfiles, chezmoi, audio]
 
     # ── 3. Rust & Cargo (Optimized Layout) ────────────────────────────────────
     - name: Create Cargo cache directories
@@ -256,8 +227,8 @@
         name: ratbagd
         enabled: yes
         state: started
-      become: true
-      tags: [systemd]
+      become: "{{ not ansible_check_mode }}"
+      tags: [systemd, ratbagd]
 
     - name: Enable and start openrgb user services
       ansible.builtin.systemd:
@@ -268,7 +239,8 @@
       loop:
         - openrgb.service
         - openrgb-profile.service
-      tags: [systemd]
+      when: (host_profile | default('desktop')) == 'desktop'
+      tags: [systemd, openrgb]
 
     # ── 6. Default MIME Associations (Text & Markdown → Neovim) ─────────────
     - name: Set Neovim as default application for text and markdown files

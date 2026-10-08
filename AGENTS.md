@@ -10,7 +10,7 @@
 - **ОС:** CachyOS (оптимизированный Arch Linux под x86-64-v3/v4).
 - **Оконный менеджер / Композитор:** Niri (scrollable-tiling Wayland композитор с конфигурацией на KDL).
 - **Автоматизация установки:** Bash-бутстрапперы (`setup_system.sh`, `setup_user.sh`) и модульные Ansible-плейбуки (`playbooks/`).
-- **Управление конфигурациями:** **GNU Stow** (симлинки из репозитория в `$HOME`).
+- **Управление конфигурациями:** **Chezmoi** (симлинки из репозитория в `$HOME` через `mode = "symlink"`, шаблоны для host-зависимых файлов).
 - **Стек разработки:** Rust (`rustup`, `mold`, `sccache`), TypeScript/Node (`mise`, `pnpm`, `biome`), Python (`uv`), Cloud-Native & DevOps (`k3d`, `kubectl`, `k9s`, `helm`, `argocd`, `sops`, `age`, `distrobox`, `docker`), QEMU/KVM (`libvirt`, `virtio-fs`).
 - **Аппаратная архитектура хранения:** Оптимизированный двухдисковый Dual-NVMe сетап с распределением файловых систем (Btrfs zstd, XFS prjquota, ext4 noatime).
 
@@ -22,7 +22,7 @@
 dotfiles/
 ├── scripts/                     # Системные скрипты и утилиты хоста
 │   ├── setup_system.sh          # [Root] Системный бутстраппер (диски, системные пакеты, SDDM/Limine)
-│   ├── setup_user.sh            # [User] Пользовательский бутстраппер (AUR, stow, mise, rust, timers)
+│   ├── setup_user.sh            # [User] Пользовательский бутстраппер (AUR, chezmoi, mise, rust, timers)
 │   ├── check.sh                 # Диагностика Docker XFS / prjquota / storage
 │   ├── check_setup.sh           # Полная валидация окружения (точки монтирования, кэши, symlinks)
 │   ├── patrition_delete.sh      # ⚠️ ДЕСТРУКТИВНЫЙ скрипт очистки /dev/nvme1n1 (не запускать без спроса!)
@@ -34,9 +34,9 @@ dotfiles/
 ├── playbooks/                   # Модульные Ansible-плейбуки
 │   ├── vars/
 │   │   └── packages.yml         # 🌟 SINGLE SOURCE OF TRUTH для всех устанавливаемых пакетов
-│   ├── packages.yml             # Плейбук установки (теги: system, user, aur, cargo)
+│   ├── packages.yml             # Плейбук установки (теги: system, user, aur, cargo; host_profile)
 │   ├── setup_system.yml         # Разметка NVMe 1, создание FS, fstab, Docker, KVM
-│   ├── setup_user.yml           # Применение Stow, настройка кэшей, каталогов, user services
+│   ├── setup_user.yml           # Применение Chezmoi, настройка кэшей, каталогов, user services
 │   ├── setup_display_manager.yml# Catppuccin тема для SDDM и Limine, multi-monitor
 │   ├── setup_rust.yml           # Изолированный быстрый Rust-тулчейн (mold, sccache, cargo-binstall)
 │   ├── setup_gaming.yml         # Gaming-стек CachyOS, Proton/NVIDIA, symlink библиотеки Steam
@@ -62,28 +62,17 @@ dotfiles/
 ├── deploy/                      # Локальные стеки деплоя (deploy/khoj/)
 ├── tests/                       # Тесты инфраструктуры (e2e_virt_manager_test.sh)
 │
-└── [GNU Stow Пакеты]            # Каждый каталог ниже зеркалирует структуру $HOME
-    ├── zsh/                     # ~/.zshrc, ~/.zshenv, ~/.zprofile, ~/.zsh/ (системные скрипты и оконные хелперы)
-    ├── niri/                    # ~/.config/niri/ (config.kdl + модули в cfg/)
-    ├── nvim/                    # ~/.config/nvim/ (LazyVim конфигурация, stylua, lua/)
-    ├── ghostty/                 # ~/.config/ghostty/ (терминал с поддержкой Wayland и Catppuccin)
-    ├── starship/                # ~/.config/starship.toml (промпт со статусом Vi-mode)
-    ├── atuin/                   # ~/.config/atuin/ (умная история команд с синхронизацией)
-    ├── sheldon/                 # ~/.config/sheldon/ (быстрый менеджер Zsh плагинов на Rust)
-    ├── mise/                    # ~/.config/mise/ (управление версиями runtimes: node, python, etc.)
-    ├── cargo/                   # ~/.cargo/config.toml (глобальный cargo config: mold, sccache)
-    ├── hypr/                    # ~/.config/hypr/ (hypridle, hyprlock для сессии Wayland)
-    ├── k3d/                     # ~/.config/k3d/ (конфигурация локального кластера K8s)
-    ├── k9s/                     # ~/.config/k9s/ (конфиги и скин терминального UI для Kubernetes)
-    ├── rofi/                    # ~/.config/rofi/ (лаунчер приложений Wayland)
-    ├── superfile/               # ~/.config/superfile/ (современный файловый TUI менеджер)
-    ├── television/              # ~/.config/television/ (быстрый fuzzy-finder / previewer)
-    ├── vivaldi/                 # ~/.config/vivaldi-stable.conf (флаги Wayland/GPU)
-    ├── wireplumber/             # ~/.config/wireplumber/ (скрипты маршрутизации аудио)
-    ├── noctalia/                # ~/.config/noctalia/ (Noctalia Shell: бар, лаунчер, OSD, темы, виджеты)
-    ├── btop/                    # ~/.config/btop/ (btop.conf: мониторинг ресурсов, кастомный макет и темы)
-    ├── openrgb/                 # ~/.config/OpenRGB/ (off.orp), ~/.config/systemd/user/ (openrgb сервисы)
-    └── zellij/                  # ~/.config/zellij/ (терминальный мультиплексор)
+├── .chezmoiroot                 # Корень source state Chezmoi (home/)
+├── home/                        # Исходное состояние Chezmoi для $HOME
+│   ├── .chezmoi.toml.tmpl       # Шаблон конфигурации хоста (promptChoiceOnce для chassis)
+│   ├── .chezmoiignore           # Изоляция ai-dotfiles и фильтрация desktop/laptop сервисов
+│   ├── dot_config/              # ~/.config (niri, nvim, ghostty, sheldon, etc.)
+│   ├── dot_cargo/               # ~/.cargo (config.toml)
+│   ├── dot_zsh/                 # ~/.zsh (скрипты, алиасы, бинды)
+│   ├── dot_zshrc                # ~/.zshrc
+│   └── dot_zshenv.tmpl          # Шаблон ~/.zshenv (desktop vs laptop)
+└── linked/                      # Директории с runtime-state приложений
+    └── noctalia/                # ~/.config/noctalia (монтируется как цельный symlink)
 ```
 
 ---
@@ -97,28 +86,25 @@ dotfiles/
   - **System (Root):** Запускается через `sudo`, отвечает за блочные устройства, `/etc/fstab`, системные пакеты, udev, SDDM, system systemd-юниты.
   - **User (Non-Root):** Запускается от обычного пользователя. AUR-хелпер (`paru` через модуль `kewlfft.aur`) **категорически запрещено** запускать из-под root! Пользовательские юниты systemd настраиваются со `scope: user`.
 
-### 2. Модель управления конфигурациями через GNU Stow
+### 2. Модель управления конфигурациями через Chezmoi
 Репозиторий dotfiles располагается в `/data/projects/dotfiles` (с симлинком в `~/projects/dotfiles`).
-Каждая конфигурация приложения оформлена как отдельный пакет Stow, путь внутри которого зеркалит относительный путь от `$HOME`:
-- `niri/.config/niri` → раскладывается в `~/.config/niri`
-- `zsh/.zshrc` → раскладывается в `~/.zshrc`
-- `cargo/.cargo/config.toml` → раскладывается в `~/.cargo/config.toml`
+Управление пользовательскими конфигурациями (`$HOME`) переведено с GNU Stow на **Chezmoi** с сохранением zero-latency symlink рабочего процесса:
+- **Корень source-state:** Задан через `.chezmoiroot = home`. Все управляемые файлы размещаются внутри `home/` с префиксами `dot_`.
+- **Режим live-editing (`mode = "symlink"`):** Статические файлы (`nvim`, `ghostty`, `sheldon`, скрипты) разворачиваются как прямые симлинки на исходники в репозитории. Изменения в Neovim или конфигах мгновенно видны в `rtk git status` без необходимости вызова `chezmoi apply`.
+- **Шаблонизация (`.tmpl`):** Хост-зависимые параметры (мониторы Niri `display.kdl.tmpl`, окружение `dot_zshenv.tmpl`) компилируются на основе переменной шасси (`desktop` vs `laptop`).
+- **Симлинки целых каталогов (`symlink_`):** Для приложений с runtime-состоянием (Noctalia) директория монтируется целиком через `home/dot_config/symlink_noctalia.tmpl` на `linked/noctalia`.
+- **Изоляция AI-стека:** Через `home/.chezmoiignore` жестко исключены пути `ai-dotfiles` (`.hermes/**`, `.config/Hermes/**`, `.opencommit*`, `.gemini/**`), которые на рабочей станции обслуживаются независимо через GNU Stow.
 
-**Правила работы со Stow:**
+**Команды работы с Chezmoi:**
 - Для применения конфигурации:
   ```bash
-  cd ~/projects/dotfiles
-  stow -t ~ <package-name>
+  chezmoi apply --source /data/projects/dotfiles --force
   ```
-- Для удаления симлинков:
+- Для проверки дрифта:
   ```bash
-  stow -D -t ~ <package-name>
+  chezmoi verify
+  chezmoi diff
   ```
-- Для повторной перелинковки (restow):
-  ```bash
-  stow -R -t ~ <package-name>
-  ```
-- В `playbooks/setup_user.yml` перед запуском `stow` выполняется превентивное удаление конфликтующих стандартных файлов (которые часто создаются пакетными менеджерами при установке программ), чтобы избежать ошибок `stow: target already exists`.
 
 ### 3. Dual-NVMe архитектура и стратегия кэширования
 Система рассчитана на эффективное использование двух NVMe накопителей:
@@ -191,7 +177,7 @@ bash scripts/setup_user.sh
 Что делает:
 1. Устанавливает коллекцию `kewlfft.aur` в Ansible Galaxy.
 2. Ставит официальные и AUR пакеты, а также Cargo-утилиты через `cargo binstall`.
-3. Настраивает симлинки проектов и применяет все пакеты Stow.
+3. Настраивает симлинки проектов и применяет конфигурации Chezmoi.
 4. Настраивает структуру кэшей Rust, pnpm, uv.
 5. Запускает фоновый таймер rclone для Obsidian (`setup_rclone.yml`).
 
@@ -227,29 +213,28 @@ mise run ai:status
    ansible-playbook playbooks/packages.yml --tags <tag>
    ```
 
-### Сценарий B: Добавление новой конфигурации программы (Stow Package)
+### Сценарий B: Добавление новой конфигурации программы (Chezmoi)
 Если вы настраиваете новую программу, например `ripgrep` или `tmux`:
-1. Создайте каталог в корне репозитория с именем программы:
+1. Разместите файлы конфигурации внутри `home/` так, чтобы путь относительно `home/` зеркалировал целевой путь в `$HOME` с заменой ведущих точек на `dot_`:
+   - `~/.config/mytool/config` → `home/dot_config/mytool/config`.
+   - `~/.mytoolrc` → `home/dot_mytoolrc`.
+2. Примените конфигурацию:
    ```bash
-   mkdir -p mytool/.config/mytool
+   chezmoi apply --source /data/projects/dotfiles --force
    ```
-2. Разместите файлы конфигурации внутри так, чтобы путь относительно корня пакета повторял путь внутри домашней директории пользователя:
-   `dotfiles/mytool/.config/mytool/config` → `~/.config/mytool/config`.
-3. Добавьте удаление конфликтующего дефолтного файла/директории в таску `Remove existing config files to avoid stow conflicts` плейбука [`playbooks/setup_user.yml`](file:///home/gidragir/projects/dotfiles/playbooks/setup_user.yml).
-4. Протестируйте линковку:
+3. Проверьте отсутствие дрифта:
    ```bash
-   stow -nv -t ~ mytool    # Dry-run (проверка на коллизии)
-   stow -t ~ mytool       # Применение
+   chezmoi verify
    ```
-5. Обновите список в [`README.md`](file:///home/gidragir/projects/dotfiles/README.md).
+4. Обновите список в [`README.md`](file:///home/gidragir/projects/dotfiles/README.md).
 
 ### Сценарий C: Изменение настроек Niri (Wayland композитор)
-Конфигурация Niri декомпозирована в [`niri/.config/niri/cfg/`](file:///home/gidragir/projects/dotfiles/niri/.config/niri/cfg):
+Конфигурация Niri декомпозирована в [`home/dot_config/niri/cfg/`](file:///home/gidragir/projects/dotfiles/home/dot_config/niri/cfg):
 - `keybinds.kdl`: Горячие клавиши (используйте существующие соглашения `Mod+...`).
 - `rules.kdl`: Правила для окон (floating, geometry-corner-radius, maximized-to-edges).
 - `autostart.kdl`: Фоновые демоны (панели, буфер обмена `cliphist`, обои).
-- `display.kdl`: Разрешение и частота мониторов (DP-2, HDMI-A-1).
-- `env/`: Локальные оверрайды для конкретной рабочей машины.
+- `display.kdl.tmpl`: Разрешение и частота мониторов (шаблон Chezmoi с ветвлением по шасси `desktop` / `laptop`).
+- `env/`: Локальные оверрайды для конкретной рабочей машины (`include optional=true`).
 
 **Безопасное тестирование без выхода из сеанса:**
 Для тестирования оконного менеджера и баров используйте готовый скрипт песочницы:
@@ -267,21 +252,21 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 
 ### Сценарий E: Создание скриптов автоматизации и CLI-утилит (Window & System Helpers)
 Когда требуется создать вспомогательный скрипт для автоматизации (переключение/вызов окон в Niri, тумблеры режимов, CLI-хелперы, интеграции):
-1. **Единый каталог размещения:** Создавайте файл строго внутри `zsh/.zsh/scripts/<script-name>.sh` (или без расширения).
+1. **Единый каталог размещения:** Создавайте файл строго внутри `home/dot_zsh/scripts/<script-name>.sh` (или без расширения).
 2. **Права на выполнение:** Всегда выставляйте флаг исполняемости:
    ```bash
-   chmod +x zsh/.zsh/scripts/<script-name>.sh
+   chmod +x home/dot_zsh/scripts/<script-name>.sh
    ```
-3. **Обновление линков:** Примените Stow для пакета `zsh`:
+3. **Обновление линков:** Примените Chezmoi:
    ```bash
-   stow -R -t ~ zsh
+   chezmoi apply --source /data/projects/dotfiles --force
    ```
-4. **Интеграция с Niri / горячими клавишами:** В `niri/.config/niri/cfg/keybinds.kdl` привязывайте скрипт через:
+4. **Интеграция с Niri / горячими клавишами:** В `home/dot_config/niri/cfg/keybinds.kdl` привязывайте скрипт через:
    ```kdl
    Mod+<Key> { spawn "bash" "-c" "~/.zsh/scripts/<script-name>.sh"; }
    ```
    Либо через `spawn-sh "<script-name>.sh";` (так как `~/.zsh/scripts` находится в `$PATH`).
-5. **Запрет на unmanaged loose scripts:** Категорически запрещено создавать локальные скрипты в `~/.local/bin/` или `~` в обход репозитория. Любая автоматизация должна быть частью Stow-пакета `zsh` и закоммичена в Git.
+5. **Запрет на unmanaged loose scripts:** Категорически запрещено создавать локальные скрипты в `~/.local/bin/` или `~` в обход репозитория. Любая автоматизация должна находиться в `home/dot_zsh/scripts/`, управляться Chezmoi и быть закоммичена в Git.
 
 ### Сценарий F: Управление и доработка AI-стека (Ollama, Khoj, Hindsight, Hermes)
 Архитектура AI-инфраструктуры хоста сосредоточена в [`ai-dotfiles`](file:///data/projects/dotfiles/ai-dotfiles):
@@ -334,8 +319,8 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 
 ## 💎 7. Золотые правила для AI-агентов (UX & Quality Checklist)
 
-- [ ] **Не ломайте симлинки Stow:** Никогда не редактируйте файлы напрямую в `~/.config/...`, если это симлинк! Всегда вносите изменения в исходный файл в `/data/projects/dotfiles/...`.
-- [ ] **Все скрипты автоматизации строго в dotfiles:** Никаких разовых скриптов в `~/.local/bin/` или вне репозитория! Все пользовательские CLI-утилиты, хелперы для Niri и скрипты автоматизации создаются в `zsh/.zsh/scripts/`, имеют права `+x`, линкуются через Stow и коммитятся в Git.
+- [ ] **Не ломайте симлинки Chezmoi:** Конфигурации в `~/.config/...` развернуты как симлинки на `/data/projects/dotfiles/home/...` (`mode = "symlink"`). Изменения вносятся либо через Neovim напрямую (симлинк прозрачен), либо в файл исходника репозитория. Никогда не заменяйте симлинк регулярным файлом вручную!
+- [ ] **Все скрипты автоматизации строго в dotfiles:** Никаких разовых скриптов в `~/.local/bin/` или вне репозитория! Все пользовательские CLI-утилиты, хелперы для Niri и скрипты автоматизации создаются в `home/dot_zsh/scripts/`, имеют права `+x`, разворачиваются через Chezmoi и коммитятся в Git.
 - [ ] **Никаких секретов напрямую — только `mise.local.toml`:** Все чувствительные переменные, токены и приватные настройки выносятся строго в `mise.local.toml` (с добавлением в `.gitignore`), запрещено писать секреты открытым текстом в репозиторий.
 - [ ] **Соблюдайте тему оформления:** Единый визуальный стиль системы — **Catppuccin Frappe**. Все новые терминальные утилиты, темы SDDM, Limine, Ghostty и Neovim должны соответствовать этой палитре.
 - [ ] **Сохраняйте целостность кэшей:** Не меняйте пути кэшей в `setup_user.yml`, так как они завязаны на Dual-NVMe разметку дисков.

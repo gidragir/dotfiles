@@ -19,7 +19,7 @@
         name: rust
         state: absent
         extra_args: "-dd"
-      become: true
+      become: "{{ not ansible_check_mode }}"
       tags: [user, packages]
 
     - name: Install system packages via pacman
@@ -27,14 +27,14 @@
         name: "{{ system_packages }}"
         state: present
         update_cache: true
-      become: true
+      become: "{{ not ansible_check_mode }}"
       tags: [system, packages]
 
     - name: Remove unwanted packages
       community.general.pacman:
         name: "{{ unwanted_packages }}"
         state: absent
-      become: true
+      become: "{{ not ansible_check_mode }}"
       tags: [system, packages]
 
     - name: Install official user packages via pacman
@@ -42,7 +42,7 @@
         name: "{{ user_pacman_packages }}"
         state: present
         extra_args: "--needed"
-      become: true
+      become: "{{ not ansible_check_mode }}"
       tags: [user, packages]
 
     - name: Install Ollama packages via pacman
@@ -50,7 +50,7 @@
         name: "{{ ollama_packages }}"
         state: present
         extra_args: "--needed"
-      become: true
+      become: "{{ not ansible_check_mode }}"
       tags: [ollama, ai]
 
 
@@ -76,10 +76,24 @@
         use: paru
       tags: [cli, packages]
 
-    - name: Install AUR utilities and applications via paru
+    - name: Install common AUR utilities and applications via paru
       kewlfft.aur.aur:
         name: "{{ aur_packages }}"
         use: paru
+      tags: [aur, packages]
+
+    - name: Install desktop-specific AUR packages via paru
+      kewlfft.aur.aur:
+        name: "{{ desktop_aur_packages }}"
+        use: paru
+      when: (host_profile | default('desktop')) == 'desktop'
+      tags: [aur, packages]
+
+    - name: Install laptop-specific AUR packages via paru
+      kewlfft.aur.aur:
+        name: "{{ laptop_aur_packages }}"
+        use: paru
+      when: (host_profile | default('desktop')) == 'laptop'
       tags: [aur, packages]
 
     - name: Check if rustup is installed

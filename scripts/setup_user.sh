@@ -53,9 +53,17 @@ sudo -v
 echo "📦 Installing required Ansible Galaxy collections..."
 ansible-galaxy collection install kewlfft.aur
 
+# Detect host chassis type for profile selection
+HOST_CHASSIS="$(hostnamectl chassis 2>/dev/null || echo "desktop")"
+case "$HOST_CHASSIS" in
+    laptop|notebook|convertible) HOST_PROFILE="laptop" ;;
+    *) HOST_PROFILE="desktop" ;;
+esac
+echo "🖥️  Host profile detected: $HOST_PROFILE"
+
 echo "📦 Running consolidated user setup playbook..."
-ansible-playbook playbooks/packages.yml --tags user,aur,cargo
-ansible-playbook playbooks/setup_user.yml
+ansible-playbook playbooks/packages.yml --tags user,aur,cargo -e "host_profile=${HOST_PROFILE}"
+ansible-playbook playbooks/setup_user.yml -e "host_profile=${HOST_PROFILE}"
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Summary
@@ -69,7 +77,7 @@ echo "║  /data/projects/.pnpm-store/ → pnpm content store (optimized)     �
 echo "║  /data/projects/.uv-cache/   → uv package cache (optimized Btrfs) ║"
 echo "║  ~/.local/share/uv/          → uv tools & pythons (XDG, auto)     ║"
 echo "║  ~/.config/mise/config.toml → Global mise tools configuration      ║"
-echo "║  ~/.zshrc           → Managed via dotfiles (Stow)               ║"
+echo "║  ~/.zshrc           → Managed via dotfiles (Chezmoi)            ║"
 echo "║                                                                    ║"
 echo "║  NATIVE DOCKER:                                                    ║"
 echo "║  Docker is installed natively and uses /var/lib/docker             ║"

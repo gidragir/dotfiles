@@ -1,0 +1,45 @@
+# ── XDG Base Directory Specification ──────────────────────────────────────────
+# Set environment variables for all shells (interactive & non-interactive / scripts)
+# Rendered by chezmoi (dot_zshenv.tmpl) — edit the source and run `chezmoi apply`.
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_STATE_HOME="$HOME/.local/state"
+
+# ── PATH Configuration ────────────────────────────────────────────────────────
+export SHELL="/usr/bin/zsh"
+export PNPM_HOME="/data/projects/.pnpm-store"
+export PATH="$HOME/.local/share/mise/shims:$PATH"
+
+typeset -U path
+path=(
+    "$HOME/.local/bin"
+    "$PNPM_HOME"
+    "$PNPM_HOME/bin"
+    "$HOME/.zsh/scripts"
+{{- if eq .chassis "desktop" }}
+    "/data/projects/dotfiles/local-ai-stack/scripts"
+    "$HOME/projects/dotfiles/local-ai-stack/scripts"
+{{- end }}
+    $path
+)
+
+# ── Environment Variables & Tool Caches ───────────────────────────────────────
+export SCCACHE_DIR="/data/projects/.sccache"
+export UV_CACHE_DIR="/data/projects/.uv-cache"
+export KUBECONFIG="$HOME/.kube/config"
+export FZF_BASE="/usr/share/fzf"
+export EDITOR="nvim"
+export VISUAL="nvim"
+{{- if eq .chassis "desktop" }}
+
+# ── Headroom Context Optimization Proxy & FX CLI (desktop AI stack only) ─────
+export ANTHROPIC_BASE_URL="http://127.0.0.1:8787"
+export OPENAI_BASE_URL="http://127.0.0.1:8787/v1"
+export OPENAI_API_KEY="ollama"
+export FX_PROVIDER="openai"
+export FX_MODEL="qwen2.5-coder:14b"
+{{- end }}
+
+# ── Local Secrets & Environment (Git-Ignored) ──────────────────────────────────
+[[ -f "$HOME/.zshenv.local" ]] && source "$HOME/.zshenv.local"

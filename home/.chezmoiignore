@@ -1,0 +1,26 @@
+# Source state root is home/ (see /.chezmoiroot) — repo metadata is outside chezmoi scope.
+
+# ── AI-Dotfiles Sovereign Artifacts Isolation (managed by ai-dotfiles via GNU Stow) ──
+.hermes
+.hermes/**
+.config/Hermes
+.config/Hermes/**
+.opencommit*
+.gemini
+.gemini/**
+
+# ── Host / Chassis Profile Exclusions ─────────────────────────────────────────
+{{ if ne .chassis "desktop" }}
+.config/OpenRGB
+.config/OpenRGB/**
+.config/coolercontrol
+.config/coolercontrol/**
+.config/systemd/user/openrgb.service
+.config/systemd/user/openrgb-profile.service
+# links into ai-dotfiles (desktop-only repository)
+.zsh/scripts/hermes-bar-status.sh
+.zsh/scripts/hermes-capture-idea.sh
+.zsh/scripts/hermes-desktop-toggle.sh
+.zsh/scripts/sync-env.sh
+.zsh/scripts/vram-guard.sh
+{{ end }}

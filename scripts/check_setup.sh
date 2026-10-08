@@ -52,7 +52,7 @@ check_mount() {
         # Check mount options
         local opts
         opts=$(findmnt -n -o OPTIONS "$path" 2>/dev/null || echo "")
-        if echo "$opts" | grep -q "$expected_opt"; then
+        if echo "$opts" | rg -q "$expected_opt"; then
             pass "  Option '$expected_opt' for $path found in mount options"
         else
             fail "  Option '$expected_opt' for $path NOT found (active options: $opts)"
@@ -134,9 +134,12 @@ check_cmd "cargo-nextest"
 check_cmd "bacon"
 check_cmd "cargo-machete"
 check_cmd "sheldon"
+check_cmd "chezmoi"
 
-# Verify zsh plugin manager & config
-check_symlink "$HOME_DIR/.config/sheldon/plugins.toml" "$HOME_DIR/projects/dotfiles/sheldon/.config/sheldon/plugins.toml"
+# Verify user dotfile configurations (managed by chezmoi in symlink mode)
+check_symlink "$HOME_DIR/.config/sheldon/plugins.toml" "$HOME_DIR/projects/dotfiles/home/dot_config/sheldon/plugins.toml"
+check_symlink "$HOME_DIR/.config/nvim/init.lua" "$HOME_DIR/projects/dotfiles/home/dot_config/nvim/init.lua"
+check_symlink "$HOME_DIR/.config/ghostty/config.ghostty" "$HOME_DIR/projects/dotfiles/home/dot_config/ghostty/config.ghostty"
 
 # Verify default shell
 USER_SHELL=$(getent passwd "${USER:-$(whoami)}" | cut -d: -f7 2>/dev/null || echo "${SHELL:-}")
