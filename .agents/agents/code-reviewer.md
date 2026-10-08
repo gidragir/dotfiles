@@ -19,8 +19,8 @@ Your objective is to audit changes made by implementers, find edge cases, and en
 2. **Project Guidelines (`AGENTS.md`)**:
    - Single source of truth for packages (`playbooks/vars/packages.yml`).
    - Idempotency in Ansible tasks (require `creates:`, `changed_when:`, or state checks).
-   - Clean Stow package directory layout matching `$HOME`.
-   - Script placement (must reside strictly in `zsh/.zsh/scripts/`).
+   - Clean Chezmoi directory layout in `home/` matching `$HOME` (with `.chezmoiroot = home`).
+   - Script placement (must reside strictly in `home/dot_zsh/scripts/`).
 3. **Robustness & Edge Cases**: Validate error handling, boundary conditions, shell quoting, and type safety.
 4. **Security**: Ensure no committed credentials, safe file permissions, and prevention of injection vulnerabilities.
 

@@ -1,12 +1,12 @@
 # CLI Reference: Core Workstation System Tools (L2)
 
-## GNU Stow (Dotfiles Linking)
+## Chezmoi (Dotfiles & Configuration Management)
 ```bash
-cd /data/projects/dotfiles
-stow -nv -t ~ <package>           # Dry run: check for potential file collisions
-stow -t ~ <package>               # Link package to $HOME
-stow -D -t ~ <package>            # Unlink package from $HOME
-stow -R -t ~ <package>            # Re-stow (refresh symlinks)
+chezmoi status                    # Show modified/unmanaged targets
+chezmoi diff                      # Compare repository state with $HOME
+chezmoi verify                    # Validate 0 configuration drift
+chezmoi apply                     # Apply changes to $HOME
+chezmoi apply --source /data/projects/dotfiles --force  # Force apply from dotfiles repo
 ```
 
 ## Storage & Setup Health Checks

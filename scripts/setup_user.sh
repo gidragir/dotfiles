@@ -23,7 +23,7 @@ fi
 # ~/.local/share/uv/              → uv tools/venvs        (UV_DATA_DIR)
 #
 # Rationale:
-#   - Cargo and Zsh configurations are managed via dotfiles (GNU Stow)
+#   - Cargo and Zsh configurations are managed via Chezmoi
 #   - pnpm store is on the same drive as projects to allow hardlinks (NVMe 2)
 #   - uv cache is on the Btrfs partition to utilize disk compression
 TARGET_DIR="${HOME}/projects/dotfiles"

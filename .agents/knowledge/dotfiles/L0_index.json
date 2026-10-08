@@ -8,7 +8,7 @@
     {
       "id": "wm_niri",
       "name": "Niri Wayland Compositor",
-      "summary": "Scrollable-tiling Wayland compositor with modular KDL configs in niri/.config/niri/cfg/",
+      "summary": "Scrollable-tiling Wayland compositor with modular KDL configs in home/dot_config/niri/cfg/",
       "l1_path": "subsystems/wm_niri.md",
       "tags": [
         "wayland",
@@ -81,7 +81,7 @@
     {
       "id": "shell_ux",
       "name": "Terminal & Shell UX Flow",
-      "summary": "Modal UX: Ghostty, Zsh Vi-mode, Neovim (v), fzf-tab, zoxide, television, superfile; all scripts in zsh/.zsh/scripts/",
+      "summary": "Modal UX: Ghostty, Zsh Vi-mode, Neovim (v), fzf-tab, zoxide, television, superfile; all scripts in home/dot_zsh/scripts/",
       "l1_path": "subsystems/shell_ux.md",
       "tags": [
         "zsh",
@@ -94,21 +94,19 @@
       ]
     }
   ],
-  "stow_packages": [
-    "antigravity",
+  "chezmoi_managed_targets": [
     "atuin",
     "btop",
     "cargo",
-    "crates",
     "ghostty",
     "hypr",
     "k3d",
     "k9s",
-    "local-ai-stack",
     "mise",
     "niri",
     "noctalia",
     "nvim",
+    "openrgb",
     "rofi",
     "sheldon",
     "starship",
@@ -121,7 +119,7 @@
   ],
   "core_rules": [
     "SSOT for all packages is playbooks/vars/packages.yml. Never invoke pacman/paru directly in tasks.",
-    "Custom shell scripts and helpers MUST be placed in zsh/.zsh/scripts/ (auto-exported to PATH via .zshenv).",
+    "Custom shell scripts and helpers MUST be placed in home/dot_zsh/scripts/ (auto-exported to PATH via .zshenv).",
     "AUR packages (paru) must NEVER be run as root.",
     "vRAM budget is strict (16 GB): only 1 model active in Ollama at a time (OLLAMA_MAX_LOADED_MODELS=1).",
     "Long-term memory is explicit tool calls only (no implicit prompt injection / context poisoning)."

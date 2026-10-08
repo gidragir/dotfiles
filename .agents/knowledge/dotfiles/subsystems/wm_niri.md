@@ -2,7 +2,7 @@
 
 ## Overview
 Niri is a scrollable-tiling Wayland compositor configured declaratively using KDL syntax.
-Configuration root: `niri/.config/niri/` -> deployed via GNU Stow to `~/.config/niri/`.
+Configuration root: `home/dot_config/niri/` -> deployed via Chezmoi to `~/.config/niri/`.
 
 ## Modular Configuration Layout
 - `config.kdl`: Master configuration file including modular definitions:
@@ -13,14 +13,14 @@ Configuration root: `niri/.config/niri/` -> deployed via GNU Stow to `~/.config/
     - Default column widths and max sizes.
   - `cfg/autostart.kdl`: Daemons started on login:
     - Status bar (Noctalia / Waybar), notification daemon, `cliphist` clipboard manager, wallpaper daemon.
-  - `cfg/display.kdl`: Monitor outputs and refresh rates (e.g. DP-2, HDMI-A-1).
+  - `cfg/display.kdl.tmpl`: Monitor outputs and refresh rates templated by host chassis (`desktop`: DP-2, HDMI-A-1; `laptop`: eDP-1).
   - `cfg/env/`: Host-specific environment variables.
 
 ## Key Operational Rules & Testing
 - Safe test keybind config without restarting compositor: `niri validate` or `niri msg action reload-config`.
 - Inspect active windows/workspaces: `niri msg windows`, `niri msg workspaces`.
-- Helper scripts: `zsh/.zsh/scripts/niri-window-switcher` or custom scratchpad scripts.
-- Never add loose window scripts to `/usr/local/bin` directly; maintain them in `zsh/.zsh/scripts/`.
+- Helper scripts: `home/dot_zsh/scripts/` (deployed to `~/.zsh/scripts/`).
+- Never add loose window scripts to `/usr/local/bin` directly; maintain them in `home/dot_zsh/scripts/`.
 
 ## Recent Changes
 - Updated `noctalia/settings.json` to use relative paths for `avatarImage` and `wallpaper.directory`:

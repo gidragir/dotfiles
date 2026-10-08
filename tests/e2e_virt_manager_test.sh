@@ -11,7 +11,7 @@
 #           - QML line count enforcement (<200 LOC)
 #           - QML syntax validation (qmllint)
 #           - Package declaration (virt-viewer in packages.yml)
-#           - Stow dry-run simulation
+#           - Dotfiles & Chezmoi Package Integration
 #   Tier 2: Boundary & Corner Cases (empty, special chars, failures, rapid burst)
 #   Tier 3: Cross-Feature Integration (pipeline, QML bindings, CLI wrapper)
 #   Tier 4: Real-World Workload (live virsh, socket access, virt-viewer binary)
@@ -390,7 +390,7 @@ Item {
 }
 EOF
 
-    # 4. Mock CLI Path Wrapper: zsh/.zsh/scripts/virt-helper.sh
+    # 4. Mock CLI Path Wrapper: home/dot_zsh/scripts/virt-helper.sh
     cat << EOF > "${MOCK_DIR}/cli/virt-helper.sh"
 #!/usr/bin/env bash
 exec "${MOCK_DIR}/plugin/scripts/virt-helper.sh" "\$@"

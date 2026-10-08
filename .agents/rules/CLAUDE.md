@@ -78,7 +78,7 @@ For multi-step tasks, state a brief plan:
 - **Customization Root:** Strictly use `.agents/` for workspace-level skills, rules, plugins, and knowledge. Never create or introduce `.agent/`.
 - **Script Locations:**
   - System bootstrap / diagnostics: `scripts/` (e.g. `scripts/setup_system.sh`, `scripts/check.sh`).
-  - User CLI / window helpers: `zsh/.zsh/scripts/` (managed via GNU Stow package `zsh`).
+  - User CLI / window helpers: `home/dot_zsh/scripts/` (managed via Chezmoi, deployed to `~/.zsh/scripts/`).
 - **Doc Integrity:** Keep `README.md` and `AGENTS.md` strictly synchronized with the real directory tree when moving or removing files.
 
 ---

@@ -12,34 +12,30 @@ docker ps --filter "name=khoj"
 curl -sf http://127.0.0.1:42110/api/health >/dev/null && echo "✓ Khoj Health: OK (:42110)" || echo "✗ Khoj Health: Failed"
 """
 
-[tasks."ai:up"]
-description = "Start Khoj & Postgres stack in local-ai-stack submodule"
-dir = "local-ai-stack"
-run = "mise run up"
-
-[tasks."ai:down"]
-description = "Stop Khoj & Postgres stack in local-ai-stack submodule"
-dir = "local-ai-stack"
-run = "mise run down"
-
-[tasks."ai:build:mcp"]
-description = "Build Host CLI MCP server in local-ai-stack submodule"
-dir = "local-ai-stack"
-run = "mise run build:mcp"
-
 [tasks."knowledge:l0"]
 description = "Inspect L0 abstract mental map of the dotfiles repository"
 run = "cat .agents/knowledge/dotfiles/L0_index.json"
 
-[tasks."knowledge:sync"]
-description = "Synchronize dotfiles Stow packages and update L1 subsystem docs using local Ollama AI"
-run = "bun run local-ai-stack/scripts/sync_knowledge.ts"
+[tasks."dotfiles:status"]
+description = "Check status of Chezmoi managed configurations"
+run = "chezmoi status"
 
-[tasks."benchmark:tokens"]
-description = "Empirical token and latency benchmark comparing raw files vs OpenViking L0/L1"
-run = "bun run local-ai-stack/scripts/benchmark_tokens.ts"
+[tasks."dotfiles:diff"]
+description = "Inspect diff between dotfiles repository and $HOME"
+run = "chezmoi diff"
 
-[tasks."build:context-init"]
-description = "Build context-init Rust CLI binary and copy to ~/.local/bin"
-dir = "crates/context-init"
-run = "cargo build --release && cp target/release/context-init ~/.local/bin/"
+[tasks."dotfiles:verify"]
+description = "Verify zero drift between dotfiles repository and $HOME"
+run = "chezmoi verify"
+
+[tasks."dotfiles:apply"]
+description = "Apply repository configurations to $HOME"
+run = "chezmoi apply --source /data/projects/dotfiles --force"
+
+[tasks."test:e2e"]
+description = "Run E2E test suite for Noctalia plugins"
+run = "bash tests/e2e_virt_manager_test.sh"
+
+[tasks."test:check"]
+description = "Run comprehensive host environment health check"
+run = "bash scripts/check_setup.sh"
