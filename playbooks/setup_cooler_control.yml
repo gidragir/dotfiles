@@ -125,7 +125,7 @@
     # race us.
     - name: Wait until config.toml contains a CPU device entry
       ansible.builtin.shell: |
-        grep -i -E '^\s*[a-f0-9]{64}\s*=\s*".*(Core|Ryzen|Intel|AMD|CPU).*"' /etc/coolercontrol/config.toml 2>/dev/null
+        rg -i -e '^\s*[a-f0-9]{64}\s*=\s*".*(Core|Ryzen|Intel|AMD|CPU).*"' /etc/coolercontrol/config.toml 2>/dev/null
       register: cpu_probe
       until: cpu_probe.rc == 0
       retries: 10
@@ -137,7 +137,7 @@
     # ── 4. Discover CPU and Motherboard device UIDs ──────────────────────────
     - name: Extract CPU device UID from config.toml
       ansible.builtin.shell: |
-        grep -i -E '^\s*[a-f0-9]{64}\s*=\s*".*(Core|Ryzen|Intel|AMD|CPU).*"' /etc/coolercontrol/config.toml 2>/dev/null | head -n 1 | cut -d '=' -f 1 | tr -d ' \n\r' || echo ""
+        rg -i -e '^\s*[a-f0-9]{64}\s*=\s*".*(Core|Ryzen|Intel|AMD|CPU).*"' /etc/coolercontrol/config.toml 2>/dev/null | head -n 1 | cut -d '=' -f 1 | tr -d ' \n\r' || echo ""
       register: cpu_device_uid_raw
       changed_when: false
       failed_when: false
@@ -145,7 +145,7 @@
 
     - name: Extract Motherboard chip device UID from config.toml
       ansible.builtin.shell: |
-        grep -i -E '^\s*[a-f0-9]{64}\s*=\s*".*(nct|it8|it87|axp|asus).*"' /etc/coolercontrol/config.toml 2>/dev/null | head -n 1 | cut -d '=' -f 1 | tr -d ' \n\r' || echo ""
+        rg -i -e '^\s*[a-f0-9]{64}\s*=\s*".*(nct|it8|it87|axp|asus).*"' /etc/coolercontrol/config.toml 2>/dev/null | head -n 1 | cut -d '=' -f 1 | tr -d ' \n\r' || echo ""
       register: mobo_device_uid_raw
       changed_when: false
       failed_when: false
@@ -428,7 +428,7 @@
                 | jq -r ".modes[] | select(.name==\"${mode_name}\") | .uid" 2>/dev/null)"
             else
               mode_uid="$(curl -k -s -H "Authorization: Bearer ${token}" "${COOLER_BASE_URL}/modes" \
-                | grep -o "{\"uid\":\"[^\"]*\",\"name\":\"${mode_name}\"" | cut -d'"' -f4)"
+                | rg -o "{\"uid\":\"[^\"]*\",\"name\":\"${mode_name}\"" | cut -d'"' -f4)"
             fi
 
             if [[ -z "$mode_uid" || "$mode_uid" == "null" ]]; then

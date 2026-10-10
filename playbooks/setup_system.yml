@@ -19,7 +19,7 @@
       ansible.builtin.shell: |
         echo "🔍 Available storage drives:"
         echo "--------------------------------------------------------"
-        lsblk -d -o NAME,SIZE,MODEL | grep -E "^(nvme|sd)"
+        lsblk -d -o NAME,SIZE,MODEL | rg "^(nvme|sd)"
         echo "--------------------------------------------------------"
       register: lsblk_drives
       changed_when: false
@@ -63,7 +63,7 @@
 
     - name: Check if target disk contains active OS partitions
       ansible.builtin.shell: |
-        lsblk -n -o MOUNTPOINT "/dev/{{ target_disk_name }}" | grep -q -E "^/$|^/boot"
+        lsblk -n -o MOUNTPOINT "/dev/{{ target_disk_name }}" | rg -q "^(/|/boot)$"
       register: active_os_check
       failed_when: false
       changed_when: false

@@ -100,6 +100,12 @@ user_pacman_packages:
   - sheldon
   - ddcutil
   - wlsunset
+  - mpv
+  - libsixel
+  - libxpresent
+  - mujs
+  - playerctl
+  - pear-desktop
 
 # Dedicated GPU/AI inference packages (installed on-demand via setup_ollama.yml)
 ollama_packages:

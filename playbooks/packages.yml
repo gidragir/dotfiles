@@ -74,7 +74,7 @@
       kewlfft.aur.aur:
         name: "{{ cli_essential_packages }}"
         use: paru
-      tags: [cli, packages]
+      tags: [cli, aur, packages]
 
     - name: Install common AUR utilities and applications via paru
       kewlfft.aur.aur:
