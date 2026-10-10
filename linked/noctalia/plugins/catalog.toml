@@ -1,0 +1,44 @@
+[[plugin]]
+id = "gidragir/openrgb"
+name = "OpenRGB Control"
+version = "2.0.0"
+author = "gidragir"
+license = "MIT"
+icon = "palette"
+description = "Manage OpenRGB device profiles and RGB lighting states"
+plugin_api = 9
+tags = ["hardware", "bar", "panel", "utility"]
+
+[[plugin]]
+id = "gidragir/obsidian"
+name = "Obsidian Companion"
+version = "2.0.0"
+author = "gidragir"
+license = "MIT"
+icon = "notebook"
+description = "Obsidian daily note tasks and rclone sync companion"
+plugin_api = 9
+tags = ["productivity", "notes", "tasks", "bar", "panel", "service"]
+
+[[plugin]]
+id = "gidragir/virt-manager"
+name = "Virt-Manager Companion"
+version = "2.0.0"
+author = "gidragir"
+license = "MIT"
+icon = "server-2"
+description = "Monitor and manage KVM virtual machines"
+plugin_api = 9
+tags = ["virtualization", "kvm", "qemu", "system", "bar", "panel"]
+
+[[plugin]]
+id = "gidragir/ytm"
+name = "YouTube Music"
+version = "1.0.0"
+author = "gidragir"
+license = "MIT"
+icon = "brand-youtube"
+description = "YouTube Music scratchpad companion and controller for Niri Wayland"
+plugin_api = 9
+tags = ["media", "audio", "music", "bar", "panel"]
+

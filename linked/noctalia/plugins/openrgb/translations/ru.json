@@ -1,0 +1,19 @@
+{
+  "plugin": {
+    "title": "Управление RGB",
+    "description": "Управление подсветкой через OpenRGB"
+  },
+  "settings": {
+    "poll_interval": {
+      "label": "Интервал опроса (сек)",
+      "description": "Интервал проверки статуса OpenRGB в секундах"
+    }
+  },
+  "panel": {
+    "title": "Управление подсветкой",
+    "profiles": "Профили и пресеты",
+    "brightness": "Яркость",
+    "quick_colors": "Быстрые цвета",
+    "turn_off": "Выключить подсветку"
+  }
+}

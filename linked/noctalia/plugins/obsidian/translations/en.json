@@ -1,0 +1,36 @@
+{
+  "plugin": {
+    "name": "Obsidian Companion",
+    "description": "Seamless Obsidian vault companion with live tasks indicator, quick capture, and sync."
+  },
+  "settings": {
+    "vault_path": {
+      "label": "Vault Path",
+      "description": "Absolute path to your local Obsidian vault directory"
+    },
+    "daily_folder": {
+      "label": "Daily Notes Folder",
+      "description": "Relative folder path for daily notes within the vault (e.g. DAILY)"
+    },
+    "refresh_interval": {
+      "label": "Refresh Interval (s)",
+      "description": "Polling interval in seconds for tasks and sync status"
+    }
+  },
+  "bar": {
+    "title": "Obsidian Companion",
+    "noTasks": "No tasks for today",
+    "sync": "Sync: {status}"
+  },
+  "panel": {
+    "title": "Obsidian Companion",
+    "todayNote": "Today's Tasks",
+    "noDailyNote": "Daily note not created yet",
+    "createDailyNote": "Create Today's Note",
+    "noTasksFound": "No tasks in today's note",
+    "syncNow": "Sync Now",
+    "openInNeovim": "Open in Neovim",
+    "openInObsidian": "Open Obsidian",
+    "newNote": "New Note (dmenu)"
+  }
+}

@@ -1,0 +1,32 @@
+id = "gidragir/ytm"
+name = "YouTube Music"
+version = "1.0.0"
+plugin_api = 9
+author = "gidragir"
+license = "MIT"
+dependencies = ["bash", "jq"]
+tags = ["media", "audio", "music", "bar", "panel"]
+icon = "brand-youtube"
+description = "YouTube Music scratchpad companion and controller for Niri Wayland"
+
+[[setting]]
+key = "poll_interval"
+type = "int"
+label_key = "settings.poll_interval.label"
+description_key = "settings.poll_interval.description"
+default = 3
+min = 1
+max = 30
+
+[[widget]]
+id = "widget"
+entry = "widget.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 380
+height = 360
+placement = "attached"
+position = "auto"
+open_near_click = true

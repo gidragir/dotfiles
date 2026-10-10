@@ -1,0 +1,51 @@
+id = "gidragir/obsidian"
+name = "Obsidian Companion"
+version = "2.0.0"
+plugin_api = 9
+author = "gidragir"
+license = "MIT"
+dependencies = ["python3", "bash"]
+tags = ["productivity", "notes", "tasks", "bar", "panel", "service"]
+icon = "notebook"
+description = "Seamless Obsidian vault companion with live tasks indicator, quick capture, and sync."
+
+[[setting]]
+key = "vault_path"
+type = "folder"
+label_key = "settings.vault_path.label"
+description_key = "settings.vault_path.description"
+default = "/data/obsidian"
+
+[[setting]]
+key = "daily_folder"
+type = "string"
+label_key = "settings.daily_folder.label"
+description_key = "settings.daily_folder.description"
+default = "DAILY"
+
+[[setting]]
+key = "refresh_interval"
+type = "int"
+label_key = "settings.refresh_interval.label"
+description_key = "settings.refresh_interval.description"
+default = 15
+min = 5
+max = 120
+
+[[service]]
+id = "service"
+entry = "service.luau"
+
+[[widget]]
+id = "widget"
+entry = "widget.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 460
+height = 520
+placement = "attached"
+position = "auto"
+open_near_click = true
+

@@ -1,0 +1,31 @@
+{
+  "name": "YouTube Music",
+  "description": "YouTube Music scratchpad companion and controller for Niri Wayland",
+  "widget": {
+    "tooltip": "YouTube Music",
+    "tooltip_playing": "Playing: %s - %s",
+    "tooltip_paused": "Paused: %s - %s",
+    "tooltip_inactive": "YouTube Music (Inactive)\n• Click: Show/Hide Window\n• Right Click: Play/Pause",
+    "tooltip_controls": "• Left Click: Toggle Window\n• Right Click: Play/Pause\n• Middle Click: Companion Panel"
+  },
+  "panel": {
+    "title": "YouTube Music",
+    "status_playing": "Playing",
+    "status_paused": "Paused",
+    "status_stopped": "Stopped",
+    "status_inactive": "Inactive",
+    "no_track": "No active track",
+    "toggle_window": "Toggle Window",
+    "toggle_window_desc": "Brings the player window to the current workspace as a floating overlay",
+    "play_pause": "Play / Pause",
+    "next": "Next Track",
+    "prev": "Previous Track",
+    "launch": "Launch Player"
+  },
+  "settings": {
+    "poll_interval": {
+      "label": "Poll Interval (sec)",
+      "description": "Interval for polling MPRIS playback state"
+    }
+  }
+}

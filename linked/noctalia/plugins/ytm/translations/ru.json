@@ -1,0 +1,31 @@
+{
+  "name": "YouTube Music",
+  "description": "Управление YouTube Music и быстрый вызов окна поверх рабочего стола",
+  "widget": {
+    "tooltip": "YouTube Music",
+    "tooltip_playing": "Играет: %s - %s",
+    "tooltip_paused": "На паузе: %s - %s",
+    "tooltip_inactive": "YouTube Music (Не активен)\n• ЛКМ: Показать/Скрыть окно\n• ПКМ: Play/Pause",
+    "tooltip_controls": "• ЛКМ: Показать/Скрыть окно\n• ПКМ: Play/Pause\n• СКМ: Панель управления"
+  },
+  "panel": {
+    "title": "YouTube Music",
+    "status_playing": "Воспроизведение",
+    "status_paused": "Пауза",
+    "status_stopped": "Остановлено",
+    "status_inactive": "Не запущено",
+    "no_track": "Нет активного трека",
+    "toggle_window": "Показать / Скрыть окно",
+    "toggle_window_desc": "Переносит окно плеера на текущий монитор в плавающем режиме",
+    "play_pause": "Воспроизведение / Пауза",
+    "next": "Следующий трек",
+    "prev": "Предыдущий трек",
+    "launch": "Запустить плеер"
+  },
+  "settings": {
+    "poll_interval": {
+      "label": "Интервал опроса (сек)",
+      "description": "Периодичность обновления статуса воспроизведения через MPRIS"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "plugin": {
+    "name": "Obsidian Companion",
+    "description": "Интеграция с Obsidian: задачи дня, быстрый ввод и синхронизация."
+  },
+  "settings": {
+    "vault_path": {
+      "label": "Путь к Vault",
+      "description": "Абсолютный путь к каталогу Obsidian Vault"
+    },
+    "daily_folder": {
+      "label": "Каталог ежедневных заметок",
+      "description": "Относительный путь к каталогу ежедневных заметок (например, DAILY)"
+    },
+    "refresh_interval": {
+      "label": "Интервал обновления (сек)",
+      "description": "Интервал опроса задач и статуса синхронизации в секундах"
+    }
+  },
+  "bar": {
+    "title": "Obsidian Companion",
+    "noTasks": "Нет задач на сегодня",
+    "sync": "Синхронизация: {status}"
+  },
+  "panel": {
+    "title": "Obsidian Companion",
+    "todayNote": "Задачи на сегодня",
+    "noDailyNote": "Заметка на сегодня еще не создана",
+    "createDailyNote": "Создать заметку на сегодня",
+    "noTasksFound": "В сегодняшней заметке нет задач",
+    "syncNow": "Синхронизировать",
+    "openInNeovim": "Открыть в Neovim",
+    "openInObsidian": "Открыть Obsidian",
+    "newNote": "Новая заметка"
+  }
+}

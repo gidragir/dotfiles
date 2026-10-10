@@ -1,0 +1,19 @@
+{
+  "plugin": {
+    "title": "RGB Control",
+    "description": "Control RGB lighting via OpenRGB"
+  },
+  "settings": {
+    "poll_interval": {
+      "label": "Poll Interval (s)",
+      "description": "Interval in seconds to check OpenRGB status"
+    }
+  },
+  "panel": {
+    "title": "RGB Lighting Control",
+    "profiles": "Profiles & Presets",
+    "brightness": "Brightness",
+    "quick_colors": "Quick Colors",
+    "turn_off": "Turn Off Lighting"
+  }
+}

@@ -254,6 +254,13 @@
                     "id": "plugin:virt-manager"
                 },
                 {
+                    "defaultSettings": {
+                        "panelPosition": "follow_launcher",
+                        "pollIntervalSec": 3
+                    },
+                    "id": "plugin:ytm"
+                },
+                {
                     "colorizeSystemIcon": "none",
                     "colorizeSystemText": "none",
                     "generalTooltipText": "⚡ Hermes AI Hub\n• ЛКМ: Hermes Desktop (Toggle)\n• ПКМ: Kanban Board (:9119)\n• СКМ: Меню профилей (Refiner/Thinker/Gemini)\n• Скролл: Захват идеи в Triage",
@@ -584,8 +591,8 @@
     },
     "location": {
         "analogClockInCalendar": false,
-        "autoLocate": false,
-        "firstDayOfWeek": -1,
+        "autoLocate": true,
+        "firstDayOfWeek": 1,
         "hideWeatherCityName": false,
         "hideWeatherTimezone": false,
         "name": "Almaty",

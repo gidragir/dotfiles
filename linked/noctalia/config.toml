@@ -14,53 +14,68 @@ enabled = false
 tint_intensity = 0.30000001192092896
 
 [bar]
-order = [ "default" ]
+order = [ "islands" ]
 
-    [bar.default]
+    [bar.islands]
     auto_hide = false
-    background_opacity = 1.0
+    background_opacity = 0.82
     border = "outline"
-    border_width = 0.0
-    capsule = false
+    border_width = 1.0
+    capsule = true
+    capsule_border = "outline"
     capsule_border_width = 1.0
     capsule_fill = "surface_variant"
-    capsule_group = []
-    capsule_opacity = 1.0
+    capsule_foreground = "on_surface"
+    capsule_opacity = 0.85
     capsule_padding = 6.0
-    capsule_thickness = 0.75999999046325684
-    center = [ "workspaces" ]
-    color = "secondary"
+    capsule_thickness = 0.78
+    color = "on_surface"
     compositor_blur = true
-    concave_edge_corners = true
+    concave_edge_corners = false
     contact_shadow = false
     enabled = true
-    end = [ "weather", "keyboard_layout", "tray", "volume", "network", "notifications" ]
+    font_family = "Cantarell"
     font_scale = 1.0
-    font_weight = 500
+    font_weight = 600
     hover_highlight = true
-    icon_color = "tertiary"
+    icon_color = "primary"
     layer = "top"
-    margin_edge = 0
-    margin_ends = 100
+    margin_edge = 8
+    margin_ends = 16
     margin_opposite_edge = 0
-    padding = 14
+    padding = 10
     panel_overlap = 1
     position = "top"
-    radius = 12
-    radius_bottom_left = 12
-    radius_bottom_right = 12
-    radius_top_left = 12
-    radius_top_right = 12
+    radius = 16
     reserve_space = true
     scale = 1.0
     shadow = true
     show_on_workspace_switch = true
     smart_auto_hide = false
-    start = [ "launcher", "clock", "cpu", "temp", "ram", "media" ]
-    thickness = 34
-    widget_spacing = 6
-
-        [bar.default.dead_zone]
+    thickness = 36
+    widget_spacing = 8
+    start = [ "launcher", "niri_preview", "workspaces" ]
+    center = [ "clock", "date", "weather" ]
+    end = [
+        "hermes_hub",
+        "headroom",
+        "docker",
+        "obsidian",
+        "openrgb",
+        "virt_manager",
+        "ytm",
+        "temp",
+        "cpu",
+        "gpu",
+        "ram",
+        "drive_health",
+        "media",
+        "keyboard_layout",
+        "audio_switcher",
+        "arch_updater",
+        "tray",
+        "notifications"
+    ]
 
 [battery]
 warning_threshold = 10
@@ -245,7 +260,7 @@ validate = [ "Return", "KP_Enter", "space" ]
 
 [location]
 address = ""
-auto_locate = false
+auto_locate = true
 custom_schedule = false
 sunrise = ""
 sunset = ""
@@ -366,7 +381,25 @@ scale = 1.0
 
 [plugins]
 auto_update = "all"
-enabled = []
+enabled = [
+    "noctalia/notes",
+    "gidragir/openrgb",
+    "gidragir/obsidian",
+    "gidragir/virt-manager",
+    "gidragir/ytm",
+    "ayagmar/headroom",
+    "yuuto/arch-updater",
+    "8bury/mini-docker",
+    "blackbartblues/audio-switcher",
+    "gustav0ar/drive-health",
+    "teagar/niri-workspace-preview"
+]
+
+    [[plugins.source]]
+    enabled = true
+    kind = "path"
+    location = "/home/gidragir/.config/noctalia/plugins"
+    name = "local"
 
     [[plugins.source]]
     enabled = true
@@ -395,14 +428,14 @@ corner_radius_scale = 1.0
 date_format = "%A, %x"
 disable_mipmaps = false
 external_ip_enabled = false
-font_family = "sans-serif"
+font_family = "Cantarell"
 input_borders = true
 launch_apps_as_systemd_services = false
 launch_apps_custom_command = ""
 niri_overview_type_to_launch_enabled = false
 offline_mode = false
 password_style = "default"
-polkit_agent = false
+polkit_agent = true
 popup_borders = true
 popup_shadows = true
 readline_shortcuts = false
@@ -610,12 +643,12 @@ swap_pct_critical_threshold = 80.0
 
 [theme]
 builtin = "Catppuccin"
-community_palette = "Oxocarbon"
+community_palette = "Catppuccin Frappe Lavender"
 custom_palette = ""
 mode = "dark"
 pure_black_dark = false
 shell_mode = "dark"
-source = "builtin"
+source = "community"
 wallpaper_scheme = "m3-content"
 
     [theme.templates]
@@ -651,14 +684,45 @@ unit = "metric"
 
 [widget.active_window]
 icon_size = 14.0
-max_length = 260.0
-min_length = 80.0
-title_scroll = "none"
+max_length = 220.0
+min_length = 60.0
+title_scroll = "on_hover"
 type = "active_window"
+
+[widget.hermes_hub]
+type = "custom_button"
+glyph = "sparkles"
+label = "AI"
+tooltip = "Hermes AI Hub\n• ЛКМ: Hermes Desktop Toggle\n• ПКМ: Kanban Board (:9119)\n• СКМ: AI Launcher\n• Скролл: Захват идеи в Obsidian"
+
+[widget.hermes_hub.actions]
+left = "hermes-desktop-toggle.sh"
+right = "vivaldi-stable --new-window --app=http://127.0.0.1:9119/#/kanban"
+middle = "ai-launcher.sh"
+scroll_up = "hermes-capture-idea.sh"
+scroll_down = "hermes-capture-idea.sh"
+
+[widget.gpu]
+type = "sysmon"
+stat = "gpu_usage"
+show_glyph = true
+glyph = "device-desktop-analytics"
+highlight_color = "secondary"
 
 [widget.cpu]
 stat = "cpu_usage"
 type = "sysmon"
+highlight_color = "primary"
+
+[widget.temp]
+stat = "cpu_temp"
+type = "sysmon"
+highlight_color = "error"
+
+[widget.ram]
+stat = "ram_used"
+type = "sysmon"
+highlight_color = "tertiary"
 
 [widget.date]
 format = "{:%a %d %b}"
@@ -684,33 +748,62 @@ type = "lock_keys"
 art_size = 16.0
 max_length = 220.0
 min_length = 80.0
-title_scroll = "none"
+title_scroll = "on_hover"
 type = "media"
 
 [widget.network_rx]
 stat = "net_rx"
 type = "sysmon"
+network_speed_compact = true
+network_speed_unit = "auto"
 
 [widget.network_tx]
 stat = "net_tx"
 type = "sysmon"
+network_speed_compact = true
+network_speed_unit = "auto"
 
 [widget.output_volume]
 device = "output"
 type = "volume"
 
-[widget.ram]
-stat = "ram_used"
-type = "sysmon"
-
 [widget.spacer]
 interactive = false
 type = "spacer"
 
-[widget.temp]
-stat = "cpu_temp"
-type = "sysmon"
-
 [widget.tray]
 drawer = true
 type = "tray"
+
+[widget.openrgb]
+type = "gidragir/openrgb:widget"
+
+[widget.obsidian]
+type = "gidragir/obsidian:widget"
+
+[widget.virt_manager]
+type = "gidragir/virt-manager:widget"
+
+[widget.ytm]
+type = "gidragir/ytm:widget"
+
+[widget.headroom]
+type = "ayagmar/headroom:usage"
+
+[widget.arch_updater]
+type = "yuuto/arch-updater:widget"
+
+[widget.docker]
+type = "8bury/mini-docker:mini-docker"
+
+[widget.audio_switcher]
+type = "blackbartblues/audio-switcher:widget"
+
+[widget.drive_health]
+type = "gustav0ar/drive-health:summary"
+
+[widget.niri_preview]
+type = "teagar/niri-workspace-preview:preview"
+
+[widget.notes]
+type = "noctalia/notes:notes"

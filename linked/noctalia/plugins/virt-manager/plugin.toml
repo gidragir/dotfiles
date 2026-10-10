@@ -1,0 +1,33 @@
+id = "gidragir/virt-manager"
+name = "Virtual Machines"
+version = "2.0.0"
+plugin_api = 9
+author = "gidragir"
+license = "MIT"
+dependencies = ["virsh", "virt-viewer", "jq"]
+tags = ["virtualization", "kvm", "qemu", "system", "bar", "panel"]
+icon = "server-2"
+description = "Monitor active KVM/QEMU virtual machines and connect via virt-viewer."
+
+[[setting]]
+key = "poll_interval"
+type = "int"
+label_key = "settings.poll_interval.label"
+description_key = "settings.poll_interval.description"
+default = 5
+min = 1
+max = 60
+
+[[widget]]
+id = "widget"
+entry = "widget.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 380
+height = 440
+placement = "attached"
+position = "auto"
+open_near_click = true
+

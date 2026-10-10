@@ -1,0 +1,17 @@
+{
+  "plugin": {
+    "title": "Virtual Machines",
+    "description": "Monitor active KVM/QEMU virtual machines and connect via virt-viewer"
+  },
+  "settings": {
+    "poll_interval": {
+      "label": "Poll Interval (s)",
+      "description": "Interval in seconds to check running virtual machines"
+    }
+  },
+  "panel": {
+    "title": "Virtual Machines",
+    "empty": "No virtual machines are running",
+    "connect": "Connect"
+  }
+}
