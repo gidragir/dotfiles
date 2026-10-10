@@ -81,6 +81,22 @@ For multi-step tasks, state a brief plan:
   - User CLI / window helpers: `home/dot_zsh/scripts/` (managed via Chezmoi, deployed to `~/.zsh/scripts/`).
 - **Doc Integrity:** Keep `README.md` and `AGENTS.md` strictly synchronized with the real directory tree when moving or removing files.
 
+## 6. Shell, Scripting & CLI Invariants
+
+- **Bash `set -e` Arithmetic Trap:** Never use `((VAR++))` or `((VAR+=1))` as standalone statements in scripts running with `set -e` (if `VAR=0`, evaluation returns false and aborts the script). Always use `VAR=$((VAR + 1))`.
+- **Ripgrep (`rg`) Flag Safety:** Do not pass `-E` to `rg` (in `rg`, `-E` is `--encoding`). `rg` evaluates regular expressions natively without flags.
+- **Script Hierarchy & Playbook Path:** Scripts in `scripts/` must resolve `REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"` to locate `playbooks/`, rather than checking `$SCRIPT_DIR/playbooks`.
+- **Playbook Tags Alignment:** Tasks required during user setup must include the matching tags (`[cli, aur, packages]`).
+- **No Unmanaged Loose Binaries:** Do not create scripts directly in `~/.local/bin/` via playbooks or shell commands. Place scripts in `home/dot_zsh/scripts/` (managed by Chezmoi).
+
+## 7. Noctalia Shell v5 & Luau Plugin Invariants
+
+- **Dropdown Panels:** Bar dropdown panels MUST specify `placement = "attached"`, `position = "auto"`, `open_near_click = true` in `plugin.toml`. Never use `placement = "floating"` or `position = "center"` for panels triggered from the bar.
+- **Card Containers:** `ui.box` is strictly a childless leaf node. All card containers and sections containing children MUST use `ui.column` or `ui.row` (`fill = "surface_variant/0.25"`, `radius = 8`, `border = "outline"`, `borderWidth = 1`).
+- **Panel Padding:** The root container of any panel must specify `padding = 14` and `gap = 12` to prevent content touching window edges.
+- **Plugin Validation:** Always run `noctalia plugins lint <path>` after modifying plugin manifests or scripts.
+
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

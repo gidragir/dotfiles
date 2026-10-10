@@ -77,7 +77,7 @@ Selective package installation and updates:
 ansible-playbook playbooks/packages.yml --tags system
 
 # User pacman, AUR, and cargo packages:
-ansible-playbook playbooks/packages.yml --tags user,aur,cargo
+ansible-playbook playbooks/packages.yml --tags user,aur,cargo,cli
 ```
 
 ### 5. 🖥️ Display Manager & Bootloader UI (`playbooks/setup_display_manager.yml`)
@@ -166,7 +166,9 @@ The terminal environment is built on Zsh in [`home/dot_zsh/`](file:///data/proje
   - `clipboard-picker.sh`: Меню истории буфера обмена через rofi (`Mod+V`)
   - `cooler-toggle.sh`: Быстрое переключение профилей охлаждения CoolerControl (`Mod+F1`)
   - `noctalia-dmenu.sh`: Dmenu-провайдер для лаунчера Noctalia
+  - `obsidian-create-note.sh`: Быстрое создание структурированных заметок в Obsidian
   - `virt-helper.sh`: Управление виртуальными машинами QEMU/KVM
+  - `wallpaper-engine-runner`: Мульти-мониторный запуск Wallpaper Engine в Niri
   - `hermes-desktop-toggle.sh` / `hermes-capture-idea.sh`: Быстрый вызов и интейк идей Hermes
   - `sync-env.sh`: Синхронизация переменных окружения и профилей
 
@@ -212,28 +214,34 @@ dotfiles/
 │   ├── dot_zprofile             -> ~/.zprofile
 │   ├── dot_cargo/               -> ~/.cargo/config.toml
 │   ├── dot_config/
-│   │   ├── niri/
-│   │   │   └── cfg/
-│   │   │       └── display.kdl.tmpl # DP-2 + HDMI-A-1 (desktop) vs eDP-1 (laptop)
-│   │   ├── nvim/                -> ~/.config/nvim (LazyVim, live symlink)
+│   │   ├── atuin/               -> ~/.config/atuin
+│   │   ├── bat/                 -> ~/.config/bat
+│   │   ├── btop/                -> ~/.config/btop
+│   │   ├── environment.d/       -> ~/.config/environment.d
+│   │   ├── fzf/                 -> ~/.config/fzf
 │   │   ├── ghostty/             -> ~/.config/ghostty (live symlink)
-│   │   ├── starship.toml        -> ~/.config/starship.toml
-│   │   ├── symlink_noctalia.tmpl-> ~/.config/noctalia (links to linked/noctalia/)
 │   │   ├── hypr/                -> ~/.config/hypr (hypridle, hyprlock)
 │   │   ├── k3d/                 -> ~/.config/k3d
 │   │   ├── k9s/                 -> ~/.config/k9s
 │   │   ├── mise/                -> ~/.config/mise
+│   │   ├── niri/
+│   │   │   └── cfg/
+│   │   │       └── display.kdl.tmpl # DP-2 + HDMI-A-1 (desktop) vs eDP-1 (laptop)
+│   │   ├── nvim/                -> ~/.config/nvim (LazyVim, live symlink)
+│   │   ├── OpenRGB/             -> ~/.config/OpenRGB (desktop only)
 │   │   ├── rofi/                -> ~/.config/rofi
+│   │   ├── rtk/                 -> ~/.config/rtk
+│   │   ├── sheldon/             -> ~/.config/sheldon
+│   │   ├── starship.toml        -> ~/.config/starship.toml
 │   │   ├── superfile/           -> ~/.config/superfile
+│   │   ├── symlink_noctalia.tmpl-> ~/.config/noctalia (links to linked/noctalia/)
+│   │   ├── systemd/user/        -> ~/.config/systemd/user (openrgb user units, desktop only)
 │   │   ├── television/          -> ~/.config/television
 │   │   ├── vivaldi-stable.conf  -> ~/.config/vivaldi-stable.conf
+│   │   ├── wallpaper-engine/    -> ~/.config/wallpaper-engine
+│   │   ├── waypaper/            -> ~/.config/waypaper
 │   │   ├── wireplumber/         -> ~/.config/wireplumber (0.5 SPA-JSON)
-│   │   ├── zellij/              -> ~/.config/zellij
-│   │   ├── btop/                -> ~/.config/btop
-│   │   ├── OpenRGB/             -> ~/.config/OpenRGB (desktop only)
-│   │   ├── systemd/user/        -> ~/.config/systemd/user (openrgb user units, desktop only)
-│   │   ├── atuin/               -> ~/.config/atuin
-│   │   └── sheldon/             -> ~/.config/sheldon
+│   │   └── zellij/              -> ~/.config/zellij
 │   └── dot_zsh/                 -> ~/.zsh/ (alias, binds, scripts)
 └── linked/
     └── noctalia/                # Atomic state app directory symlinked into ~/.config/noctalia

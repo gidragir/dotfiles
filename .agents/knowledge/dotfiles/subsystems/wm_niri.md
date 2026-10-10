@@ -22,10 +22,35 @@ Configuration root: `home/dot_config/niri/` -> deployed via Chezmoi to `~/.confi
 - Helper scripts: `home/dot_zsh/scripts/` (deployed to `~/.zsh/scripts/`).
 - Never add loose window scripts to `/usr/local/bin` directly; maintain them in `home/dot_zsh/scripts/`.
 
+## Noctalia Shell Architecture & Invariants (v5)
+- **Runtime:** Native C++ Wayland layer-shell with Luau scripting engine.
+- **Config Stack:** Base declarative config in `linked/noctalia/config.toml` (symlinked via Chezmoi to `~/.config/noctalia/config.toml`), overlaid by dynamic runtime state in `~/.local/state/noctalia/settings.toml`.
+  - Invariant: Do not keep conflicting `[bar]` blocks in `settings.toml`; declarative layout belongs in `config.toml`.
+  - Schema naming: Strict `snake_case` in TOML (`background_opacity`, `capsule_fill`, `font_weight`).
+  - Color Tokens: `bar.<name>.color` sets text/icon color, NOT background fill. To guarantee readability against dark surfaces (Catppuccin Frappe/Mocha), set `color = "on_surface"` (`#c6d0f5`).
+- **Bar Topology:** Active preset is single `islands` bar (`order = ["islands"]`).
+  - Appearance: Translucent Catppuccin Frappe (`background_opacity = 0.82`, `compositor_blur = true`, `capsule_opacity = 0.85`, `border = "outline"`).
+  - Audio: Native `volume` widget removed in favor of `blackbartblues/audio-switcher` (sink/source routing + volume).
+  - LLM: `marccvictoria/llamanager` disabled and removed.
+  - Headroom: Metric display defaults to `used` (consumed limit); for `remaining` (quota left), configure `display = "remaining"`.
+  - Drive Health: Full SMART telemetry for NVMe drives requires the background collector unit `noctalia-drive-health.timer`.
+- **Plugin & Panel Architecture (Luau):**
+  - **Widget pattern:** In `widget.luau`, avoid simultaneous `barWidget.setGlyph()` and `barWidget.setText()` (causes overlap). Use `barWidget.render(ui.row({ gap = 6, align = "center" }, children))`.
+  - **Dropdown Panels:** In `plugin.toml`, set `placement = "attached"`, `position = "auto"`, `open_near_click = true` so panels drop down directly under bar widgets rather than floating in screen center.
+  - **Containers:** `ui.box` is strictly a childless leaf node (used for color swatches/squares). Grouped cards with children MUST use `ui.column` or `ui.row` (`fill = "surface_variant/0.25"`, `radius = 8`, `border = "outline"`, `borderWidth = 1`).
+  - **Spacing:** Root panel layout must specify `padding = 14` on `ui.column({ flexGrow = 1, padding = 14, gap = 12 }, ...)`.
+  - **Linting:** Always validate plugins with `noctalia plugins lint <path>`.
+- **Validation & Sync:**
+  - Check syntax: `rtk noctalia config validate`.
+  - Lint plugins: `noctalia plugins lint linked/noctalia/plugins/<name>/`.
+  - Apply changes: `rtk chezmoi apply --source /data/projects/dotfiles --force`.
+
+
 ## Recent Changes
 - Updated `noctalia/settings.json` to use relative paths for `avatarImage` and `wallpaper.directory`:
   - `avatarImage` changed from `/home/gidragir/.face` to `~/.face`.
   - `wallpaper.directory` changed from `/home/gidragir/Pictures/Wallpapers` to `~/Pictures/Wallpapers`.
+- Redesigned Noctalia top bar to Catppuccin Frappe `islands` preset with blur, custom plugins, and removed standard `volume` widget.
 
 ## New Configurations & Hotkeys
 - Added `cfg/keybinds.kdl` entry for Mod+Shift+Return to open a floating terminal.
@@ -37,3 +62,4 @@ Configuration root: `home/dot_config/niri/` -> deployed via Chezmoi to `~/.confi
 ## Additional Notes
 - Ensure all paths in configuration files are relative to the user's home directory to maintain portability across different setups.
 - Regularly update the `cfg/autostart.kdl` file to include the latest system utilities and services.
+

@@ -3,7 +3,7 @@
   "project": "dotfiles",
   "description": "Declarative Infrastructure-as-Code & configuration for CachyOS (Niri Wayland) Workstation",
   "root_path": "/data/projects/dotfiles",
-  "updated_at": "2026-09-12",
+  "updated_at": "2026-10-09",
   "subsystems": [
     {
       "id": "wm_niri",
@@ -37,13 +37,14 @@
     {
       "id": "ai_stack",
       "name": "Personal AI Stack & Memory",
-      "summary": "Ollama (:11434, 16GB vRAM budget), Khoj AI (:42110, pgvector :5432), Headroom Proxy (:8787), AnythingLLM Desktop, OpenCommit",
+      "summary": "Ollama (:11434, 16GB vRAM budget), Khoj AI (:42110, pgvector :5432), Headroom Proxy (:8787), Hindsight (:9999), Hermes Idea Pipeline, OpenCommit",
       "l1_path": "subsystems/ai_stack.md",
       "tags": [
         "ollama",
         "khoj",
         "headroom",
-        "anythingllm",
+        "hermes",
+        "hindsight",
         "postgres",
         "pgvector",
         "mcp"
@@ -52,14 +53,15 @@
     {
       "id": "playbooks",
       "name": "Ansible Orchestration",
-      "summary": "Single source of truth for packages (playbooks/vars/packages.yml); modular system, user, ai_stack playbooks",
+      "summary": "Single source of truth for packages (playbooks/vars/packages.yml); modular system, user, gaming, virt, rclone, wallpaper_engine playbooks",
       "l1_path": "subsystems/playbooks.md",
       "tags": [
         "ansible",
         "packages",
         "setup_system",
         "setup_user",
-        "setup_ai_stack"
+        "setup_rclone",
+        "setup_wallpaper_engine"
       ]
     },
     {
@@ -96,8 +98,11 @@
   ],
   "chezmoi_managed_targets": [
     "atuin",
+    "bat",
     "btop",
     "cargo",
+    "environment.d",
+    "fzf",
     "ghostty",
     "hypr",
     "k3d",
@@ -108,11 +113,14 @@
     "nvim",
     "openrgb",
     "rofi",
+    "rtk",
     "sheldon",
     "starship",
     "superfile",
     "television",
     "vivaldi",
+    "wallpaper-engine",
+    "waypaper",
     "wireplumber",
     "zellij",
     "zsh"

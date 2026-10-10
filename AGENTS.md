@@ -27,7 +27,8 @@ dotfiles/
 │   ├── check_setup.sh           # Полная валидация окружения (точки монтирования, кэши, symlinks)
 │   ├── patrition_delete.sh      # ⚠️ ДЕСТРУКТИВНЫЙ скрипт очистки /dev/nvme1n1 (не запускать без спроса!)
 │   ├── setup_wallpaper_engine.sh# Утилита настройки динамических обоев
-│   └── create_win11_vm.sh       # Скрипт развертывания Windows 11 VM в KVM
+│   ├── create_win11_vm.sh       # Скрипт развертывания Windows 11 VM в KVM
+│   └── configure_win11_vm_postinstall.sh # Настройка VirtIO-FS и оборудования Win11 VM
 ├── mise.toml                    # Задачи сборки и проверки окружения (mise run ai:status, etc.)
 ├── lefthook.yml                 # Git хуки качества и линтинга
 │
@@ -90,10 +91,17 @@ dotfiles/
 Репозиторий dotfiles располагается в `/data/projects/dotfiles` (с симлинком в `~/projects/dotfiles`).
 Управление пользовательскими конфигурациями (`$HOME`) переведено с GNU Stow на **Chezmoi** с сохранением zero-latency symlink рабочего процесса:
 - **Корень source-state:** Задан через `.chezmoiroot = home`. Все управляемые файлы размещаются внутри `home/` с префиксами `dot_`.
-- **Режим live-editing (`mode = "symlink"`):** Статические файлы (`nvim`, `ghostty`, `sheldon`, скрипты) разворачиваются как прямые симлинки на исходники в репозитории. Изменения в Neovim или конфигах мгновенно видны в `rtk git status` без необходимости вызова `chezmoi apply`.
-- **Шаблонизация (`.tmpl`):** Хост-зависимые параметры (мониторы Niri `display.kdl.tmpl`, окружение `dot_zshenv.tmpl`) компилируются на основе переменной шасси (`desktop` vs `laptop`).
+- **Режим live-editing (`mode = "symlink"`):** Статические файлы (`nvim`, `ghostty`, `sheldon`, `bat`, `fzf`, `rtk`, `television`, `superfile`, скрипты) разворачиваются как прямые симлинки на исходники в репозитории. Изменения мгновенно видны в `rtk git status` без необходимости вызова `chezmoi apply`.
+- **Шаблонизация (`.tmpl`):** Хост-зависимые параметры (мониторы Niri `display.kdl.tmpl`, окружение `dot_zshenv.tmpl`, `environment.d/10-environment.conf.tmpl`, пути к обоям `waypaper/config.ini.tmpl`, `wallpaper-engine/config.json.tmpl`) компилируются на основе переменных (`chassis`, `.chezmoi.homeDir`).
 - **Симлинки целых каталогов (`symlink_`):** Для приложений с runtime-состоянием (Noctalia) директория монтируется целиком через `home/dot_config/symlink_noctalia.tmpl` на `linked/noctalia`.
-- **Изоляция AI-стека:** Через `home/.chezmoiignore` жестко исключены пути `ai-dotfiles` (`.hermes/**`, `.config/Hermes/**`, `.opencommit*`, `.gemini/**`), которые на рабочей станции обслуживаются независимо через GNU Stow.
+- **Границы Chezmoi vs Unmanaged / Host-Local:**
+  - *Managed:* CLI/TUI инструменты и основные файлы рабочего окружения.
+  - *Intentionally Unmanaged (Host-Local):* Системные настройки GTK (`gtk-3.0`, `gtk-4.0`), дефолтные ассоциации (`mimeapps.list`), дефолтный редактор `micro`, дампы оборудования OpenRGB (`Configuration.json`, `sizes.ors`), токены авторизации (`gh`, `coolercontrol/token`, `rclone.conf`).
+- **Изоляция и аудит зависимостей `ai-dotfiles`:**
+  - Через `home/.chezmoiignore` жестко исключены пути AI-стека (`.hermes/**`, `.config/Hermes/**`, `.opencommit*`, `.gemini/**`), обслуживаемые независимо через Stow.
+  - **Инвариант аудита перед удалением:** Запрещено удалять битые симлинки и артефакты в `$HOME` и `~/.config` без проверки в `/data/projects/ai-dotfiles`.
+  - При обнаружении ссылок на устаревший `local-ai-stack` (например, в `~/.config/anythingllm-desktop/` или `ollama.service`), они перелинковываются на актуальные службы `ai-dotfiles`, а не удаляются.
+  - Файл `~/.config/environment.d/pythonpath.conf` является обязательным инвариантом Hermes (`/opt/hermes-agent/venv`, Python 3.11) и не подлежит удалению.
 
 **Команды работы с Chezmoi:**
 - Для применения конфигурации:
@@ -105,6 +113,7 @@ dotfiles/
   chezmoi verify
   chezmoi diff
   ```
+
 
 ### 3. Dual-NVMe архитектура и стратегия кэширования
 Система рассчитана на эффективное использование двух NVMe накопителей:
@@ -176,10 +185,10 @@ bash scripts/setup_user.sh
 ```
 Что делает:
 1. Устанавливает коллекцию `kewlfft.aur` в Ansible Galaxy.
-2. Ставит официальные и AUR пакеты, а также Cargo-утилиты через `cargo binstall`.
-3. Настраивает симлинки проектов и применяет конфигурации Chezmoi.
+2. Ставит официальные и AUR пакеты, базовый CLI-стек и Cargo-утилиты (`packages.yml --tags user,aur,cargo,cli`).
+3. Настраивает симлинки проектов и применяет конфигурации Chezmoi (`setup_user.yml`).
 4. Настраивает структуру кэшей Rust, pnpm, uv.
-5. Запускает фоновый таймер rclone для Obsidian (`setup_rclone.yml`).
+5. Разворачивает фоновый таймер двусторонней синхронизации rclone для Obsidian (`rclone-obsidian-sync.timer`).
 
 ### Проверка корректности окружения (Health Checks)
 После установки или внесения инфраструктурных изменений обязательно запустите диагностические скрипты:

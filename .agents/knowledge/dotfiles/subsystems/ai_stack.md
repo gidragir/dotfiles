@@ -1,47 +1,53 @@
 # Subsystem: Personal AI Stack & Architecture (L1)
 
 ## Resource Constraints & Hardware
-- GPU: ASUS NVIDIA GeForce RTX 4070 Ti Super (16 GB vRAM).
-- Budget: ~2.5 GB desktop (Niri Wayland) + ~9.2 GB 14B model (Q4_K_M) + ~3.0 GB KV Cache (16k FlashAttention q8_0) + ~1.2 GB bge-m3 embedder = ~15.5 GB total.
-- Rule: `OLLAMA_MAX_LOADED_MODELS=1` in `ollama/.config/ollama/config.env`. No multi-model batching (vLLM forbidden to prevent Niri OOM).
+- **GPU:** ASUS NVIDIA GeForce RTX 4070 Ti Super (16 GB vRAM).
+- **Budget:** ~2.5 GB desktop (Niri Wayland) + ~9.2 GB 14B model (Q4_K_M) + ~3.0 GB KV Cache (64k context q8_0) + ~1.2 GB bge-m3 embedder = ~15.5 GB total.
+- **Inference Invariant:** `OLLAMA_MAX_LOADED_MODELS=1` strictly enforced. Batching servers (vLLM) are prohibited to prevent compositor OOM crashes in Niri. 100% GPU offload verified via `ollama ps`.
 
 ## Three Operational Circuits
-1. Terminal Circuit (Ghostty + Zsh):
-   - `OpenCommit` via Ollama (:11434, `qwen2.5-coder:14b`).
-   - Alias: `gcai` (`git add -p && opencommit`).
-   - Knowledge search CLI: `khoj-ctl` and `khoj-tags`.
-2. Active Development Circuit (Antigravity IDE):
-   - Headroom Proxy (:8787): AST-pruning, deduplication, semantic caching in PostgreSQL (`headroom_cache`).
-   - Host CLI MCP server (`bash-mcp-server.mjs`).
-   - Khoj MCP server (stdio via docker exec).
-3. Knowledge & Notes Circuit (Obsidian + Khoj + AnythingLLM):
-   - Obsidian: `/data/obsidian` (Markdown notes, frontmatter tags).
-   - Khoj AI (:42110): Docker container, live indexing, tag search, web search agent.
-   - PostgreSQL 16 + pgvector (:5432): Shared vector DB for Khoj embeddings and Headroom cache.
-   - AnythingLLM Desktop: Interactive brainstorming UI, workspaces for Socratic dialogue and research.
+
+### 1. Terminal Circuit (Ghostty + Zsh)
+- **OpenCommit:** Fast AI commit generation via local Ollama (`qwen2.5:14b-ctx64k` / `qwen2.5-coder:14b` on `:11434`).
+- **Alias:** `gcai` (`git add -p && opencommit`).
+- **Knowledge CLI:** `khoj-ctl` and `khoj-tags` for rapid note lookup and search.
+
+### 2. Active Development Circuit (Antigravity IDE)
+- **Headroom Proxy (:8787):** CCR AST-compression, deduplication, and semantic caching in PostgreSQL (`headroom_cache`).
+- **Host CLI MCP Server:** TypeScript/Bun server (`services/host-cli/`) providing typesafe tools with Zod validation and defensive error hints.
+- **Khoj MCP Server:** stdio RAG search interface via `docker exec -i khoj khoj-mcp`.
+
+### 3. Knowledge, Memory & Multi-Agent Circuit
+- **Obsidian Vault:** `/data/obsidian` (Markdown notes, frontmatter tags, bidirectional sync via `rclone-obsidian-sync.timer`).
+- **Khoj AI (:42110):** Docker container with live indexing of Obsidian vault and web research capabilities.
+- **PostgreSQL 16 + pgvector (:5432):** Shared vector store for Khoj embeddings and Headroom cache.
+- **Hindsight Long-Term Memory (:9999):** 3-tier memory engine (`world`/`experience` evidence vs `observation` consolidated layer). CLI management via `manage-hindsight.sh`.
+- **Hermes Idea Pipeline:** Multi-agent intake and refinement funnel (`idea-receiver` -> `idea-refiner` -> `coder`/`thinker`) with 18 MCP tools, Noctalia telemetry integration, and zero-terminal safety.
 
 ## Network Topology & Ports
-- `11434`: Ollama HTTP API.
-- `8787`: Headroom Proxy HTTP API.
-- `5432`: PostgreSQL (pgvector).
-- `42110`: Khoj AI Web & API.
+| Port | Service | Purpose |
+| :--- | :--- | :--- |
+| `11434` | Ollama HTTP API | Local SLM inference engine |
+| `8787` | Headroom Proxy | Context-compression proxy & CCR |
+| `5432` | PostgreSQL (pgvector) | Vector embeddings & Headroom cache |
+| `42110` | Khoj AI Web & API | Knowledge base RAG & note indexing |
+| `9999` | Hindsight Long-Term Memory | Agent episodic & observational memory |
 
-## Recent Configurations & Hotkeys
-- **AnythingLLM Desktop**:
-  - **Prompts**:
-    - `assistant-chats.md`: Updated to communicate in Russian or English using only Cyrillic and Latin scripts.
-    - `main-workspace.md`: Simplified system topology and environment facts, focusing on language and reasoning protocols.
-    - `onlychats.md`: Clarified language and reasoning protocols, ensuring factual and verifiable analysis.
-  - **Storage Plugins**:
-    - `bash-mcp-server.mjs`: Expanded to include more detailed server logic and error handling.
-    - `build.ts`: Added build scripts for MCP Server and Agent Skills Handlers, ensuring efficient compilation and deployment.
+## Cross-Repo Symlink Integrity (`ai-dotfiles` vs `dotfiles`)
+- **Pre-Cleanup Audit Invariant:** Before deleting broken symlinks or config remnants in `~` or `~/.config`, always inspect `/data/projects/ai-dotfiles`.
+- **AnythingLLM Integration:** `~/.config/anythingllm-desktop/` depends on files in `ai-dotfiles/services/anythingllm/` (`prompts`, `sync-prompts.ts`, `anythingllm_mcp_servers.json`, `skills`) and `ai-dotfiles/services/host-cli/dist/bash-mcp-server.mjs`. Legacy broken links pointing to historical `local-ai-stack` MUST be relinked to `ai-dotfiles`, NOT deleted.
+- **Hermes PYTHONPATH Invariant:** `~/.config/environment.d/pythonpath.conf` exports `PYTHONPATH=~/.local/lib/python3.11/site-packages` for `/opt/hermes-agent/venv/bin/python` (Python 3.11.16). Used by `hermes-dashboard.service` and `hermes-gateway.service`. Must never be deleted.
+- **User Service Re-linking:** When user systemd units move or break, run `systemctl --user reenable <unit>` to recreate `default.target.wants` symlinks cleanly.
 
-- **Hotkeys**:
-  - `Ctrl+Shift+P`: Open the command palette in Ghostty.
-  - `Alt+Shift+D`: Toggle dark mode in Obsidian.
-  - `F5`: Refresh the Khoj AI web interface.
-  - `Ctrl+Alt+T`: Open a new terminal window in Ghostty.
-  - `Ctrl+Alt+K`: Open the Khoj AI web interface.
-  - `Ctrl+Alt+L`: Open the AnythingLLM Desktop application.
+## Diagnostic Commands
+```bash
+# Verify AI stack status (Ollama, Headroom, Khoj, Postgres):
+mise run ai:status
 
-These updates ensure a seamless and efficient workflow across the AI stack, leveraging the latest configurations and hotkeys for optimal performance.
+# Inspect Ollama active model and GPU allocation:
+ollama ps
+
+# Verify Hindsight service status:
+manage-hindsight.sh status
+```
+
