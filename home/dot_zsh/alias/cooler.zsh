@@ -20,7 +20,7 @@ _cooler_activate() {
       | jq -r ".modes[] | select(.name==\"${mode_name}\") | .uid" 2>/dev/null)"
   else
     mode_uid="$(curl -k -s -H "Authorization: Bearer ${token}" "${COOLER_BASE_URL}/modes" \
-      | grep -o "{\"uid\":\"[^\"]*\",\"name\":\"${mode_name}\"" | cut -d'"' -f4)"
+      | rg -o "{\"uid\":\"[^\"]*\",\"name\":\"${mode_name}\"" | cut -d'"' -f4)"
   fi
 
   if [[ -z "$mode_uid" || "$mode_uid" == "null" ]]; then

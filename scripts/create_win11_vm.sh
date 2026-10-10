@@ -43,7 +43,7 @@ echo "=== [1/4] Проверка образов ==="
 WIN_ISO=$(find_iso "Win11_25H2_English_x64_v2.iso")
 if [[ -z "$WIN_ISO" ]]; then
     # Автопоиск любого другого ISO Windows 11 в папке
-    WIN_ISO=$(find "$ISO_DIR" "$HOME/Downloads" -maxdepth 1 -iname "*win11*.iso" 2>/dev/null | head -n 1 || true)
+    WIN_ISO=$(fd -d 1 -i '.*win11.*\.iso$' "$ISO_DIR" "$HOME/Downloads" 2>/dev/null | head -n 1 || true)
 fi
 
 if [[ -z "$WIN_ISO" || ! -f "$WIN_ISO" ]]; then

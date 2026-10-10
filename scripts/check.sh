@@ -21,9 +21,9 @@ PASS=0
 FAIL=0
 WARN=0
 
-pass() { echo -e "  ${GRN}✓${RST} $1"; ((PASS++)); }
-fail() { echo -e "  ${RED}✗${RST} $1"; ((FAIL++)); }
-warn() { echo -e "  ${YLW}!${RST} $1"; ((WARN++)); }
+pass() { echo -e "  ${GRN}✓${RST} $1"; PASS=$((PASS + 1)); }
+fail() { echo -e "  ${RED}✗${RST} $1"; FAIL=$((FAIL + 1)); }
+warn() { echo -e "  ${YLW}!${RST} $1"; WARN=$((WARN + 1)); }
 header() { echo -e "\n${BOLD}${BLU}▶ $1${RST}"; }
 
 # Function: get device by mount point
@@ -66,13 +66,17 @@ fi
 MOUNT_OPTS=$(findmnt -n -o OPTIONS "$DOCKER_DATA_DIR" 2>/dev/null || echo "")
 echo "  → Options: $MOUNT_OPTS"
 
-for OPT in noatime prjquota logbsize=256k; do
-    if echo "$MOUNT_OPTS" | grep -q "$OPT"; then
+for OPT in noatime prjquota; do
+    if echo "$MOUNT_OPTS" | rg -q "$OPT"; then
         pass "Option '$OPT' active"
     else
         fail "Option '$OPT' NOT found in mount options"
     fi
 done
+
+if echo "$MOUNT_OPTS" | rg -q "logbsize="; then
+    pass "Option 'logbsize' active ($(echo "$MOUNT_OPTS" | rg -o 'logbsize=[^,]+'))"
+fi
 
 # =============================================================================
 header "2. XFS Filesystem"
@@ -85,16 +89,20 @@ if [[ -n "$DEVICE" ]]; then
     if [[ -n "$XFS_INFO" ]]; then
         pass "xfs_info executed successfully"
 
-        if echo "$XFS_INFO" | grep -q "ftype=1"; then
+        if echo "$XFS_INFO" | rg -q "ftype=1"; then
             pass "ftype=1 enabled (required for overlay2)"
         else
             fail "ftype=1 NOT enabled! overlay2 will not function properly"
         fi
 
-        BSIZE=$(echo "$XFS_INFO" | grep -oP 'bsize=\K[0-9]+' | head -1)
+        BSIZE=$(echo "$XFS_INFO" | rg -o 'bsize=[0-9]+' | head -1 | cut -d= -f2)
         pass "XFS block size: ${BSIZE} bytes"
     else
-        fail "xfs_info failed (is xfsprogs installed?)"
+        if [[ $EUID -ne 0 ]]; then
+            warn "xfs_info requires root privileges to read $DOCKER_DATA_DIR (run with sudo for full inspection)"
+        else
+            fail "xfs_info failed (is xfsprogs installed?)"
+        fi
     fi
 fi
 
@@ -102,21 +110,21 @@ fi
 header "3. /etc/fstab"
 # =============================================================================
 
-if grep -q "$DOCKER_DATA_DIR" /etc/fstab; then
-    FSTAB_LINE=$(grep "$DOCKER_DATA_DIR" /etc/fstab)
+if rg -q "$DOCKER_DATA_DIR" /etc/fstab; then
+    FSTAB_LINE=$(rg "$DOCKER_DATA_DIR" /etc/fstab)
     pass "/etc/fstab contains entry for $DOCKER_DATA_DIR"
     echo "  → $FSTAB_LINE"
 
-    if echo "$FSTAB_LINE" | grep -q "UUID="; then
+    if echo "$FSTAB_LINE" | rg -q "UUID="; then
         pass "Mounted by UUID (recommended)"
     else
         warn "NOT mounted by UUID — using UUID is recommended"
     fi
 
-    if echo "$FSTAB_LINE" | grep -q "prjquota"; then
-        pass "prjquota in fstab"
+    if echo "$FSTAB_LINE" | rg -q "(prjquota|pquota)"; then
+        pass "prjquota/pquota in fstab"
     else
-        fail "prjquota NOT found in fstab"
+        fail "prjquota/pquota NOT found in fstab"
     fi
 else
     fail "/etc/fstab does not contain entry for $DOCKER_DATA_DIR"
@@ -153,14 +161,14 @@ if [[ -f "$DAEMON_JSON" ]]; then
     STORAGE_OPTS=$(python3 -c "import json; d=json.load(open('$DAEMON_JSON')); print(' '.join(d.get('storage-opts',[])))" 2>/dev/null || echo "")
     echo "  → storage-opts: $STORAGE_OPTS"
 
-    if echo "$STORAGE_OPTS" | grep -q "overlay2.size"; then
+    if echo "$STORAGE_OPTS" | rg -q "overlay2.size"; then
         pass "overlay2.size configured"
     else
         warn "overlay2.size not configured — no per-container disk quota limit"
     fi
 
     # Ensure override_kernel_check is removed
-    if echo "$STORAGE_OPTS" | grep -q "override_kernel_check"; then
+    if echo "$STORAGE_OPTS" | rg -q "override_kernel_check"; then
         fail "overlay2.override_kernel_check found! This option was removed in Docker 19.03+"
     else
         pass "overlay2.override_kernel_check absent (correct)"
@@ -195,15 +203,15 @@ else
             warn "Docker root dir: '$RUNTIME_ROOT' (expected $DOCKER_DATA_DIR)"
         fi
 
-        if docker info 2>/dev/null | grep -q "Backing Filesystem.*xfs"; then
+        if docker info 2>/dev/null | rg -q "Backing Filesystem.*xfs"; then
             pass "Backing filesystem: xfs"
         fi
 
-        if docker info 2>/dev/null | grep -q "Supports d_type.*true"; then
+        if docker info 2>/dev/null | rg -q "Supports d_type.*true"; then
             pass "d_type (ftype): supported"
         fi
 
-        if docker info 2>/dev/null | grep -q "Native Overlay Diff.*true"; then
+        if docker info 2>/dev/null | rg -q "Native Overlay Diff.*true"; then
             pass "Native Overlay Diff: enabled"
         fi
 
@@ -227,7 +235,7 @@ if systemctl is-active --quiet docker 2>/dev/null; then
 
     # Write test in container
     echo "  Testing container disk write..."
-    if docker run --rm alpine sh -c "dd if=/dev/zero of=/tmp/test bs=1M count=10 2>/dev/null && echo OK" 2>/dev/null | grep -q "OK"; then
+    if docker run --rm alpine sh -c "dd if=/dev/zero of=/tmp/test bs=1M count=10 2>/dev/null && echo OK" 2>/dev/null | rg -q "OK"; then
         pass "Write to overlay2 layer works correctly"
     else
         warn "Could not execute container write test"

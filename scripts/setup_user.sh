@@ -29,9 +29,9 @@ fi
 TARGET_DIR="${HOME}/projects/dotfiles"
 
 # Locate dotfiles directory or clone if executed via curl
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd 2>/dev/null || echo "")"
-if [ -n "$SCRIPT_DIR" ] && [ -d "${SCRIPT_DIR}/playbooks" ]; then
-    cd "$SCRIPT_DIR"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd 2>/dev/null || echo "")"
+if [ -n "$REPO_ROOT" ] && [ -d "${REPO_ROOT}/playbooks" ]; then
+    cd "$REPO_ROOT"
 elif [ -d "./playbooks" ]; then
     :
 else
@@ -62,7 +62,7 @@ esac
 echo "🖥️  Host profile detected: $HOST_PROFILE"
 
 echo "📦 Running consolidated user setup playbook..."
-ansible-playbook playbooks/packages.yml --tags user,aur,cargo -e "host_profile=${HOST_PROFILE}"
+ansible-playbook playbooks/packages.yml --tags user,aur,cargo,cli -e "host_profile=${HOST_PROFILE}"
 ansible-playbook playbooks/setup_user.yml -e "host_profile=${HOST_PROFILE}"
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -90,6 +90,7 @@ echo "║  sandbox-rm          → destroy the sandbox container              �
 echo "║                                                                    ║"
 echo "║  NEXT STEPS:                                                       ║"
 echo "║  1. Run 'rclone config' → create remote named 'gdrive'            ║"
-echo "║  2. systemctl --user start rclone-mount.service                   ║"
-echo "║  3. Open a new terminal to apply shell config                     ║"
+echo "║  2. systemctl --user start rclone-obsidian-sync.timer              ║"
+echo "║  3. Run health check: bash scripts/check_setup.sh                 ║"
+echo "║  4. Open a new terminal to apply shell config                     ║"
 echo "╚═══════════════════════════════════════════════════════════════════╝"

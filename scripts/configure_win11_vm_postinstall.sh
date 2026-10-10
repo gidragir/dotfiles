@@ -55,7 +55,7 @@ echo "1. Настройка Shared Memory (memfd + shared access)..."
 virt-xml -c qemu:///system "$VM_NAME" --edit --memorybacking source.type=memfd,access.mode=shared
 
 echo "2. Настройка устройства VirtIO-FS..."
-if virsh -c qemu:///system dumpxml "$VM_NAME" | grep -q "<target dir=['\"]${MOUNT_TAG}['\"]"; then
+if virsh -c qemu:///system dumpxml "$VM_NAME" | rg -q "<target dir=['\"]${MOUNT_TAG}['\"]"; then
     echo "Filesystem '$MOUNT_TAG' уже присутствует, обновляем путь..."
     virt-xml -c qemu:///system "$VM_NAME" --edit target.dir="$MOUNT_TAG" --filesystem type=mount,driver.type=virtiofs,source.dir="$SHARED_DIR"
 else

@@ -20,9 +20,9 @@ REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 TARGET_DIR="${REAL_HOME:-$HOME}/projects/dotfiles"
 
 # Locate dotfiles directory or clone if executed via curl
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd 2>/dev/null || echo "")"
-if [ -n "$SCRIPT_DIR" ] && [ -d "${SCRIPT_DIR}/playbooks" ]; then
-    cd "$SCRIPT_DIR"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd 2>/dev/null || echo "")"
+if [ -n "$REPO_ROOT" ] && [ -d "${REPO_ROOT}/playbooks" ]; then
+    cd "$REPO_ROOT"
 elif [ -d "./playbooks" ]; then
     :
 else

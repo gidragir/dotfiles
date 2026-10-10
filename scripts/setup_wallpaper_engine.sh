@@ -15,9 +15,11 @@ if [ "$EUID" -eq 0 ]; then
     exit 1
 fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd 2>/dev/null || echo "")"
-if [ -n "$SCRIPT_DIR" ] && [ -d "${SCRIPT_DIR}/playbooks" ]; then
-    cd "$SCRIPT_DIR"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd 2>/dev/null || echo "")"
+if [ -n "$REPO_ROOT" ] && [ -d "${REPO_ROOT}/playbooks" ]; then
+    cd "$REPO_ROOT"
+elif [ -d "./playbooks" ]; then
+    :
 fi
 
 echo "🔑 Ensuring sudo permissions for pacman and installing dependencies..."
