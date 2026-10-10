@@ -4,7 +4,7 @@ binds {
 Mod+N hotkey-overlay-title="Obsidian: New Note (Sticky/Workstation/Fleeting)" { spawn "bash" "-c" "~/.zsh/scripts/obsidian-create-note.sh"; }
 Mod+Alt+N hotkey-overlay-title="Obsidian: New Note (Sticky/Workstation/Fleeting)" { spawn "bash" "-c" "~/.zsh/scripts/obsidian-create-note.sh"; }
 Mod+I hotkey-overlay-title="Insert Path/Note: Obsidian & Projects" { spawn "bash" "-c" "~/.zsh/scripts/path-picker-dmenu.sh"; }
-	// Mod+Shift+O hotkey-overlay-title="Obsidian: Companion Hub" { spawn-sh "noctalia msg plugin obsidian toggle"; } // Legacy Noctalia v4 QML plugin
+	Mod+Shift+O hotkey-overlay-title="Obsidian: Companion Hub" { spawn "noctalia" "msg" "panel-toggle" "gidragir/obsidian:panel"; }
 Mod+Alt+F hotkey-overlay-title="Obsidian: Search Notes (Noctalia)" { spawn "bash" "-c" "obsidian-helper.sh search-notes"; }
 Mod+Alt+T hotkey-overlay-title="Obsidian: Explore Tags (Noctalia)" { spawn "bash" "-c" "obsidian-helper.sh explore-tags"; }
 
@@ -12,6 +12,10 @@ Mod+Alt+T hotkey-overlay-title="Obsidian: Explore Tags (Noctalia)" { spawn "bash
 Mod+V hotkey-overlay-title="Clipboard History: Noctalia" { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
 Mod+Z hotkey-overlay-title="Open Zoxide Directory in Antigravity IDE" { spawn "bash" "-c" "res=$(zoxide query -l | noctalia dmenu -p 'Zoxide:'); [ -n \"$res\" ] && antigravity-ide \"$res\""; }
 Mod+X hotkey-overlay-title="Open Workspace in Antigravity IDE" { spawn "bash" "-c" "res=$(ls ~/workspaces | noctalia dmenu -p 'Workspace:'); [ -n \"$res\" ] && antigravity-ide ~/workspaces/\"$res\""; }
+
+	// Media and music
+	Mod+M hotkey-overlay-title="Music: YouTube Music (Toggle)" { spawn "bash" "-c" "ytm-toggle.sh"; }
+	Mod+Shift+M hotkey-overlay-title="Music: YouTube Music Companion" { spawn "noctalia" "msg" "panel-toggle" "gidragir/ytm:panel"; }
 
 	// AI assistants
 Mod+A hotkey-overlay-title="AI Assistant: AnythingLLM" { spawn "bash" "-c" "anythingllm-assistant-toggle.sh"; }

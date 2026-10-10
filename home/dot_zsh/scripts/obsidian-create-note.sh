@@ -161,7 +161,7 @@ fi
 
 # ── 5. Обновление плагина Noctalia и открытие редактора ──
 # Обновляем статус в баре Noctalia
-qs -c noctalia-shell ipc call plugin:obsidian refresh >/dev/null 2>&1 || true
+noctalia msg plugin gidragir/obsidian:service all refresh >/dev/null 2>&1 || qs -c noctalia-shell ipc call plugin:obsidian refresh >/dev/null 2>&1 || true
 
 # Открываем заметку в Neovim внутри центрированного плавающего Ghostty
 ghostty --title="Obsidian Note: $FILENAME" -e nvim "+normal G" "$FULL_PATH" &
