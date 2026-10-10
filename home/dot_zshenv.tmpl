@@ -40,5 +40,17 @@ export FX_PROVIDER="openai"
 export FX_MODEL="qwen2.5-coder:14b"
 {{- end }}
 
-# ── Local Secrets & Environment (Git-Ignored) ──────────────────────────────────
+# ── Local Secrets & Environment (Rendered from ~/.config/chezmoi/secrets.toml) ──
+{{- $secretsFile := joinPath .chezmoi.homeDir ".config/chezmoi/secrets.toml" }}
+{{- if stat $secretsFile }}
+{{-   $secrets := (include $secretsFile | fromToml) }}
+{{-   if hasKey $secrets "env" }}
+{{-     range $key, $val := $secrets.env }}
+export {{ $key }}={{ $val | quote }}
+{{-     end }}
+{{-   end }}
+{{- end }}
+
+# ── Fallback Machine-Local Overrides (Optional) ────────────────────────────────
 [[ -f "$HOME/.zshenv.local" ]] && source "$HOME/.zshenv.local"
+

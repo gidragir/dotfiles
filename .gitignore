@@ -20,6 +20,9 @@ token
 *.local
 .zshenv.local
 mise.local.toml
+secrets.toml
+*.secrets.toml
+
 
 # Dynamic AI scripts symlinks (managed by ai-dotfiles)
 home/dot_zsh/scripts/ai-*.sh
