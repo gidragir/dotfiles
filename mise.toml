@@ -32,6 +32,13 @@ run = "chezmoi verify"
 description = "Apply repository configurations to $HOME"
 run = "chezmoi apply --source /data/projects/dotfiles --force"
 
+[tasks."apply:all"]
+description = "Apply omni-dotfiles (L-Core) followed by dotfiles (L-Host CachyOS)"
+run = """
+chezmoi apply --source /home/gidragir/projects/omni-dotfiles
+chezmoi apply --source /data/projects/dotfiles --force
+"""
+
 [tasks."test:e2e"]
 description = "Run E2E test suite for Noctalia plugins"
 run = "bash tests/e2e_virt_manager_test.sh"

@@ -150,3 +150,8 @@ source "$HOME/.zsh/alias/git.zsh"
 source "$HOME/.zsh/alias/ansible.zsh"
 source "$HOME/.zsh/alias/k8s.zsh"
 
+# ── Omni-Dotfiles SSOT Aliases Integration ───────────────────────────────────
+if [[ -f "$HOME/.config/zsh/aliases.zsh" ]]; then
+    source "$HOME/.config/zsh/aliases.zsh"
+fi
+

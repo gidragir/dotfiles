@@ -9,6 +9,34 @@
 .gemini
 .gemini/**
 
+# ── Omni-Dotfiles Sovereign Artifacts Isolation (managed by omni-dotfiles via Chezmoi) ──
+.config/nvim
+.config/nvim/**
+.config/bat
+.config/bat/**
+.config/btop
+.config/btop/**
+.config/atuin
+.config/atuin/**
+.config/k9s
+.config/k9s/**
+.config/superfile
+.config/superfile/**
+.config/television
+.config/television/**
+.config/rtk
+.config/rtk/**
+.config/ghostty
+.config/ghostty/**
+.config/zellij
+.config/zellij/**
+.config/nushell
+.config/nushell/**
+.config/k3d
+.config/k3d/**
+.config/zsh/aliases.zsh
+.cargo/config.toml
+
 # ── Host / Chassis Profile Exclusions ─────────────────────────────────────────
 {{ if ne .chassis "desktop" }}
 .config/OpenRGB
