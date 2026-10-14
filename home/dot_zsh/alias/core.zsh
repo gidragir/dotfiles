@@ -28,7 +28,8 @@ alias dotfiles-sync="ansible-playbook /data/projects/dotfiles/playbooks/setup_us
 alias dotfiles-sync-cli="sudo -v && ansible-playbook /data/projects/dotfiles/playbooks/setup_user.yml --tags chezmoi && ansible-playbook /data/projects/dotfiles/playbooks/packages.yml --tags cli"
 
 # Extract archives easily (oh-my-zsh extract plugin functionality)
-extract() {
+unalias extract 2>/dev/null
+function extract {
     if [ -f "$1" ]; then
         case "$1" in
             *.tar.bz2)   tar xjf "$1"     ;;
