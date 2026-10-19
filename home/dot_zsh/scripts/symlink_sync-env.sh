@@ -1,1 +1,0 @@
-/data/projects/ai-dotfiles/scripts/sync-env.sh
