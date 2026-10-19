@@ -7,6 +7,9 @@
 sourceDir = {{ .chezmoi.workingTree | quote }}
 mode = "symlink"
 
+[warnings]
+    configFileTemplateHasChanged = false
+
 [data]
     chassis = {{ $chassis | quote }}
     os = "cachyos"

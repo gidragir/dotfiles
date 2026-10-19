@@ -24,10 +24,31 @@ secrets.toml
 *.secrets.toml
 
 
-# Dynamic AI scripts symlinks (managed by ai-dotfiles)
-home/dot_zsh/scripts/ai-*.sh
-home/dot_zsh/scripts/anything*.sh
-home/dot_zsh/scripts/khoj*.sh
-home/dot_zsh/scripts/manage-hindsight.sh
-home/dot_zsh/scripts/sync-knowledge.sh
+
+# ── Migrated to omni-dotfiles (L-Core SSOT) ───────────────────────────
+# TUI Stack
+home/dot_config/nvim/
+home/dot_config/bat/
+home/dot_config/btop/
+home/dot_config/atuin/
+home/dot_config/k9s/
+home/dot_config/superfile/
+home/dot_config/television/
+home/dot_config/rtk/
+home/dot_config/ghostty/
+home/dot_config/zellij/
+
+# Shells & Session Management
+home/dot_zshrc
+home/dot_zshenv*
+home/dot_config/zsh/aliases.zsh
+home/dot_config/environment.d/10-environment.conf*
+home/dot_config/nushell/
+home/dot_config/starship.toml
+home/dot_config/sheldon/
+home/dot_cargo/config.toml*
+
+# Toolchain & DevOps Core
+home/dot_config/mise/
+home/dot_config/k3d/
 

@@ -37,11 +37,19 @@
 .config/zsh/aliases.zsh
 .config/sheldon
 .config/sheldon/**
+.config/fzf
+.config/fzf/**
 .cargo/config.toml
 
 # Managed by omni-dotfiles (Layer 1 Core)
 .zshrc
 dot_zshrc
+.zshenv
+dot_zshenv
+.config/environment.d/10-environment.conf
+.config/starship.toml
+.config/mise
+.config/mise/**
 
 
 # ── Host / Chassis Profile Exclusions ─────────────────────────────────────────
@@ -51,11 +59,4 @@ dot_zshrc
 .config/coolercontrol
 .config/coolercontrol/**
 .config/systemd/user/openrgb.service
-.config/systemd/user/openrgb-profile.service
-# links into ai-dotfiles (desktop-only repository)
-.zsh/scripts/hermes-bar-status.sh
-.zsh/scripts/hermes-capture-idea.sh
-.zsh/scripts/hermes-desktop-toggle.sh
-.zsh/scripts/sync-env.sh
-.zsh/scripts/vram-guard.sh
 {{ end }}

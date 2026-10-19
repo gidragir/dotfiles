@@ -1,7 +1,0 @@
-[tools]
-node = "lts"
-uv = "latest"
-bun = "latest"
-usage = "latest"
-nushell = "latest"
-just = "latest"
