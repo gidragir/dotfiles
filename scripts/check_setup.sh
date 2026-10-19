@@ -136,10 +136,19 @@ check_cmd "cargo-machete"
 check_cmd "sheldon"
 check_cmd "chezmoi"
 
-# Verify user dotfile configurations (managed by chezmoi in symlink mode)
-check_symlink "$HOME_DIR/.config/sheldon/plugins.toml" "$HOME_DIR/projects/dotfiles/home/dot_config/sheldon/plugins.toml"
-check_symlink "$HOME_DIR/.config/nvim/init.lua" "$HOME_DIR/projects/dotfiles/home/dot_config/nvim/init.lua"
-check_symlink "$HOME_DIR/.config/ghostty/config.ghostty" "$HOME_DIR/projects/dotfiles/home/dot_config/ghostty/config.ghostty"
+# Verify user dotfile configurations (managed by chezmoi)
+check_file() {
+    local file_path="$1"
+    if [[ -f "$file_path" ]]; then
+        pass "Configuration file $file_path exists"
+    else
+        fail "Configuration file $file_path NOT found!"
+    fi
+}
+
+check_file "$HOME_DIR/.config/sheldon/plugins.toml"
+check_file "$HOME_DIR/.config/nvim/init.lua"
+check_file "$HOME_DIR/.config/ghostty/config.ghostty"
 
 # Verify default shell
 USER_SHELL=$(getent passwd "${USER:-$(whoami)}" | cut -d: -f7 2>/dev/null || echo "${SHELL:-}")
