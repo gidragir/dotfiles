@@ -29,7 +29,7 @@ dotfiles/
 │   ├── setup_wallpaper_engine.sh# Утилита настройки динамических обоев
 │   ├── create_win11_vm.sh       # Скрипт развертывания Windows 11 VM в KVM
 │   └── configure_win11_vm_postinstall.sh # Настройка VirtIO-FS и оборудования Win11 VM
-├── mise.toml                    # Задачи сборки и проверки окружения (mise run ai:status, etc.)
+├── mise.toml                    # Задачи сборки и проверки окружения (mise run knowledge:l0, etc.)
 ├── lefthook.yml                 # Git хуки качества и линтинга
 │
 ├── playbooks/                   # Модульные Ansible-плейбуки
@@ -141,9 +141,9 @@ dotfiles/
 - **Централизация скриптов автоматизации:** Все кастомные shell-скрипты, оконные хелперы (например, переключение/вызов окон в Niri), CLI-утилиты и скрипты интеграций хранятся **исключительно** в `home/dot_zsh/scripts/`. Каталог `~/.zsh/scripts` автоматически экспортируется в `$PATH` через `.zshenv`. Категорически запрещено создавать изолированные loose-скрипты в `~/.local/bin/` или вне репозитория dotfiles.
 
 ### 5. Персональный AI-стек и трехуровневая архитектура моделей
-Единая декларативная AI-инфраструктура хоста вынесена в репозиторий [`ai-dotfiles`](file:///data/projects/dotfiles/ai-dotfiles):
+Единая декларативная AI-инфраструктура хоста вынесена в репозиторий [`ai-dotfiles`](file:///data/projects/ai-dotfiles):
 - **Три рабочих контура:**
-  1. *Терминальный контур:* OpenCommit напрямую через локальный `ollama` (`qwen2.5:14b-ctx64k` на `:11434`), алиас `gcai` (`git add -p && opencommit`).
+  1. *Терминальный контур:* OpenCommit напрямую через локальный `ollama` (`qwen2.5:14b-ctx64k` на `:11434`), CLI `gcai` (`~/.local/bin/gcai`: `git add -p && opencommit`).
   2. *Контур разработки:* Antigravity IDE (Gemini Pro) + Headroom Proxy (`:8787`, CCR AST-сжатие логов/кода, кэш в PostgreSQL) + Host CLI MCP (TypeScript/Bun) + Khoj MCP (`docker exec -i khoj khoj-mcp`).
   3. *Контур знаний и RAG:* Obsidian (`/data/obsidian`) + Khoj Docker (`:42110`, живая индексация) + PostgreSQL 16 с расширением `pgvector` (`:5432`) + Hindsight Long-Term Memory (`:9999`).
 - **Аппаратные ограничения vRAM (16 ГБ):** Пакетные серверы типа vLLM запрещены из-за риска OOM десктопа Niri. Используется `ollama.service` (`q8_0` KV-кэш, Flash Attention, `OLLAMA_MAX_LOADED_MODELS=1`).
@@ -200,7 +200,7 @@ bash scripts/check_setup.sh
 sudo bash scripts/check.sh
 
 # 3. Комплексная проверка AI-стека (Ollama, Headroom, Khoj, Postgres):
-mise run ai:status
+mise -C /data/projects/ai-dotfiles run status
 ```
 
 ---
@@ -278,13 +278,13 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 5. **Запрет на unmanaged loose scripts:** Категорически запрещено создавать локальные скрипты в `~/.local/bin/` или `~` в обход репозитория. Любая автоматизация должна находиться в `home/dot_zsh/scripts/`, управляться Chezmoi и быть закоммичена в Git.
 
 ### Сценарий F: Управление и доработка AI-стека (Ollama, Khoj, Hindsight, Hermes)
-Архитектура AI-инфраструктуры хоста сосредоточена в [`ai-dotfiles`](file:///data/projects/dotfiles/ai-dotfiles):
+Архитектура AI-инфраструктуры хоста сосредоточена в [`ai-dotfiles`](file:///data/projects/ai-dotfiles):
 1. **Кастомные Modelfiles и модели Ollama:**
    - Все декларативные Modelfiles версионируются в `ai-dotfiles/infra/modelfiles/`.
    - Сборка и оверлеи выполняются через `mise run model:build:<name>`.
 2. **Docker Compose стеки (Khoj, Hindsight):**
    - Конфигурации стеков хранятся в `ai-dotfiles/infra/stacks/` (`khoj`, `hindsight`).
-   - Управление и статус проверяются через `mise run ai:status`.
+   - Управление и статус проверяются через `mise -C /data/projects/ai-dotfiles run status`.
 3. **MCP-серверы и защитное программирование (Defensive Coercion):**
    - Host CLI MCP сервер реализован на TypeScript/Bun в `ai-dotfiles/services/host-cli/`.
    - Для всех инструментов используется валидация Zod.
@@ -339,7 +339,7 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - [ ] **Декларативность моделей AI:** Все локальные модели Ollama объявляются в `ai-dotfiles/infra/playbooks/setup_ollama.yml`.
 - [ ] **Защитное программирование MCP:** При реализации или обновлении MCP-инструментов обеспечьте Zod-валидацию аргументов и осмысленные подсказки со списком доступных инструментов (`available_tools`) для самокоррекции моделей 14B.
 - [ ] **Осторожность с дисками:** Никогда не запускайте скрипты разметки диска (`playbooks/setup_system.yml`, `scripts/patrition_delete.sh`) без явного указания и подтверждения от пользователя.
-- [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `scripts/check_setup.sh`, а для AI-сервисов — `mise run ai:status`.
+- [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `scripts/check_setup.sh`, а для AI-сервисов — `mise -C /data/projects/ai-dotfiles run status`.
 
 
 

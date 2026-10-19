@@ -108,13 +108,13 @@ Configures `linux-wallpaperengine` for Niri Wayland sessions with systemd user u
 ansible-playbook -K playbooks/setup_wallpaper_engine.yml
 ```
 
-### 9. 🧠 Sovereign AI Infrastructure (`ai-dotfiles/`)
-Centralized AI stack and agent orchestration are tracked in [`ai-dotfiles`](file:///data/projects/dotfiles/ai-dotfiles):
+### 9. 🧠 Sovereign AI Infrastructure (`ai-dotfiles`)
+Centralized AI stack and agent orchestration are tracked in [`ai-dotfiles`](file:///data/projects/ai-dotfiles):
 - **Ollama Engine (`infra/playbooks/setup_ollama.yml`):** GPU-accelerated local SLMs (`qwen2.5:14b-ctx64k`, `qwen2.5-coder:14b`, `bge-m3:latest`) with 64K context and `q8_0` KV cache
 - **Khoj & Hindsight Stacks (`infra/stacks/`):** Docker Compose stacks for Obsidian vault RAG (`:42110`) and agent long-term memory (`:9999`)
 - **Hermes Idea Pipeline (`services/hermes/`):** Multi-agent idea refinement and Kanban board orchestration
 - **Host CLI MCP (`services/host-cli/`):** TypeScript/Bun MCP server for system interactions and repository knowledge navigation
-- **Task Runner (`mise.toml`):** Orchestrates AI diagnostics and workflows (`mise run ai:status`, `mise run knowledge:l0`)
+- **Task Runner (`ai-dotfiles/mise.toml`):** Orchestrates AI diagnostics and workflows (`mise run status`, `mise run ai:start`)
 
 ---
 
