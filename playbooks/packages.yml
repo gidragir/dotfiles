@@ -45,13 +45,6 @@
       become: "{{ not ansible_check_mode }}"
       tags: [user, packages]
 
-    - name: Install Ollama packages via pacman
-      community.general.pacman:
-        name: "{{ ollama_packages }}"
-        state: present
-        extra_args: "--needed"
-      become: "{{ not ansible_check_mode }}"
-      tags: [ollama, ai]
 
 
 # ── Play 2: AUR and Cargo Packages (Requires Normal User) ────────────────────

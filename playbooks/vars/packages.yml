@@ -46,30 +46,19 @@ unwanted_packages:
 # Essential CLI tools for shell environment (pacman / AUR)
 cli_essential_packages:
   - chezmoi
-  - sheldon
-  - starship
-  - zoxide
-  - atuin
   - eza
   - bat
   - ripgrep
   - fd
-  - lazygit
   - jq
-  - yq
   - fzf
   - imv
-  - carapace-bin
-  - television
-  - btop
-  - glow
 
 # Official pacman packages for the user (installed via pacman, requires sudo)
 user_pacman_packages:
   - rustup
   - neovim
   - jq
-  - yq
   - chromium
   - chezmoi
   - stow   # Required for ai-dotfiles repository on workstation host
@@ -78,26 +67,11 @@ user_pacman_packages:
   - fd
   - bat
   - eza
-  - lazygit
-  - lazydocker
-  - kubectl
-  - kubectx
-  - k9s
-  - sops
-  - age
-  - argocd
   - rofi
-  - zoxide
-  - helm
-  - starship
-  - atuin
   - piper
   - libratbag
-  - zellij
   - obsidian
-  - biome
   - imv
-  - sheldon
   - ddcutil
   - wlsunset
   - mpv
@@ -107,27 +81,17 @@ user_pacman_packages:
   - playerctl
   - pear-desktop
 
-# Dedicated GPU/AI inference packages (installed on-demand via setup_ollama.yml)
-ollama_packages:
-  - ollama
-  - ollama-cuda
-
 # AUR packages (installed via paru, MUST run as normal user)
 aur_packages:
   - vivaldi
   - visual-studio-code-bin
   - ferdium-bin
   - tor-browser-bin
-  - television
-  - lefthook
   - turbo
   - android-studio
   - ghostty
   - warp-terminal
-  - superfile
-  - carapace-bin
   - mise
-  - k3d
   - noctalia-qs
   - noctalia
   - noctalia-shell
@@ -148,8 +112,4 @@ cargo_packages:
   - cargo-nextest
   - bacon
   - cargo-machete
-
-# Python CLI tools (installed via uv tool in isolated virtualenvs)
-uv_tools:
-  - "headroom-ai[proxy,code,mcp]"
 
