@@ -1,16 +1,7 @@
 [tools]
 bun = "latest"
 node = "lts"
-
-[tasks."ai:status"]
-description = "Quick status check for Ollama, Headroom, Khoj, and Postgres"
-run = """
-echo "=== AI Services Status ==="
-systemctl --user is-active ollama.service &>/dev/null && echo "✓ Ollama: active (:11434)" || echo "✗ Ollama: inactive"
-systemctl --user is-active headroom-default.service &>/dev/null && echo "✓ Headroom: active (:8787)" || echo "✗ Headroom: inactive"
-docker ps --filter "name=khoj"
-curl -sf http://127.0.0.1:42110/api/health >/dev/null && echo "✓ Khoj Health: OK (:42110)" || echo "✗ Khoj Health: Failed"
-"""
+chezmoi = "latest"
 
 [tasks."knowledge:l0"]
 description = "Inspect L0 abstract mental map of the dotfiles repository"

@@ -5,5 +5,3 @@ git-all() {
 git-pack() {
     git add . && git commit -m "${1:-Update}" && git push
 }
-
-alias gcai="git add -p && opencommit"
