@@ -57,7 +57,6 @@ dotfiles/
 │   ├── agents/                  # Роли и промпты субагентов (researcher, implementer, etc.)
 │   ├── knowledge/dotfiles/      # Архитектурная база знаний L0/L1 (ADR, CLI, подсистемы)
 │   ├── plugins/                 # Antigravity плагины (headroom, host-cli)
-│   ├── rules/                   # Поведенческие правила (CLAUDE.md)
 │   └── skills/                  # Специализированные навыки (hardware-troubleshooting, etc.)
 │
 ├── deploy/                      # Локальные стеки деплоя (deploy/khoj/)
@@ -341,5 +340,38 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - [ ] **Осторожность с дисками:** Никогда не запускайте скрипты разметки диска (`playbooks/setup_system.yml`, `scripts/patrition_delete.sh`) без явного указания и подтверждения от пользователя.
 - [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `scripts/check_setup.sh`, а для AI-сервисов — `mise -C /data/projects/ai-dotfiles run status`.
 
+---
 
+## 📜 8. Инварианты разработки и правила кодинга (Behavioral & Coding Invariants)
 
+### 1. Базовые принципы разработки (Core Behavioral Guidelines)
+- **Think First:** Не делайте предположений и не скрывайте неясности. Фиксируйте допущения, задавайте вопросы при неопределенности и предлагайте компромиссы до реализации.
+- **Simplicity First:** Минимальный код, решающий задачу. Никаких спекулятивных абстракций, избыточной гибкости и обработки невозможных сценариев. Если код можно написать в 50 строк вместо 200 — перепишите.
+- **Surgical Changes:** Точечные изменения. Трогайте только то, что требуется задачей. Не «улучшайте» соседний код, форматирование или комментарии. Удаляйте только тот неиспользуемый код, который возник в результате ваших изменений; не удаляйте ранее существовавший неиспользуемый код без запроса.
+- **Goal-Driven Execution:** Формулируйте проверяемые цели. Разбивайте многошаговые задачи на краткий план вида:
+  ```text
+  1. [Step] → verify: [check]
+  2. [Step] → verify: [check]
+  3. [Step] → verify: [check]
+  ```
+  Всегда проверяйте критерии успеха перед отчетом о завершении.
+
+### 2. Antigravity & Workspace Topology Invariants
+- **Корень кастомизаций:** Строго использовать `.agents/` для workspace-уровня (навыки, правила, плагины, база знаний). Категорически запрещено создавать или внедрять `.agent/`.
+- **Локации скриптов:**
+  - Системный бутстрап и диагностика хоста: [`scripts/`](file:///home/gidragir/projects/dotfiles/scripts) (например, [`scripts/setup_system.sh`](file:///home/gidragir/projects/dotfiles/scripts/setup_system.sh), [`scripts/check.sh`](file:///home/gidragir/projects/dotfiles/scripts/check.sh)).
+  - Пользовательский CLI и оконные хелперы Niri: [`home/dot_zsh/scripts/`](file:///home/gidragir/projects/dotfiles/home/dot_zsh/scripts) (управляются через Chezmoi, развертываются в `~/.zsh/scripts/`).
+- **Синхронизация документации (Doc Integrity):** Поддерживать [`README.md`](file:///home/gidragir/projects/dotfiles/README.md) и [`AGENTS.md`](file:///home/gidragir/projects/dotfiles/AGENTS.md) в строгой синхронизации с реальным деревом каталогов при перемещении или удалении файлов.
+
+### 3. Shell, Scripting & CLI Invariants
+- **Bash `set -e` Arithmetic Trap:** Категорически запрещено использовать `((VAR++))` или `((VAR+=1))` как самостоятельные инструкции в скриптах с `set -e` (если `VAR=0`, арифметическая оценка возвращает false и аварийно завершает скрипт). Всегда использовать `VAR=$((VAR + 1))`.
+- **Безопасность флагов Ripgrep (`rg`):** Не передавать флаг `-E` в `rg` (в `rg` ключ `-E` означает `--encoding`). Утилита `rg` по умолчанию обрабатывает регулярные выражения без дополнительных флагов.
+- **Иерархия скриптов и пути к плейбукам:** Скрипты в [`scripts/`](file:///home/gidragir/projects/dotfiles/scripts) обязаны вычислять `REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"` для обращения к [`playbooks/`](file:///home/gidragir/projects/dotfiles/playbooks), а не полагаться на `$SCRIPT_DIR/playbooks`.
+- **Выравнивание тегов плейбуков:** Задачи, необходимые при установке пользовательского окружения, обязаны включать соответствующие теги (`[cli, aur, packages]`).
+- **Запрет неуправляемых бинарников:** Не создавать скрипты напрямую в `~/.local/bin/` через плейбуки или шелл-команды. Все скрипты размещаются в [`home/dot_zsh/scripts/`](file:///home/gidragir/projects/dotfiles/home/dot_zsh/scripts) под управлением Chezmoi.
+
+### 4. Noctalia Shell v5 & Luau Plugin Invariants
+- **Dropdown Panels:** Выпадающие панели бара ОБЯЗАНЫ указывать `placement = "attached"`, `position = "auto"`, `open_near_click = true` в `plugin.toml`. Запрещено использовать `placement = "floating"` или `position = "center"` для панелей, вызываемых из бара.
+- **Card Containers:** `ui.box` является строго терминальным узлом без дочерних элементов (leaf node). Все карточки-контейнеры и секции с дочерними элементами обязаны использовать `ui.column` или `ui.row` (`fill = "surface_variant/0.25"`, `radius = 8`, `border = "outline"`, `borderWidth = 1`).
+- **Panel Padding:** Корневой контейнер любой панели обязан указывать `padding = 14` и `gap = 12` для предотвращения прилипания контента к краям окна.
+- **Plugin Validation:** Всегда выполнять `noctalia plugins lint <path>` после модификации манифестов плагинов или скриптов.
