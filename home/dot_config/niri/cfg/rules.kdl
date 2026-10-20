@@ -75,6 +75,15 @@
     }
 
     window-rule {
+        match app-id=r#"^(Hermes|hermes-desktop)$"#
+        match title=r#"^Hermes$"#
+        open-floating true
+        default-floating-position x=485 y=100 relative-to="top-left"
+        default-column-width { fixed 1100; }
+        default-window-height { fixed 850; }
+    }
+
+    window-rule {
         match app-id=r#"^(pear-desktop|youtube-music|com\.github\.th[-_]ch\.youtube[-_]music)$"#
         open-floating true
         default-floating-position x=485 y=100 relative-to="top-left"
