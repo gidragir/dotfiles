@@ -57,7 +57,7 @@ order = [ "islands" ]
     start = [ "launcher", "niri_preview", "workspaces" ]
     center = [ "clock", "date", "weather" ]
     end = [
-        "hermes_hub",
+        "hermes",
         "headroom",
         "docker",
         "obsidian",
@@ -162,7 +162,6 @@ magnification_scale = 1.4500000476837158
 main_axis_padding = 16
 margin_edge = 0
 margin_ends = 0
-monitors = []
 pinned = []
 position = "bottom"
 radius = 16
@@ -383,6 +382,7 @@ scale = 1.0
 auto_update = "all"
 enabled = [
     "noctalia/notes",
+    "gidragir/hermes",
     "gidragir/openrgb",
     "gidragir/obsidian",
     "gidragir/virt-manager",
@@ -689,18 +689,11 @@ min_length = 60.0
 title_scroll = "on_hover"
 type = "active_window"
 
-[widget.hermes_hub]
-type = "custom_button"
-glyph = "sparkles"
-label = "AI"
-tooltip = "Hermes AI Hub\n• ЛКМ: Hermes Desktop Toggle\n• ПКМ: Kanban Board (:9119)\n• СКМ: AI Launcher\n• Скролл: Захват идеи в Obsidian"
+[widget.hermes]
+type = "gidragir/hermes:widget"
 
-[widget.hermes_hub.actions]
-left = "hermes-desktop-toggle.sh"
-right = "vivaldi-stable --new-window --app=http://127.0.0.1:9119/#/kanban"
-middle = "ai-launcher.sh"
-scroll_up = "hermes-capture-idea.sh"
-scroll_down = "hermes-capture-idea.sh"
+[widget.hermes.actions]
+middle = "none"
 
 [widget.gpu]
 type = "sysmon"

@@ -1,0 +1,8 @@
+{
+  "settings": {
+    "poll_interval": {
+      "label": "Интервал опроса (секунды)",
+      "description": "Периодичность проверки статуса задач SQLite kanban"
+    }
+  }
+}

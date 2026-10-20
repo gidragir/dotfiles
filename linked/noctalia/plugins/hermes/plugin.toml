@@ -1,0 +1,23 @@
+id = "gidragir/hermes"
+name = "Hermes AI Hub"
+version = "2.0.0"
+plugin_api = 9
+author = "gidragir"
+license = "MIT"
+dependencies = ["bash", "sqlite3"]
+tags = ["ai", "hermes", "kanban", "bar", "utility"]
+icon = "message-chatbot"
+description = "Hermes Agent Hub with live Kanban status telemetry, fast toggle, and idea capture."
+
+[[setting]]
+key = "poll_interval"
+type = "int"
+label_key = "settings.poll_interval.label"
+description_key = "settings.poll_interval.description"
+default = 4
+min = 1
+max = 60
+
+[[widget]]
+id = "widget"
+entry = "widget.luau"

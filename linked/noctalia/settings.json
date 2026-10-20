@@ -261,39 +261,10 @@
                     "id": "plugin:ytm"
                 },
                 {
-                    "colorizeSystemIcon": "none",
-                    "colorizeSystemText": "none",
-                    "generalTooltipText": "⚡ Hermes AI Hub\n• ЛКМ: Hermes Desktop (Toggle)\n• ПКМ: Kanban Board (:9119)\n• СКМ: Меню профилей (Refiner/Thinker/Gemini)\n• Скролл: Захват идеи в Triage",
-                    "hideMode": "alwaysExpanded",
-                    "icon": "message-chatbot",
-                    "iconPosition": "left",
-                    "id": "CustomButton",
-                    "ipcIdentifier": "hermes-hub",
-                    "leftClickExec": "hermes-desktop-toggle.sh",
-                    "leftClickUpdateText": true,
-                    "maxTextLength": {
-                        "horizontal": 14,
-                        "vertical": 14
+                    "defaultSettings": {
+                        "pollIntervalSec": 4
                     },
-                    "middleClickExec": "ai-launcher.sh",
-                    "middleClickUpdateText": true,
-                    "parseJson": false,
-                    "rightClickExec": "vivaldi-stable --new-window --app=http://127.0.0.1:9119/#/kanban",
-                    "rightClickUpdateText": false,
-                    "showExecTooltip": false,
-                    "showIcon": true,
-                    "showTextTooltip": true,
-                    "textCollapse": "",
-                    "textCommand": "hermes-bar-status.sh",
-                    "textIntervalMs": 4000,
-                    "textStream": false,
-                    "wheelDownExec": "hermes-capture-idea.sh",
-                    "wheelDownUpdateText": true,
-                    "wheelExec": "",
-                    "wheelMode": "unified",
-                    "wheelUpExec": "hermes-capture-idea.sh",
-                    "wheelUpUpdateText": true,
-                    "wheelUpdateText": true
+                    "id": "plugin:hermes"
                 },
                 {
                     "blacklist": [

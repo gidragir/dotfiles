@@ -42,3 +42,15 @@ description = "YouTube Music scratchpad companion and controller for Niri Waylan
 plugin_api = 9
 tags = ["media", "audio", "music", "bar", "panel"]
 
+[[plugin]]
+id = "gidragir/hermes"
+name = "Hermes AI Hub"
+version = "2.0.0"
+author = "gidragir"
+license = "MIT"
+icon = "message-chatbot"
+description = "Hermes AI Hub with live Kanban status telemetry, fast toggle, and idea capture"
+plugin_api = 9
+tags = ["ai", "hermes", "kanban", "bar", "utility"]
+
+

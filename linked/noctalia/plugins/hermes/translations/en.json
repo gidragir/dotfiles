@@ -1,0 +1,8 @@
+{
+  "settings": {
+    "poll_interval": {
+      "label": "Poll Interval (seconds)",
+      "description": "How often to check SQLite kanban tasks status"
+    }
+  }
+}
