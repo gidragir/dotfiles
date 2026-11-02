@@ -163,6 +163,20 @@ dotfiles/
     1. Автоматический self-healing в `devices.sh` (`_heal_stale_openrgb()`, проверяющий `/proc/<pid>/fd/` на `hidraw.*deleted`).
     2. Системный sleep-хук `/usr/lib/systemd/system-sleep/openrgb-resume` (из `playbooks/setup_system.yml`), перезапускающий `openrgb.service` при выходе из сна.
 
+### 7. Сетевая архитектура, Bufferbloat и инварианты Ansible QoS
+- **Принцип модульности сетевых оптимизаций:**
+  - Сетевые тюнинги ядра, шейпинг полосы и QoS-политики изолируются в отдельном плейбуке [`playbooks/setup_network_optimization.yml`](file:///home/gidragir/projects/dotfiles/playbooks/setup_network_optimization.yml). Их жесткое включение в базовые бутстрапперы (`setup_system.yml` / `setup_user.yml`) запрещено, так как такие настройки требуются опционально.
+  - Плейбук обязан гранулярно поддерживать теги `apply` и `revert` без навязывания тегов на уровне плеев (во избежание ложного наследования).
+- **Инварианты Systemd Drop-in Overrides:**
+  - При переопределении списковых директив сервисов (`ExecStart`) и таймеров (`OnBootSec`) в drop-in файлах (`override.conf`) первым шагом **всегда** идет сброс директивы пустым значением (`ExecStart=`, `OnBootSec=`), иначе systemd выполнит оба вызова последовательно.
+  - Исходные пакетные юниты CachyOS в `/usr/lib/systemd/` не редактируются напрямую — изменения вносятся строго через drop-in в `/etc/systemd/system/*.d/`.
+- **Инварианты TCP BBR и Idempotent Sysctl:**
+  - Назначение `net.ipv4.tcp_congestion_control = bbr` в плейбуках всегда предваряется проверкой доступности алгоритма через чтение `/proc/sys/net/ipv4/tcp_available_congestion_control`.
+  - При откате на CUBIC (`sysctl -w net.ipv4.tcp_congestion_control=cubic`) обязателен guard-контроль текущего состояния из `/proc/sys/net/ipv4/tcp_congestion_control` во избежание ложного `changed` статуса.
+- **Изоляция фоновых служб от домашней сети:**
+  - Таймеры ресурсоемких системных бенчмарков (`cachyos-rate-mirrors.timer`) обязаны иметь `Persistent=false`, чтобы исключить всплеск параллельных сетевых запросов при загрузке ПК.
+  - Периодические задачи облачной синхронизации (`rclone bisync`) обязаны запускаться с задержкой после логина (`OnBootSec=10m`) и иметь жесткий лимит полосы отдачи (`--bwlimit 10M`), предотвращающий насыщение очередей роутера.
+
 ---
 
 ## 🚀 4. Инструкция по установке и тестированию
