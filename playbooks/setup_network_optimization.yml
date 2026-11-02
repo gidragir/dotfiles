@@ -1,0 +1,214 @@
+---
+# =============================================================================
+# Playbook : setup_network_optimization.yml
+# Purpose  : Standalone network QoS & bufferbloat mitigation (BBR, rate-mirrors,
+#            LLMNR, rclone bandwidth shaping).
+# Usage    :
+#   Apply  : ansible-playbook playbooks/setup_network_optimization.yml --ask-become-pass
+#   Revert : ansible-playbook playbooks/setup_network_optimization.yml --ask-become-pass -e network_optimization_state=absent
+# =============================================================================
+
+# ── Play 1: System-level network optimizations (Root) ────────────────────────
+- name: System Network Optimizations (BBR, Mirrors, Resolved)
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+  tags:
+    - apply
+    - revert
+
+  vars:
+    network_optimization_state: present
+
+  handlers:
+    - name: Reload sysctl
+      ansible.builtin.command:
+        cmd: sysctl --system
+      changed_when: true
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Restart systemd-resolved
+      ansible.builtin.systemd:
+        name: systemd-resolved
+        state: restarted
+
+  tasks:
+    # ── 1. TCP BBR & FQ-CoDel Congestion Control ─────────────────────────────
+    - name: Configure TCP BBR and FQ-CoDel sysctl
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/99-network-bbr.conf
+        mode: '0644'
+        content: |
+          # Managed by dotfiles setup_network_optimization.yml
+          net.core.default_qdisc = fq_codel
+          net.ipv4.tcp_congestion_control = bbr
+      when: network_optimization_state == 'present'
+      notify: Reload sysctl
+
+    - name: Revert TCP BBR sysctl
+      ansible.builtin.file:
+        path: /etc/sysctl.d/99-network-bbr.conf
+        state: absent
+      when: network_optimization_state == 'absent'
+      notify: Reload sysctl
+
+    - name: Restore default CUBIC congestion control on revert
+      ansible.builtin.command:
+        cmd: sysctl -w net.ipv4.tcp_congestion_control=cubic
+      when: network_optimization_state == 'absent'
+      changed_when: true
+
+    # ── 2. CachyOS Rate-Mirrors Boot Burst Drop-in ───────────────────────────
+    - name: Ensure cachyos-rate-mirrors timer drop-in directory exists
+      ansible.builtin.file:
+        path: /etc/systemd/system/cachyos-rate-mirrors.timer.d
+        state: directory
+        mode: '0755'
+      when: network_optimization_state == 'present'
+
+    - name: Disable Persistent execution for cachyos-rate-mirrors.timer
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/cachyos-rate-mirrors.timer.d/override.conf
+        mode: '0644'
+        content: |
+          # Prevent aggressive mirror benchmark burst on system startup
+          [Timer]
+          Persistent=false
+      when: network_optimization_state == 'present'
+      notify: Reload systemd daemon
+
+    - name: Remove cachyos-rate-mirrors drop-in on revert
+      ansible.builtin.file:
+        path: /etc/systemd/system/cachyos-rate-mirrors.timer.d
+        state: absent
+      when: network_optimization_state == 'absent'
+      notify: Reload systemd daemon
+
+    # ── 3. Suppress LLMNR Multicast Noise in systemd-resolved ────────────────
+    - name: Ensure systemd-resolved drop-in directory exists
+      ansible.builtin.file:
+        path: /etc/systemd/resolved.conf.d
+        state: directory
+        mode: '0755'
+      when: network_optimization_state == 'present'
+
+    - name: Disable LLMNR multicast in systemd-resolved
+      ansible.builtin.copy:
+        dest: /etc/systemd/resolved.conf.d/disable-llmnr.conf
+        mode: '0644'
+        content: |
+          # Suppress LLMNR multicast storms on home network
+          [Resolve]
+          LLMNR=no
+      when: network_optimization_state == 'present'
+      notify: Restart systemd-resolved
+
+    - name: Remove LLMNR drop-in on revert
+      ansible.builtin.file:
+        path: /etc/systemd/resolved.conf.d/disable-llmnr.conf
+        state: absent
+      when: network_optimization_state == 'absent'
+      notify: Restart systemd-resolved
+
+
+# ── Play 2: User-level Rclone Bandwidth Shaping (Non-Root) ───────────────────
+- name: User Network Optimizations (Rclone Bandwidth & Boot Delay)
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: true
+  tags:
+    - apply
+    - revert
+
+  vars:
+    network_optimization_state: present
+    rclone_bwlimit: "10M"
+    rclone_boot_delay: "10m"
+
+  handlers:
+    - name: Reload user systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+        scope: user
+
+  tasks:
+    - name: Check if rclone-obsidian-sync service exists
+      ansible.builtin.stat:
+        path: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.service"
+      register: rclone_service_stat
+
+    # ── Rclone Service Bandwidth Limit Override ──────────────────────────────
+    - name: Ensure rclone service drop-in directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.service.d"
+        state: directory
+        mode: '0755'
+      when:
+        - network_optimization_state == 'present'
+        - rclone_service_stat.stat.exists
+
+    - name: Create rclone service bandwidth limit override
+      ansible.builtin.copy:
+        dest: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.service.d/override.conf"
+        mode: '0644'
+        content: |
+          [Service]
+          # Reset default ExecStart before defining modified command
+          ExecStart=
+          ExecStart=/usr/bin/rclone bisync /data/obsidian gdrive:Obsidian \
+              --fast-list \
+              --modify-window 2s \
+              --resilient \
+              --recover \
+              --retries 3 \
+              --bwlimit {{ rclone_bwlimit }} \
+              --log-level INFO \
+              --log-file=%h/.cache/rclone/obsidian-sync.log
+      when:
+        - network_optimization_state == 'present'
+        - rclone_service_stat.stat.exists
+      notify: Reload user systemd daemon
+
+    # ── Rclone Timer Boot Delay Override ─────────────────────────────────────
+    - name: Ensure rclone timer drop-in directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.timer.d"
+        state: directory
+        mode: '0755'
+      when:
+        - network_optimization_state == 'present'
+        - rclone_service_stat.stat.exists
+
+    - name: Create rclone timer boot delay override
+      ansible.builtin.copy:
+        dest: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.timer.d/override.conf"
+        mode: '0644'
+        content: |
+          [Timer]
+          # Reset OnBootSec before defining delayed initial run
+          OnBootSec=
+          OnBootSec={{ rclone_boot_delay }}
+      when:
+        - network_optimization_state == 'present'
+        - rclone_service_stat.stat.exists
+      notify: Reload user systemd daemon
+
+    # ── Revert Rclone User Overrides ─────────────────────────────────────────
+    - name: Remove rclone service override on revert
+      ansible.builtin.file:
+        path: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.service.d"
+        state: absent
+      when: network_optimization_state == 'absent'
+      notify: Reload user systemd daemon
+
+    - name: Remove rclone timer override on revert
+      ansible.builtin.file:
+        path: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.timer.d"
+        state: absent
+      when: network_optimization_state == 'absent'
+      notify: Reload user systemd daemon

@@ -1,5 +1,6 @@
 .DS_Store
 __pycache__
+.superpowers/
 
 # Cargo runtime files & binaries
 home/dot_cargo/bin/
