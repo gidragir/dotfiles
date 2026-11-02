@@ -44,7 +44,8 @@ dotfiles/
 │   ├── setup_virt.yml           # QEMU/KVM/libvirt, swtpm, UFW правила, Virtio-FS /srv/Shared
 │   ├── setup_rclone.yml         # Systemd user unit + timer для bisync Obsidian в Google Drive
 │   ├── setup_cooler_control.yml # Профили охлаждения и кривые вентиляторов
-│   └── setup_wallpaper_engine.yml # Установка и сервис Wallpaper Engine для Wayland
+│   ├── setup_wallpaper_engine.yml # Установка и сервис Wallpaper Engine для Wayland
+│   └── setup_network_optimization.yml # Изоляция Bufferbloat, TCP BBR, QoS и шейпинг стартовых всплесков
 ├── ai-dotfiles/                 # 🧠 [Repo] Единая декларативная AI-инфраструктура (~/projects/ai-dotfiles)
 │   ├── infra/playbooks/         # Плейбуки настройки AI-стека (setup_ollama, setup_khoj, setup_hermes)
 │   ├── infra/stacks/            # Docker Compose стеки (khoj, hindsight)
@@ -155,7 +156,8 @@ dotfiles/
   - Автопереключение профилей гарнитуры выключено: `"bluetooth.autoswitch-to-headset-profile" = false` в `10-seamless-routing.conf` (предотвращает принудительное переключение в монофонический HFP/HSP при доступе приложений к микрофону).
   - Запрет засыпания нод: свойство `session.suspend-timeout-seconds = 0` обязательно для правил, матчащих `api.alsa.*` и `api.bluez5.*` в `30-disable-idle-suspend.conf` (устраняет задержки и зависания аудиопотоков).
 - **OpenRGB & USB HID Архитектура:**
-  - **Systemd Targets:** Пользовательские юниты `openrgb.service` и `openrgb-profile.service` должны привязываться строго к `graphical-session.target`. Привязка к `default.target` / `multi-user.target` создает ordering cycle, при котором systemd аварийно сбрасывает старт сервиса профиля.
+  - **Systemd Targets & Ordering Cycles:** Пользовательские юниты `openrgb.service` и `openrgb-profile.service` должны привязываться строго к `graphical-session.target`. При этом `openrgb-profile.service` обязан содержать `After=openrgb.service graphical-session.target` во избежание ordering cycle (`job deleted to break ordering cycle`) при логине.
+  - **Восстановление ARGB-зон при апгрейде OpenRGB:** При обновлении версий OpenRGB (например, 1.0 -> 1.1) в `~/.config/OpenRGB/Configuration.json` возможна дубликация контроллера материнской платы с обнулением светодиодов зон 2 и 3 (вентиляторы и кастомная лента). Восстановление требует единовременного задания размеров через CLI (`-z 1 -sz 60 -z 2 -sz 60 -z 3 -sz 60`) и дедупликации `Configuration.json`.
   - **Изоляция аргументов в CLI OpenRGB:** Опции `-z` (зоны) внутри одного вызова `openrgb` загрязняют последующие устройства в цепочке `-d`. Категорически запрещено передавать временные размеры зон (`-sz`) или `-z` внутри регулярной смены цвета в `devices.conf` / `devices.sh`. Размеры ARGB-заголовков материнской платы персистентно хранятся в `Configuration.json`.
   - **Zombie-дескрипторы после сна (Hotplug Limit):** Демон `openrgb --server` не имеет udev hotplug-монитора. При сне ПК или USB-ресбросе ядро удаляет старые ноды (`/dev/hidraw2 (deleted)`) и создает новые (`/dev/hidraw3`). Для исключения отправки команд в мертвые дескрипторы используется:
     1. Автоматический self-healing в `devices.sh` (`_heal_stale_openrgb()`, проверяющий `/proc/<pid>/fd/` на `hidraw.*deleted`).
