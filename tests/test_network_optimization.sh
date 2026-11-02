@@ -21,7 +21,16 @@ echo "==> 3. Verifying required tags (apply, revert)..."
 ansible-playbook --list-tags "$PLAYBOOK" | rg -q "apply"
 ansible-playbook --list-tags "$PLAYBOOK" | rg -q "revert"
 
-echo "==> 4. Verifying systemd drop-in reset directives..."
+echo "==> 4. Verifying kernel module pre-check in playbook..."
+# Ensure playbook reads tcp_available_congestion_control or checks bbr before writing sysctl
+rg -q "tcp_available_congestion_control" "$PLAYBOOK"
+
+echo "==> 5. Verifying granular task tags (apply vs revert)..."
+# Playbook tasks should have explicit apply and revert tags
+rg -q "^\s*-\s*apply\b" "$PLAYBOOK"
+rg -q "^\s*-\s*revert\b" "$PLAYBOOK"
+
+echo "==> 6. Verifying systemd drop-in reset directives..."
 # Ensure ExecStart= reset exists before custom command
 rg -q "ExecStart=" "$PLAYBOOK"
 # Ensure OnBootSec= reset exists before custom delay
@@ -31,7 +40,10 @@ rg -q "Persistent=false" "$PLAYBOOK"
 # Ensure LLMNR=no exists
 rg -q "LLMNR=no" "$PLAYBOOK"
 
-echo "==> 5. Verifying kernel TCP BBR availability..."
+echo "==> 7. Verifying idempotency guard on CUBIC restore..."
+rg -q "!= 'cubic'" "$PLAYBOOK"
+
+echo "==> 8. Verifying kernel TCP BBR availability on host..."
 if [[ -f /proc/sys/net/ipv4/tcp_available_congestion_control ]]; then
     rg -q "bbr" /proc/sys/net/ipv4/tcp_available_congestion_control
     echo "    Kernel supports BBR: OK"
