@@ -7,7 +7,7 @@ All packages must be declared in `playbooks/vars/packages.yml`:
 - `aur_packages`: AUR packages installed via `paru` (`kewlfft.aur` collection). Categorically NEVER run as root!
 - `desktop_aur_packages` / `laptop_aur_packages`: Hardware-profile-specific AUR packages.
 - `cargo_packages`: Rust binaries installed via `cargo-binstall`.
-- `cli_essential_packages`: Core terminal tools (`chezmoi`, `fzf`, `eza`, `bat`, `ripgrep`, `fd`, `btop`, `glow`, etc.).
+- `cli_essential_packages`: Core terminal tools (`fzf`, `eza`, `bat`, `ripgrep`, `fd`, `btop`, `glow`, etc.).
 - `unwanted_packages`: Stock packages removed during installation (e.g. default browser).
 - `ollama_packages`: Dedicated GPU/AI inference packages.
 
@@ -20,7 +20,7 @@ All packages must be declared in `playbooks/vars/packages.yml`:
 
 ### 2. User Level (`bash scripts/setup_user.sh`)
 - `packages.yml --tags user,aur,cargo,cli`: Official user packages, essential CLI utilities, desktop AUR applications, and Cargo tools.
-- `setup_user.yml`: Chezmoi configuration deployment (`chezmoi apply`), toolchain caches, user services (`rclone-obsidian-sync.timer`, `openrgb.service`).
+- `setup_user.yml`: Toolchain caches, user services (`rclone-obsidian-sync.timer`, `openrgb.service`). Configuration symlinks are deployed via `ygg apply`.
 
 ### 3. Specialized Modular Playbooks
 - `setup_rust.yml`: Isolated Rust toolchain with mold linker, sccache cache, and cargo-binstall tools.

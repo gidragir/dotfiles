@@ -1,6 +1,6 @@
 # 🚀 CachyOS Niri: Ultimate Developer Setup & Dotfiles
 
-Automated setup scripts and Ansible playbooks for configuring a **CachyOS (Niri)** installation. Transforms a bare system into an optimized development environment for Rust, TypeScript, Python, Kubernetes, and DevOps — with a Zsh + Neovim workflow, dotfiles management via Chezmoi (supporting desktop and laptop profiles), native Docker, QEMU/KVM virtualization, and an optimized dual-NVMe storage layout.
+Automated setup scripts and Ansible playbooks for configuring a **CachyOS (Niri)** installation. Transforms a bare system into an optimized development environment for Rust, TypeScript, Python, Kubernetes, and DevOps — with a Zsh + Neovim workflow, modular dotfiles management via Yggdrasil (`ygg`, supporting PC and ASUS laptop scopes), native Docker, QEMU/KVM virtualization, and an optimized dual-NVMe storage layout.
 
 ---
 
@@ -20,7 +20,7 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/m
 
 ### 2. User Setup (run as normal user)
 
-Configures the user environment: development runtimes via [mise](https://mise.jdx.sh/), AUR packages via `paru`, Cargo tools, dotfiles via Chezmoi, and background `rclone` sync timers.
+Configures the user environment: development runtimes via [mise](https://mise.jdx.sh/), AUR packages via `paru`, Cargo tools, dotfiles via Yggdrasil (`ygg`), and background `rclone` sync timers.
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/scripts/setup_user.sh)"
@@ -196,73 +196,53 @@ The terminal environment is built on Zsh in [`home/dot_zsh/`](file:///data/proje
 
 ---
 
-## ⚙️ Configuration Management (Chezmoi)
+## ⚙️ Configuration Management (Yggdrasil)
 
-All user configurations are declaratively managed via **Chezmoi** from `/data/projects/dotfiles/home` (with the repository dotfiles root configured via `.chezmoiroot = home`).
-Chezmoi operates in `mode = "symlink"` mode for native zero-latency live-editing, and provides multi-host profiling for Workstation (`desktop`) and Laptop (`laptop`) machines.
+All user configurations are declaratively managed via **Yggdrasil (`ygg`)**, a minimalist, modular Nushell-based dotfile manager. Configurations are organized into modules (`omni-dotfiles` for L-Core tools and `dotfiles` for L-Host CachyOS) and linked directly into `$HOME` without template engines. Hardware roles are partitioned into declarative scopes (`pc` and `asus`).
 
 ### Directory Structure
 
 ```
 dotfiles/
-├── .chezmoiroot                 # Directs chezmoi to use home/ as the dotfiles root
-├── home/
-│   ├── .chezmoi.toml.tmpl       # Host initialization template (chassis detection: desktop | laptop)
-│   ├── .chezmoiignore           # Profile filtering and ai-dotfiles isolation
-│   ├── dot_zshrc                -> ~/.zshrc
-│   ├── dot_zshenv.tmpl          -> ~/.zshenv (desktop AI proxy vs standalone)
-│   ├── dot_zprofile             -> ~/.zprofile
-│   ├── dot_cargo/               -> ~/.cargo/config.toml
-│   ├── dot_config/
-│   │   ├── atuin/               -> ~/.config/atuin
-│   │   ├── bat/                 -> ~/.config/bat
-│   │   ├── btop/                -> ~/.config/btop
-│   │   ├── environment.d/       -> ~/.config/environment.d
-│   │   ├── fzf/                 -> ~/.config/fzf
-│   │   ├── ghostty/             -> ~/.config/ghostty (live symlink)
-│   │   ├── hypr/                -> ~/.config/hypr (hypridle, hyprlock)
-│   │   ├── k3d/                 -> ~/.config/k3d
-│   │   ├── k9s/                 -> ~/.config/k9s
-│   │   ├── mise/                -> ~/.config/mise
-│   │   ├── niri/
-│   │   │   └── cfg/
-│   │   │       └── display.kdl.tmpl # DP-2 + HDMI-A-1 (desktop) vs eDP-1 (laptop)
-│   │   ├── nvim/                -> ~/.config/nvim (LazyVim, live symlink)
-│   │   ├── OpenRGB/             -> ~/.config/OpenRGB (desktop only)
-│   │   ├── rofi/                -> ~/.config/rofi
-│   │   ├── rtk/                 -> ~/.config/rtk
-│   │   ├── sheldon/             -> ~/.config/sheldon
-│   │   ├── starship.toml        -> ~/.config/starship.toml
-│   │   ├── superfile/           -> ~/.config/superfile
-│   │   ├── symlink_noctalia.tmpl-> ~/.config/noctalia (links to linked/noctalia/)
-│   │   ├── systemd/user/        -> ~/.config/systemd/user (openrgb user units, desktop only)
-│   │   ├── television/          -> ~/.config/television
-│   │   ├── vivaldi-stable.conf  -> ~/.config/vivaldi-stable.conf
-│   │   ├── wallpaper-engine/    -> ~/.config/wallpaper-engine
-│   │   ├── waypaper/            -> ~/.config/waypaper
-│   │   ├── wireplumber/         -> ~/.config/wireplumber (0.5 SPA-JSON)
-│   │   └── zellij/              -> ~/.config/zellij
-│   └── dot_zsh/                 -> ~/.zsh/ (alias, binds, scripts)
-└── linked/
-    └── noctalia/                # Atomic state app directory symlinked into ~/.config/noctalia
+├── ygg.toml                     # Module identifier and OS compatibility (cachyos, arch)
+├── links.toml                   # Symlink mappings and scope definitions ([scope.pc.links], [scope.asus.links])
+├── packages.toml                # Declarative package lists (pacman, paru, cargo, scopes)
+├── setup.nu                     # Procedural lifecycle hook (MIME apps, cache dirs, user services)
+├── niri/                        # ~/.config/niri (config.kdl, cfg/*.kdl)
+│   └── displays/                # Display configurations (pc.kdl, asus.kdl)
+├── noctalia/                    # ~/.config/noctalia (config.toml, colors.json, plugins/)
+├── rofi/                        # ~/.config/rofi (cliphist, main, noctalia.rasi)
+├── sheldon/                     # ~/.config/sheldon (plugins.toml)
+├── systemd/                     # ~/.config/systemd/user (openrgb, rclone)
+├── vivaldi-stable.conf          # ~/.config/vivaldi-stable.conf
+├── wallpaper-engine/            # ~/.config/wallpaper-engine (config.json)
+├── waypaper/                    # ~/.config/waypaper (config.ini)
+├── wireplumber/                 # ~/.config/wireplumber (SPA-JSON 0.5 rules)
+└── zsh/                         # ~/.zsh/
+    ├── alias/                   # Core, git, k8s aliases
+    ├── alias-pc/                # Hardware-specific aliases (cooler.zsh)
+    ├── scripts/                 # Centralized user automation scripts
+    └── scripts-pc/              # Hardware-specific scripts (cooler-toggle.sh)
 ```
 
-### Essential Chezmoi Commands
+### Essential Ygg Commands
 
 ```bash
-# Verify synchronization status (0 drift):
-chezmoi status
-chezmoi verify
+# Check synchronization status across all active modules:
+ygg status
 
-# Inspect pending changes against home directory:
-chezmoi diff
+# Inspect planned changes and drift without modifying host (dry-run):
+ygg apply -n
+ygg apply --dry-run
 
-# Apply configurations:
-chezmoi apply
+# Apply all module configurations to $HOME:
+ygg apply
 
-# Test templates without modifying files:
-chezmoi execute-template --override-data '{"chassis":"desktop"}' < home/dot_config/niri/cfg/display.kdl.tmpl
-chezmoi execute-template --override-data '{"chassis":"laptop"}' < home/dot_config/niri/cfg/display.kdl.tmpl
+# Apply links and setup while skipping package installation:
+ygg apply --skip-packages
+
+# Isolated dry run / validation inside a temporary sandbox directory:
+ygg apply --sandbox /tmp/ygg-sandbox --skip-packages
 ```
 
 ---

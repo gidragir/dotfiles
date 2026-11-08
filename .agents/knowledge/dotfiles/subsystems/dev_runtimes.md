@@ -1,13 +1,13 @@
 # Subsystem: Development Toolchains & Runtimes (L1)
 
 ## Mise Runtime Manager
-- Configuration: `home/dot_config/mise/config.toml` -> deployed via Chezmoi to `~/.config/mise/config.toml`.
+- Configuration: `omni-dotfiles` -> deployed via Yggdrasil to `~/.config/mise/config.toml`.
 - Shims path: `~/.local/share/mise/shims`.
 - Default runtimes: Node.js (`lts`), Bun (`latest`), pnpm (`latest`), Python (`uv`).
 
 ## Rust Toolchain Optimization
 - Compiler: `rustup` stable.
-- Fast Linker: `mold` + `clang` configured in `home/dot_cargo/config.toml`.
+- Fast Linker: `mold` + `clang` configured in `cargo/config.toml` (managed via `omni-dotfiles`).
 - Compilation Cache: `sccache` targeting `/data/projects/.sccache`.
 - Cargo Cache Symlinks: `~/.cargo/registry` and `~/.cargo/git` point to `/data/projects/.cargo-cache/`.
 - Fast Binary Installer: `cargo-binstall` used for quick binary installation without compiling from source (`bacon`, `cargo-nextest`, `cargo-machete`, `cargo-ramdisk`).
@@ -26,9 +26,10 @@
 | :--- | :--- |
 | `ai:status` | Status check for Ollama, Headroom, Khoj, and Postgres |
 | `knowledge:l0` | Inspect L0 abstract mental map of the dotfiles repository |
-| `dotfiles:status` | Check status of Chezmoi managed configurations |
-| `dotfiles:diff` | Inspect diff between dotfiles repository and `$HOME` |
-| `dotfiles:verify` | Verify zero drift between dotfiles repository and `$HOME` |
-| `dotfiles:apply` | Apply repository configurations to `$HOME` |
+| `dotfiles:status` | Check status of Yggdrasil managed configurations (`ygg status`) |
+| `dotfiles:diff` | Inspect diff between dotfiles repository and `$HOME` (`ygg apply --dry-run`) |
+| `dotfiles:verify` | Verify zero drift between dotfiles repository and `$HOME` (`ygg apply --dry-run`) |
+| `dotfiles:apply` | Apply repository configurations to `$HOME` (`ygg apply`) |
+| `apply:all` | Apply omni-dotfiles followed by dotfiles (`ygg apply`) |
 | `test:e2e` | Run E2E test suite for Noctalia plugins |
 | `test:check` | Run comprehensive host environment health check (`scripts/check_setup.sh`) |

@@ -1,12 +1,12 @@
 # CLI Reference: Core Workstation System Tools (L2)
 
-## Chezmoi (Dotfiles & Configuration Management)
+## Yggdrasil (Dotfiles & Module Configuration Management)
 ```bash
-chezmoi status                    # Show modified/unmanaged targets
-chezmoi diff                      # Compare repository state with $HOME
-chezmoi verify                    # Validate 0 configuration drift
-chezmoi apply                     # Apply changes to $HOME
-chezmoi apply --source /data/projects/dotfiles --force  # Force apply from dotfiles repo
+ygg status                        # Show module sync status and active scopes
+ygg apply -n                      # Dry-run inspection of link/config drift
+ygg apply                         # Apply all module configurations to $HOME
+ygg apply --skip-packages         # Apply links and run setup without touching packages
+ygg apply --sandbox /tmp/sb       # Test deployment in isolated sandbox root
 ```
 
 ## Storage & Setup Health Checks
