@@ -1,6 +1,6 @@
 [Unit]
 Description=OpenRGB Auto Profile Loader (Off)
-After=openrgb.service
+After=openrgb.service graphical-session.target
 Wants=openrgb.service
 PartOf=graphical-session.target
 
