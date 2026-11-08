@@ -303,7 +303,7 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
    Mod+<Key> { spawn "bash" "-c" "~/.zsh/scripts/<script-name>.sh"; }
    ```
    Либо через `spawn-sh "<script-name>.sh";` (так как `~/.zsh/scripts` находится в `$PATH`).
-5. **Запрет на unmanaged loose scripts:** Категорически запрещено создавать локальные скрипты в `~/.local/bin/` или `~` в обход репозитория. Любая автоматизация должна находиться в `home/dot_zsh/scripts/`, управляться Chezmoi и быть закоммичена в Git.
+5. **Запрет на unmanaged loose scripts:** Категорически запрещено создавать локальные скрипты в `~/.local/bin/` или `~` в обход репозитория. Любая автоматизация должна находиться в `zsh/scripts/`, управляться Yggdrasil и быть закоммичена в Git.
 
 ### Сценарий F: Управление и доработка AI-стека (Ollama, Khoj, Hindsight, Hermes)
 Архитектура AI-инфраструктуры хоста сосредоточена в [`ai-dotfiles`](file:///data/projects/ai-dotfiles):
@@ -397,9 +397,18 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - **Безопасность флагов Ripgrep (`rg`):** Не передавать флаг `-E` в `rg` (в `rg` ключ `-E` означает `--encoding`). Утилита `rg` по умолчанию обрабатывает регулярные выражения без дополнительных флагов.
 - **Иерархия скриптов и пути к плейбукам:** Скрипты в [`scripts/`](file:///home/gidragir/projects/dotfiles/scripts) обязаны вычислять `REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"` для обращения к [`playbooks/`](file:///home/gidragir/projects/dotfiles/playbooks), а не полагаться на `$SCRIPT_DIR/playbooks`.
 - **Выравнивание тегов плейбуков:** Задачи, необходимые при установке пользовательского окружения, обязаны включать соответствующие теги (`[cli, aur, packages]`).
-- **Запрет неуправляемых бинарников:** Не создавать скрипты напрямую в `~/.local/bin/` через плейбуки или шелл-команды. Все скрипты размещаются в [`home/dot_zsh/scripts/`](file:///home/gidragir/projects/dotfiles/home/dot_zsh/scripts) под управлением Chezmoi.
+- **Запрет неуправляемых бинарников:** Не создавать скрипты напрямую в `~/.local/bin/` через плейбуки или шелл-команды. Все скрипты размещаются в [`zsh/scripts/`](file:///home/gidragir/projects/dotfiles/zsh/scripts) под управлением Yggdrasil.
 
 ### 4. Noctalia Shell v5 & Luau Plugin Invariants
+- **Noctalia Configuration & State Synchronization Invariant:**
+  - **Config Stack:** Базовый декларативный конфиг хранится в [`noctalia/config.toml`](file:///home/gidragir/projects/dotfiles/noctalia/config.toml) (версионируется в Git), динамическое runtime-состояние — в `~/.local/state/noctalia/settings.toml`.
+  - **Правило синхронизации раскладки:** Все структурные элементы панели (раскладки островов `start`/`center`/`end`, капсульные группы `[[bar.islands.capsule_group]]`, аккордеоны плеера, виджеты `wallhaven`/`mpvpaper`/`audio_switcher`) обязаны быть задекларированы в `noctalia/config.toml`.
+  - **Запрет слепого сброса `settings.toml`:** Категорически запрещено удалять `settings.toml` или вырезать из него блок `[bar.islands]` без предварительного бэкапа и переноса пользовательских настроек в `config.toml`. Сброс затирает эргономику пользователя (аккордеоны, порядок виджетов).
+  - **Протокол восстановления после смены симлинков:**
+    1. Создать резервную копию: `cp ~/.local/state/noctalia/settings.toml ~/.local/state/noctalia/settings.toml.bak`.
+    2. Проверить доступность каталога плагинов через симлинк `~/.config/noctalia/plugins/`.
+    3. Сверить `settings.toml` с `config.toml`, перенести недостающие плагины/группы в `config.toml`.
+    4. Выполнить мягкую перезагрузку демона: `noctalia msg config-reload`.
 - **Dropdown Panels:** Выпадающие панели бара ОБЯЗАНЫ указывать `placement = "attached"`, `position = "auto"`, `open_near_click = true` в `plugin.toml`. Запрещено использовать `placement = "floating"` или `position = "center"` для панелей, вызываемых из бара.
 - **Card Containers:** `ui.box` является строго терминальным узлом без дочерних элементов (leaf node). Все карточки-контейнеры и секции с дочерними элементами обязаны использовать `ui.column` или `ui.row` (`fill = "surface_variant/0.25"`, `radius = 8`, `border = "outline"`, `borderWidth = 1`).
 - **Panel Padding:** Корневой контейнер любой панели обязан указывать `padding = 14` и `gap = 12` для предотвращения прилипания контента к краям окна.
