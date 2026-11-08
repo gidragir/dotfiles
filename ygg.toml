@@ -1,0 +1,3 @@
+name = "dotfiles"
+description = "CachyOS / Arch Wayland Desktop (Niri, Noctalia, Audio, Desktop & ASUS Laptop Hardware Scopes)"
+os = ["cachyos", "arch"]

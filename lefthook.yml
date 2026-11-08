@@ -6,11 +6,11 @@ pre-commit:
   parallel: false
   commands:
     check-shell:
-      glob: "{scripts/**/*.sh,home/dot_zsh/scripts/*.sh,tests/**/*.sh}"
+      glob: "{scripts/**/*.sh,zsh/scripts/*.sh,tests/**/*.sh}"
       run: bash -n {all_files}
 
     check-niri:
-      glob: "home/dot_config/niri/**/*.kdl"
+      glob: "niri/**/*.kdl"
       run: niri validate -c ~/.config/niri/config.kdl
 
     check-ansible:

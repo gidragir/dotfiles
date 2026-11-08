@@ -1,33 +1,32 @@
 [tools]
 bun = "latest"
 node = "lts"
-chezmoi = "latest"
 
 [tasks."knowledge:l0"]
 description = "Inspect L0 abstract mental map of the dotfiles repository"
 run = "cat .agents/knowledge/dotfiles/L0_index.json"
 
 [tasks."dotfiles:status"]
-description = "Check status of Chezmoi managed configurations"
-run = "chezmoi status"
+description = "Check status of ygg managed configurations"
+run = "ygg status"
 
 [tasks."dotfiles:diff"]
 description = "Inspect diff between dotfiles repository and $HOME"
-run = "chezmoi diff"
+run = "ygg apply --dry-run"
 
 [tasks."dotfiles:verify"]
 description = "Verify zero drift between dotfiles repository and $HOME"
-run = "chezmoi verify"
+run = "ygg apply --dry-run"
 
 [tasks."dotfiles:apply"]
 description = "Apply repository configurations to $HOME"
-run = "chezmoi apply --source /data/projects/dotfiles --force"
+run = "ygg apply"
 
 [tasks."apply:all"]
 description = "Apply omni-dotfiles (L-Core) followed by dotfiles (L-Host CachyOS)"
 run = """
 chezmoi apply --source /home/gidragir/projects/omni-dotfiles
-chezmoi apply --source /data/projects/dotfiles --force
+ygg apply
 """
 
 [tasks."test:e2e"]

@@ -63,7 +63,7 @@ echo "🖥️  Host profile detected: $HOST_PROFILE"
 
 echo "📦 Running consolidated user setup playbook..."
 ansible-playbook playbooks/packages.yml --tags user,aur,cargo,cli -e "host_profile=${HOST_PROFILE}"
-ansible-playbook playbooks/setup_user.yml -e "host_profile=${HOST_PROFILE}"
+ygg apply
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Summary

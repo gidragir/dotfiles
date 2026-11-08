@@ -1,5 +1,5 @@
 {
-  "assets_dir": "{{ .chezmoi.homeDir }}/Games/SteamLibrary/common/wallpaper_engine/assets",
+  "assets_dir": "~/Games/SteamLibrary/common/wallpaper_engine/assets",
   "default_wallpaper_id": "2471321039",
   "fps": 60,
   "volume": 0,
