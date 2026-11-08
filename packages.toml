@@ -1,0 +1,30 @@
+[packages]
+pacman = [
+  "rustup", "neovim", "jq", "chromium", "git", "ripgrep", "fd", "bat", "eza",
+  "rofi", "piper", "libratbag", "obsidian", "imv", "ddcutil", "wlsunset", "mpv",
+  "libsixel", "libxpresent", "mujs", "playerctl", "pear-desktop", "rclone",
+  "cliphist", "wtype", "hypridle", "cargo-binstall",
+]
+paru = [
+  "vivaldi", "visual-studio-code-bin", "ferdium-bin", "tor-browser-bin",
+  "ghostty", "mise", "noctalia-qs", "noctalia", "noctalia-shell",
+]
+cargo = [
+  "cargo-ramdisk", "cargo-nextest", "bacon", "cargo-machete",
+]
+
+[scope.pc.packages]
+paru = [
+  "openrgb",
+  "coolercontrold-bin",
+  "coolercontrol-bin",
+]
+
+[scope.asus.packages]
+pacman = [
+  "asusctl",
+  "supergfxctl",
+  "rog-control-center",
+  "power-profiles-daemon",
+  "brightnessctl",
+]

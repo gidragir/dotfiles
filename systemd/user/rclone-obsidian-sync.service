@@ -1,0 +1,13 @@
+[Unit]
+Description=Rclone – Bisync Obsidian Vault with Google Drive
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rclone bisync /data/obsidian gdrive:Obsidian \
+    --fast-list \
+    --modify-window 2s \
+    --resilient \
+    --recover \
+    --retries 3 \
+    --log-level INFO \
+    --log-file=%h/.cache/rclone/obsidian-sync.log

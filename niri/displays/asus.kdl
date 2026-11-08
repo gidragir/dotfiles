@@ -1,0 +1,11 @@
+// ────────────── Output Configuration (ASUS laptop) ──────────────
+// Linked by ygg to ~/.config/niri/cfg/display.kdl for scope `asus`.
+// Run `niri msg outputs` to get the correct name for your displays.
+// https://github.com/YaLTeR/niri/wiki/Configuration:-Outputs
+
+output "eDP-1" {
+    mode "1920x1080@60"
+    scale 1
+}
+
+include optional=true "../local.kdl"

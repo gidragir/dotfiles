@@ -1,0 +1,24 @@
+[links]
+"hypr" = "~/.config/hypr"
+"niri/config.kdl" = "~/.config/niri/config.kdl"
+"niri/noctalia.kdl" = "~/.config/niri/noctalia.kdl"
+"niri/cfg/*" = "~/.config/niri/cfg/*"
+"noctalia" = "~/.config/noctalia"
+"rofi" = "~/.config/rofi"
+"systemd/user/*" = "~/.config/systemd/user/*"
+"vivaldi-stable.conf" = "~/.config/vivaldi-stable.conf"
+"wallpaper-engine" = "~/.config/wallpaper-engine"
+"waypaper" = "~/.config/waypaper"
+"wireplumber" = "~/.config/wireplumber"
+"zsh/alias/*" = "~/.zsh/alias/*"
+"zsh/scripts/*" = "~/.zsh/scripts/*"
+
+[scope.pc.links]
+"niri/displays/pc.kdl" = "~/.config/niri/cfg/display.kdl"
+"OpenRGB" = "~/.config/OpenRGB"
+"systemd/user-pc/*" = "~/.config/systemd/user/*"
+"zsh/alias-pc/cooler.zsh" = "~/.zsh/alias/cooler.zsh"
+"zsh/scripts-pc/cooler-toggle.sh" = "~/.zsh/scripts/cooler-toggle.sh"
+
+[scope.asus.links]
+"niri/displays/asus.kdl" = "~/.config/niri/cfg/display.kdl"

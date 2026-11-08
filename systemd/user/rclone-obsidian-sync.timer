@@ -1,0 +1,9 @@
+[Unit]
+Description=Run rclone bisync for Obsidian every 15 minutes
+
+[Timer]
+OnBootSec=2m
+OnUnitActiveSec=15m
+
+[Install]
+WantedBy=timers.target
