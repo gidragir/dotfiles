@@ -36,10 +36,17 @@ vrr = "fullscreen"
 direct_scanout = true
 
 # ==============================================================================
-# Appearance & Effects
+# Appearance & Effects (Niri-matched Focus Ring #7fc8ff & Blur)
 # ==============================================================================
+[appearance]
+border_width = 2
+
 [appearance.blur]
 radius = 4
+
+[colors.border]
+focused = "#7FC8FFFF"
+unfocused = "#505050FF"
 
 [effects]
 cursor = "trail"
@@ -58,15 +65,39 @@ follows_mouse = true
 hover_raises = false
 
 # ==============================================================================
-# Layout
+# Layout (Niri Scrolling Ribbon + Center on Overflow)
 # ==============================================================================
 [layout]
 mode = "scrolling"
-extent_presets = [0.25, 0.333, 0.5, 0.667, 1.0]
+gap = 8
+extent_presets = [0.25, 0.333, 0.5, 0.667, 0.75, 1.0]
 
 [layout.scrolling]
 default_extent_fraction = 0.5
+center_focused = "on_overflow"
 center_on_overview_select = true
+
+[workspaces]
+back_and_forth = true
+
+# ==============================================================================
+# Per-Workspace Layouts (Привязка режимов к конкретным воркспейсам)
+# ==============================================================================
+# [[workspace]]
+# index = 1
+# layout.mode = "scrolling"
+
+# [[workspace]]
+# index = 2
+# layout.mode = "dwindle"
+
+# [[workspace]]
+# index = 3
+# layout.mode = "master"
+
+# [[workspace]]
+# index = 9
+# layout.mode = "stacking"
 
 # ==============================================================================
 # Keybinds
@@ -126,9 +157,22 @@ center_on_overview_select = true
 "Mod+Shift+L" = "column-move-right"
 "Mod+Shift+K" = "window-move-up"
 "Mod+Shift+J" = "window-move-down"
+"Mod+Shift+Alt+Left" = "window-consume-or-expel-left"
+"Mod+Shift+Alt+Right" = "window-consume-or-expel-right"
+"Mod+Home" = "column-focus-first"
+"Mod+End" = "column-focus-last"
+"Mod+Ctrl+Home" = "column-move-to-first"
+"Mod+Ctrl+End" = "column-move-to-last"
 
-# --- Layout Mode Switcher & Overview ---
+# --- Layout Mode Switcher & Controls ---
 "Mod+Alt+Space" = "workspace-set-layout toggle scrolling dwindle master stacking"
+"Mod+Alt+T" = "layout-toggle-split"
+"Mod+BracketRight" = "layout-master-count-increase"
+"Mod+BracketLeft" = "layout-master-count-decrease"
+"Mod+Ctrl+Left" = "window-set-region left"
+"Mod+Ctrl+Right" = "window-set-region right"
+"Mod+Ctrl+Up" = "window-set-region top"
+"Mod+Ctrl+Down" = "window-set-region bottom"
 "Mod+O" = { action = "overview-toggle", repeat = false }
 "Mod+Escape" = "session-quit"
 
@@ -136,7 +180,8 @@ center_on_overview_select = true
 "Mod+Space" = "scratchpad-toggle"
 "Mod+Shift+Space" = { action = "window-move-to-scratchpad", repeat = false }
 "Mod+Ctrl+Space" = { action = "window-restore-from-scratchpad", repeat = false }
-"Mod+Tab" = "scratchpad-focus-next"
+"Mod+Ctrl+Tab" = "scratchpad-focus-next"
+"Mod+Tab" = "workspace-focus-last"
 
 # --- Workspaces (1-9) ---
 "Mod+1" = "workspace-switch 1"
