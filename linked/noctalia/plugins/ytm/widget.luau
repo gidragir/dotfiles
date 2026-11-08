@@ -28,7 +28,7 @@ local function render(state)
     else
       barWidget.setText("▶")
     end
-    barWidget.setTooltip(string.format("▶ %s\n👤 %s\n\n• ЛКМ: Окно YouTube Music (Toggle)\n• ПКМ: Панель управления", title, artist))
+    barWidget.setTooltip(string.format("▶ %s\n👤 %s\n\n• ЛКМ: Окно YouTube Music (Toggle)\n• ПКМ: Панель управления\n• Колесо: Громкость (±5%%)", title, artist))
   elseif status == "Paused" then
     barWidget.setGlyphColor("tertiary")
     if title ~= "" then
@@ -37,15 +37,15 @@ local function render(state)
     else
       barWidget.setText("⏸")
     end
-    barWidget.setTooltip(string.format("⏸ %s\n👤 %s\n\n• ЛКМ: Окно YouTube Music (Toggle)\n• ПКМ: Панель управления", title, artist))
+    barWidget.setTooltip(string.format("⏸ %s\n👤 %s\n\n• ЛКМ: Окно YouTube Music (Toggle)\n• ПКМ: Панель управления\n• Колесо: Громкость (±5%%)", title, artist))
   elseif status == "Idle" then
     barWidget.setGlyphColor("on_surface")
     barWidget.setText("")
-    barWidget.setTooltip("YouTube Music (Фоновый режим)\n\n• ЛКМ: Окно YouTube Music (Toggle)\n• ПКМ: Панель управления")
+    barWidget.setTooltip("YouTube Music (Фоновый режим)\n\n• ЛКМ: Окно YouTube Music (Toggle)\n• ПКМ: Панель управления\n• Колесо: Громкость (±5%%)")
   else
     barWidget.setGlyphColor("on_surface_variant")
     barWidget.setText("")
-    barWidget.setTooltip("YouTube Music (Не активен)\n\n• ЛКМ: Запустить и показать окно\n• ПКМ: Панель управления")
+    barWidget.setTooltip("YouTube Music (Не активен)\n\n• ЛКМ: Запустить и показать окно\n• ПКМ: Панель управления\n• Колесо: Громкость (±5%%)")
   end
 end
 
@@ -82,6 +82,51 @@ end
 
 function onRightClick()
   noctalia.togglePanel("gidragir/ytm:panel")
+end
+
+local function changeVolume(step)
+  local helper = getHelperPath()
+  local action = (step > 0) and "volume-up" or "volume-down"
+  local absStep = math.abs(step)
+  noctalia.runAsync(string.format("%s %s %f", helper, action, absStep), function(_res)
+    refresh()
+  end)
+end
+
+function onScroll(_axis, steps, _startsGesture)
+  local amount = tonumber(steps) or 0
+  if amount == 0 then return end
+  if amount < 0 then
+    changeVolume(0.05)
+  else
+    changeVolume(-0.05)
+  end
+end
+
+function onScrollUp()
+  changeVolume(0.05)
+end
+
+function onScrollDown()
+  changeVolume(-0.05)
+end
+
+function scrollUp()
+  changeVolume(0.05)
+end
+
+function scrollDown()
+  changeVolume(-0.05)
+end
+
+function onIpc(event, ...)
+  if event == "volume-up" or event == "volume_up" or event == "scroll_up" then
+    changeVolume(0.05)
+  elseif event == "volume-down" or event == "volume_down" or event == "scroll_down" then
+    changeVolume(-0.05)
+  elseif event == "refresh" then
+    refresh()
+  end
 end
 
 local initial = noctalia.state.get("ytm_status")
