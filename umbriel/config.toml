@@ -6,10 +6,11 @@
 files = [
     "/usr/share/umbriel/effects/cursor/trail/effect.toml",
     "/usr/share/umbriel/effects/border/pulse/effect.toml",
+    "/usr/share/umbriel/effects/border/audio/effect.toml",
 ]
 
 [include.optional]
-files = []
+files = ["noctalia.toml"]
 
 # ==============================================================================
 # General & Autostart
@@ -48,9 +49,14 @@ radius = 4
 focused = "#7FC8FFFF"
 unfocused = "#505050FF"
 
+[effects.pool.borders]
+kind = "border"
+choose = ["audio", "pulse"]
+selection = "round_robin"
+
 [effects]
 cursor = "trail"
-border = "pulse"
+border = "audio"
 
 # ==============================================================================
 # Input (Keyboard, Focus, Mouse)
@@ -173,6 +179,9 @@ back_and_forth = true
 "Mod+Ctrl+Right" = "window-set-region right"
 "Mod+Ctrl+Up" = "window-set-region top"
 "Mod+Ctrl+Down" = "window-set-region bottom"
+"Mod+Shift+E" = "effect-border-cycle borders"
+"Mod+Ctrl+E" = "effect-border-toggle"
+"Mod+Alt+E" = "effect-border-reset"
 "Mod+O" = { action = "overview-toggle", repeat = false }
 "Mod+Escape" = "session-quit"
 

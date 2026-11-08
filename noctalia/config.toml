@@ -465,6 +465,7 @@ show_location = true
 telemetry_enabled = false
 time_format = "{:%H:%M}"
 umbriel_overview_type_to_launch_enabled = false
+umbriel_audio_provider_enabled = true
 
 [shell.animation]
 enabled = true
