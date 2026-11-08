@@ -10,17 +10,25 @@
   ],
   "commands": {
     "custom": {
-      "dotfiles:verify": "rtk mise run dotfiles:verify",
-      "dotfiles:status": "rtk mise run dotfiles:status",
-      "knowledge:l0": "rtk mise run knowledge:l0",
+      "setup:virt": "rtk mise run setup:virt",
       "apply:all": "rtk mise run apply:all",
-      "disk:wipe": "rtk mise run disk:wipe",
-      "vm:create": "rtk mise run vm:create",
+      "net:revert": "rtk mise run net:revert",
+      "setup:gaming": "rtk mise run setup:gaming",
+      "knowledge:l0": "rtk mise run knowledge:l0",
+      "net:optimize": "rtk mise run net:optimize",
+      "vm:postinstall": "rtk mise run vm:postinstall",
+      "dotfiles:verify": "rtk mise run dotfiles:verify",
+      "rclone:resync": "rtk mise run rclone:resync",
+      "setup:sddm": "rtk mise run setup:sddm",
       "dotfiles:diff": "rtk mise run dotfiles:diff",
       "test:e2e": "rtk mise run test:e2e",
-      "vm:postinstall": "rtk mise run vm:postinstall",
-      "docker:check": "rtk mise run docker:check",
-      "dotfiles:apply": "rtk mise run dotfiles:apply"
+      "vm:create": "rtk mise run vm:create",
+      "setup:cooler-control": "rtk mise run setup:cooler-control",
+      "dotfiles:apply": "rtk mise run dotfiles:apply",
+      "disk:wipe": "rtk mise run disk:wipe",
+      "setup:wallpaper-engine": "rtk mise run setup:wallpaper-engine",
+      "dotfiles:status": "rtk mise run dotfiles:status",
+      "docker:check": "rtk mise run docker:check"
     }
   },
   "subsystems": [
@@ -412,19 +420,44 @@
     {
       "id": "playbooks",
       "name": "Playbooks",
-      "summary": "Модуль и компоненты директории `playbooks` (2 файлов)",
+      "summary": "Модуль и компоненты директории `playbooks` (7 файлов)",
       "l1_path": "subsystems/playbooks.md",
       "tags": [
         "Generic / Multi-language",
         "playbooks"
       ],
       "key_files": [
+        "playbooks/setup_cooler_control.yml",
+        "playbooks/setup_display_manager.yml",
+        "playbooks/setup_gaming.yml",
         "playbooks/setup_network_optimization.yml",
+        "playbooks/setup_virt.yml",
+        "playbooks/setup_wallpaper_engine.yml",
         "playbooks/vars/packages.yml"
       ],
       "files": [
         {
+          "path": "playbooks/setup_cooler_control.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_display_manager.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_gaming.yml",
+          "is_entrypoint": false
+        },
+        {
           "path": "playbooks/setup_network_optimization.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_virt.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_wallpaper_engine.yml",
           "is_entrypoint": false
         },
         {
@@ -437,7 +470,7 @@
     {
       "id": "playbooks_archive",
       "name": "Playbooks Archive",
-      "summary": "Модуль и компоненты директории `playbooks/archive` (10 файлов)",
+      "summary": "Модуль и компоненты директории `playbooks/archive` (5 файлов)",
       "l1_path": "subsystems/playbooks_archive.md",
       "tags": [
         "Generic / Multi-language",
@@ -445,31 +478,14 @@
       ],
       "key_files": [
         "playbooks/archive/packages.yml",
-        "playbooks/archive/setup_cooler_control.yml",
-        "playbooks/archive/setup_display_manager.yml",
-        "playbooks/archive/setup_gaming.yml",
         "playbooks/archive/setup_rclone.yml",
         "playbooks/archive/setup_rust.yml",
         "playbooks/archive/setup_system.yml",
-        "playbooks/archive/setup_user.yml",
-        "playbooks/archive/setup_virt.yml",
-        "playbooks/archive/setup_wallpaper_engine.yml"
+        "playbooks/archive/setup_user.yml"
       ],
       "files": [
         {
           "path": "playbooks/archive/packages.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/archive/setup_cooler_control.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/archive/setup_display_manager.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/archive/setup_gaming.yml",
           "is_entrypoint": false
         },
         {
@@ -486,14 +502,6 @@
         },
         {
           "path": "playbooks/archive/setup_user.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/archive/setup_virt.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/archive/setup_wallpaper_engine.yml",
           "is_entrypoint": false
         }
       ],

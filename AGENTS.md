@@ -41,7 +41,7 @@ dotfiles/
 │   ├── scripts/                 # Пользовательские скрипты автоматизации
 │   └── scripts-pc/              # Аппаратные скрипты (cooler-toggle.sh)
 ├── scripts/                     # Вспомогательные скрипты хоста (mise run ...)
-├── playbooks/                   # Плейбуки (сеть, vars) и архив (playbooks/archive/)
+├── playbooks/                   # Ондеманд-плейбуки (gaming, virt, sddm, net) и архив (playbooks/archive/)
 ├── tests/                       # Тесты инфраструктуры (e2e_virt_manager_test.sh)
 ├── mise.toml                    # Задачи сборки и проверки окружения
 └── lefthook.yml                 # Git хуки качества и линтинга
@@ -189,8 +189,28 @@ dotfiles/
 
 ## 🚀 4. Инструкция по установке и тестированию
 
-### Системный этап (Архив)
-Исторические плейбуки первичной подготовки накопителей и бутстрапа сохранены в `playbooks/archive/` (`setup_system.yml`, `setup_display_manager.yml`).
+### Системный и ондеманд-этап (Mise + Ansible)
+Тяжелые опциональные окружения и задачи с правами root вынесены в ондеманд-задачи `mise`:
+```bash
+# Игровой стек (Steam, Lutris, cachyos-gaming-meta, /data/games):
+mise run setup:gaming
+
+# Виртуализация (KVM/QEMU, libvirt, virt-manager, сети):
+mise run setup:virt
+
+# Аппаратный контроллер вентиляторов CoolerControl (демон и профили):
+mise run setup:cooler-control
+
+# Дисплейный менеджер SDDM (DP-2, Catppuccin) и стилизация Limine:
+mise run setup:sddm
+
+# Wallpaper Engine (AUR linux-wallpaperengine-git + Steam Workshop):
+mise run setup:wallpaper-engine
+
+# Оптимизация сети (TCP BBR, FQ-CoDel, rate-mirrors):
+mise run net:optimize
+```
+Исторические плейбуки первичной подготовки накопителей и бутстрапа сохранены в `playbooks/archive/` (`setup_system.yml`, `setup_user.yml`, `setup_rust.yml`).
 
 ### Развертывание и синхронизация (Yggdrasil)
 Конфигурация применяется декларативно:
@@ -424,8 +444,8 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - `noctalia_plugins_audio-outputs` (Noctalia Plugins Audio Outputs) — Модуль и компоненты директории `noctalia/plugins/audio-outputs` (4 файлов)
 - `noctalia_plugins_audio-outputs_tests` (Noctalia Plugins Audio Outputs Tests) — Тесты для `noctalia_plugins_audio-outputs`
 - `noctalia_plugins_obsidian` (Noctalia Plugins Obsidian) — Модуль и компоненты директории `noctalia/plugins/obsidian` (6 файлов)
-- `playbooks` (Playbooks) — Модуль и компоненты директории `playbooks` (2 файлов)
-- `playbooks_archive` (Playbooks Archive) — Модуль и компоненты директории `playbooks/archive` (10 файлов)
+- `playbooks` (Playbooks) — Модуль и компоненты директории `playbooks` (7 файлов)
+- `playbooks_archive` (Playbooks Archive) — Модуль и компоненты директории `playbooks/archive` (5 файлов)
 - `scripts` (Scripts) — Модуль и компоненты директории `scripts` (4 файлов)
 - `tests` (Tests) — Тесты проекта
 - `wallpaper-engine` (Wallpaper Engine) — Модуль и компоненты директории `wallpaper-engine` (1 файлов)

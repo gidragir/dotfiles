@@ -45,3 +45,35 @@ run = "sudo bash scripts/patrition_delete.sh"
 [tasks."docker:check"]
 description = "Verify Docker storage configuration (overlay2 + XFS)"
 run = "sudo bash scripts/check.sh"
+
+[tasks."setup:gaming"]
+description = "Install Steam, Lutris, NVIDIA tools and gaming directories on demand"
+run = "ansible-playbook -K playbooks/setup_gaming.yml"
+
+[tasks."setup:virt"]
+description = "Provision KVM/QEMU, libvirt daemon, networks and groups on demand"
+run = "ansible-playbook -K playbooks/setup_virt.yml"
+
+[tasks."setup:cooler-control"]
+description = "Configure CoolerControl daemon, fan curves and hardware monitoring"
+run = "ansible-playbook -K playbooks/setup_cooler_control.yml"
+
+[tasks."setup:sddm"]
+description = "Configure SDDM multi-monitor isolation and Catppuccin theme"
+run = "ansible-playbook -K playbooks/setup_display_manager.yml"
+
+[tasks."setup:wallpaper-engine"]
+description = "Install linux-wallpaperengine and configure Steam Workshop integration"
+run = "ansible-playbook playbooks/setup_wallpaper_engine.yml"
+
+[tasks."net:optimize"]
+description = "Apply TCP BBR, FQ-CoDel and network QoS tuning"
+run = "ansible-playbook -K playbooks/setup_network_optimization.yml --tags apply"
+
+[tasks."net:revert"]
+description = "Revert TCP BBR and network QoS tuning to system defaults"
+run = "ansible-playbook -K playbooks/setup_network_optimization.yml --tags revert"
+
+[tasks."rclone:resync"]
+description = "Perform initial rclone bisync resync for Obsidian vault"
+run = "rclone bisync /data/obsidian gdrive:Obsidian --resync --fast-list --modify-window 2s --resilient --recover --retries 3 -v"
