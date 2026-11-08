@@ -2,8 +2,8 @@
 directory: playbooks/archive
 source:
   kind: git
-  blob_sha: 03701c7ed6e308c15d708f89f8ec1c6363d631f2
-  commit_sha: e04f11a8bd33a4fa9f151248d11ad81b279fa60b
+  blob_sha: 27953828ff0d911321528468cf088048829610a5
+  commit_sha: 781b045f2c3eb64ebaa8064f5acf430b3f35e160
 generated_by:
   component: context-init
   role: update
