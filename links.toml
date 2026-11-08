@@ -5,7 +5,6 @@
 "niri/cfg/*" = "~/.config/niri/cfg/*"
 "noctalia" = "~/.config/noctalia"
 "rofi" = "~/.config/rofi"
-"sheldon" = "~/.config/sheldon"
 "systemd/user/*" = "~/.config/systemd/user/*"
 "vivaldi-stable.conf" = "~/.config/vivaldi-stable.conf"
 "wallpaper-engine" = "~/.config/wallpaper-engine"

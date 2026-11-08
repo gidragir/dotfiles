@@ -134,9 +134,9 @@ check_cmd "cargo-nextest"
 check_cmd "bacon"
 check_cmd "cargo-machete"
 check_cmd "sheldon"
-check_cmd "chezmoi"
+check_cmd "ygg"
 
-# Verify user dotfile configurations (managed by chezmoi)
+# Verify user dotfile configurations (managed by ygg)
 check_file() {
     local file_path="$1"
     if [[ -f "$file_path" ]]; then

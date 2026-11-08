@@ -10,7 +10,7 @@
 - **ОС:** CachyOS (оптимизированный Arch Linux под x86-64-v3/v4).
 - **Оконный менеджер / Композитор:** Niri (scrollable-tiling Wayland композитор с конфигурацией на KDL).
 - **Автоматизация установки:** Bash-бутстрапперы (`setup_system.sh`, `setup_user.sh`) и модульные Ansible-плейбуки (`playbooks/`).
-- **Управление конфигурациями:** **Chezmoi** (симлинки из репозитория в `$HOME` через `mode = "symlink"`, шаблоны для host-зависимых файлов).
+- **Управление конфигурациями:** **Yggdrasil (`ygg`)** (декларативное управление модулями, симлинки напрямую в `$HOME`, разделение по аппаратным скоупам `pc` и `asus`, процедурные хуки `setup.nu`).
 - **Стек разработки:** Rust (`rustup`, `mold`, `sccache`), TypeScript/Node (`mise`, `pnpm`, `biome`), Python (`uv`), Cloud-Native & DevOps (`k3d`, `kubectl`, `k9s`, `helm`, `argocd`, `sops`, `age`, `distrobox`, `docker`), QEMU/KVM (`libvirt`, `virtio-fs`).
 - **Аппаратная архитектура хранения:** Оптимизированный двухдисковый Dual-NVMe сетап с распределением файловых систем (Btrfs zstd, XFS prjquota, ext4 noatime).
 
@@ -20,60 +20,30 @@
 
 ```
 dotfiles/
-├── scripts/                     # Системные скрипты и утилиты хоста
-│   ├── setup_system.sh          # [Root] Системный бутстраппер (диски, системные пакеты, SDDM/Limine)
-│   ├── setup_user.sh            # [User] Пользовательский бутстраппер (AUR, chezmoi, mise, rust, timers)
-│   ├── check.sh                 # Диагностика Docker XFS / prjquota / storage
-│   ├── check_setup.sh           # Полная валидация окружения (точки монтирования, кэши, symlinks)
-│   ├── patrition_delete.sh      # ⚠️ ДЕСТРУКТИВНЫЙ скрипт очистки /dev/nvme1n1 (не запускать без спроса!)
-│   ├── setup_wallpaper_engine.sh# Утилита настройки динамических обоев
-│   ├── create_win11_vm.sh       # Скрипт развертывания Windows 11 VM в KVM
-│   └── configure_win11_vm_postinstall.sh # Настройка VirtIO-FS и оборудования Win11 VM
-├── mise.toml                    # Задачи сборки и проверки окружения (mise run knowledge:l0, etc.)
-├── lefthook.yml                 # Git хуки качества и линтинга
-│
+├── ygg.toml                     # Идентификатор модуля и поддерживаемые ОС (cachyos, arch)
+├── links.toml                   # Сопоставления симлинков и скоупы ([scope.pc.links], [scope.asus.links])
+├── packages.toml                # Декларативные списки пакетов (pacman, paru, cargo, scopes)
+├── setup.nu                     # Процедурный хук жизненного цикла (MIME apps, кэши, сервисы)
+├── secrets.example.toml         # Шаблон хостовых секретов для ~/.ygg/secrets.toml
+├── niri/                        # ~/.config/niri (config.kdl, noctalia.kdl, cfg/*.kdl)
+│   └── displays/                # Конфигурации дисплеев (pc.kdl, asus.kdl)
+├── noctalia/                    # ~/.config/noctalia (config.toml, plugins/)
+├── rofi/                        # ~/.config/rofi (cliphist, main, noctalia.rasi)
+├── systemd/                     # ~/.config/systemd/user (openrgb, rclone)
+├── vivaldi-stable.conf          # ~/.config/vivaldi-stable.conf
+├── wallpaper-engine/            # ~/.config/wallpaper-engine (config.json)
+├── waypaper/                    # ~/.config/waypaper (config.ini)
+├── wireplumber/                 # ~/.config/wireplumber (SPA-JSON 0.5 правила)
+├── zsh/                         # ~/.zsh/
+│   ├── alias/                   # Базовые алиасы (core, git, k8s)
+│   ├── alias-pc/                # Аппаратные алиасы (cooler.zsh)
+│   ├── scripts/                 # Пользовательские скрипты автоматизации
+│   └── scripts-pc/              # Аппаратные скрипты (cooler-toggle.sh)
+├── scripts/                     # Системные скрипты и бутстрапперы хоста
 ├── playbooks/                   # Модульные Ansible-плейбуки
-│   ├── vars/
-│   │   └── packages.yml         # 🌟 SINGLE SOURCE OF TRUTH для всех устанавливаемых пакетов
-│   ├── packages.yml             # Плейбук установки (теги: system, user, aur, cargo; host_profile)
-│   ├── setup_system.yml         # Разметка NVMe 1, создание FS, fstab, Docker, KVM
-│   ├── setup_user.yml           # Применение Chezmoi, настройка кэшей, каталогов, user services
-│   ├── setup_display_manager.yml# Catppuccin тема для SDDM и Limine, multi-monitor
-│   ├── setup_rust.yml           # Изолированный быстрый Rust-тулчейн (mold, sccache, cargo-binstall)
-│   ├── setup_gaming.yml         # Gaming-стек CachyOS, Proton/NVIDIA, symlink библиотеки Steam
-│   ├── setup_virt.yml           # QEMU/KVM/libvirt, swtpm, UFW правила, Virtio-FS /srv/Shared
-│   ├── setup_rclone.yml         # Systemd user unit + timer для bisync Obsidian в Google Drive
-│   ├── setup_cooler_control.yml # Профили охлаждения и кривые вентиляторов
-│   ├── setup_wallpaper_engine.yml # Установка и сервис Wallpaper Engine для Wayland
-│   └── setup_network_optimization.yml # Изоляция Bufferbloat, TCP BBR, QoS и шейпинг стартовых всплесков
-├── ai-dotfiles/                 # 🧠 [Repo] Единая декларативная AI-инфраструктура (~/projects/ai-dotfiles)
-│   ├── infra/playbooks/         # Плейбуки настройки AI-стека (setup_ollama, setup_khoj, setup_hermes)
-│   ├── infra/stacks/            # Docker Compose стеки (khoj, hindsight)
-│   ├── infra/stow/              # GNU Stow пакеты (hermes, ollama, opencommit)
-│   ├── services/hermes/         # Hermes Idea Pipeline (18 MCP инструментов, профили, плагины)
-│   ├── services/host-cli/       # Host CLI MCP сервер на TypeScript/Bun
-│   └── scripts/                 # Автономные CLI-утилиты (ai-status.sh, khoj-ctl.sh, etc.)
-│
-├── .agents/                     # 🤖 Antigravity Workspace Customizations
-│   ├── agents/                  # Роли и промпты субагентов (researcher, implementer, etc.)
-│   ├── knowledge/dotfiles/      # Архитектурная база знаний L0/L1 (ADR, CLI, подсистемы)
-│   ├── plugins/                 # Antigravity плагины (headroom, host-cli)
-│   └── skills/                  # Специализированные навыки (hardware-troubleshooting, etc.)
-│
-├── deploy/                      # Локальные стеки деплоя (deploy/khoj/)
 ├── tests/                       # Тесты инфраструктуры (e2e_virt_manager_test.sh)
-│
-├── .chezmoiroot                 # Корень source state Chezmoi (home/)
-├── home/                        # Исходное состояние Chezmoi для $HOME
-│   ├── .chezmoi.toml.tmpl       # Шаблон конфигурации хоста (promptChoiceOnce для chassis)
-│   ├── .chezmoiignore           # Изоляция ai-dotfiles и фильтрация desktop/laptop сервисов
-│   ├── dot_config/              # ~/.config (niri, nvim, ghostty, sheldon, etc.)
-│   ├── dot_cargo/               # ~/.cargo (config.toml)
-│   ├── dot_zsh/                 # ~/.zsh (скрипты, алиасы, бинды)
-│   ├── dot_zshrc                # ~/.zshrc
-│   └── dot_zshenv.tmpl          # Шаблон ~/.zshenv (desktop vs laptop)
-└── linked/                      # Директории с runtime-state приложений
-    └── noctalia/                # ~/.config/noctalia (монтируется как цельный symlink)
+├── mise.toml                    # Задачи сборки и проверки окружения
+└── lefthook.yml                 # Git хуки качества и линтинга
 ```
 
 ---
@@ -151,9 +121,9 @@ dotfiles/
 - **Интеграция с Neovim:** Нажатие `v` в командной строке Zsh открывает текущую команду в Neovim (LazyVim).
 - **Интерактивные превью:** `fzf-tab` перехватывает автодополнения Zsh (`cd`, `kill`, `git`, `systemctl`, `export`) и отображает интерактивные превью с помощью `eza`, `bat` и `ps`.
 - **Фаст-навигация:** `zoxide` (`cd`), `tv` (Television), `spf` (Superfile TUI, автоматически меняющий рабочую директорию при выходе).
-- **Композитор Niri:** Модульная конфигурация в `home/dot_config/niri/cfg/*.kdl`. Оконные правила (`rules.kdl`) изолируют настройки, правила автозапуска лежат в `autostart.kdl`.
+- **Композитор Niri:** Модульная конфигурация в `niri/cfg/*.kdl`. Оконные правила (`rules.kdl`) изолируют настройки, правила автозапуска лежат в `autostart.kdl`.
 - **Централизация скриптов автоматизации и паттерн изоляции системных утилит:**
-  - Все кастомные shell-скрипты, оконные хелперы (например, переключение/вызов окон в Niri), CLI-утилиты и скрипты интеграций хранятся **исключительно** в `home/dot_zsh/scripts/` (в Ygg: `zsh/scripts/`). Каталог `~/.zsh/scripts` автоматически экспортируется в `$PATH` через `.zshenv`. Категорически запрещено создавать изолированные loose-скрипты в `~/.local/bin/` или вне репозитория dotfiles.
+  - Все кастомные shell-скрипты, оконные хелперы (например, переключение/вызов окон в Niri), CLI-утилиты и скрипты интеграций хранятся **исключительно** в `zsh/scripts/`. Каталог `~/.zsh/scripts` автоматически экспортируется в `$PATH` через `.zshenv`. Категорически запрещено создавать изолированные loose-скрипты в `~/.local/bin/` или вне репозитория dotfiles.
   - **Паттерн системных оберток (System Python / Tool Isolation):** Системные GUI/CLI утилиты с шебангом `#!/usr/bin/env python3` (`virt-manager` и др.), зависящие от модулей дистрибутива (`python-gobject`/`gi`), ломаются при перехвате пользовательскими средами `mise`/`pyenv`. Для устранения конфликтов создается декларативная обертка в `zsh/scripts/<tool>`:
     - Сбрасываются переменные виртуальных окружений (`unset VIRTUAL_ENV PYTHONHOME`).
     - Производится вызов строго через системный бинарник: `exec /usr/bin/python3 /usr/bin/<tool> "$@"`.
@@ -221,7 +191,7 @@ bash scripts/setup_user.sh
 Что делает:
 1. Устанавливает коллекцию `kewlfft.aur` в Ansible Galaxy.
 2. Ставит официальные и AUR пакеты, базовый CLI-стек и Cargo-утилиты (`packages.yml --tags user,aur,cargo,cli`).
-3. Настраивает симлинки проектов и применяет конфигурации Chezmoi (`setup_user.yml`).
+3. Настраивает симлинки проектов и применяет конфигурации Yggdrasil (`setup_user.yml`).
 4. Настраивает структуру кэшей Rust, pnpm, uv.
 5. Разворачивает фоновый таймер двусторонней синхронизации rclone для Obsidian (`rclone-obsidian-sync.timer`).
 
@@ -257,27 +227,29 @@ mise -C /data/projects/ai-dotfiles run status
    ansible-playbook playbooks/packages.yml --tags <tag>
    ```
 
-### Сценарий B: Добавление новой конфигурации программы (Chezmoi)
-Если вы настраиваете новую программу, например `ripgrep` или `tmux`:
-1. Разместите файлы конфигурации внутри `home/` так, чтобы путь относительно `home/` зеркалировал целевой путь в `$HOME` с заменой ведущих точек на `dot_`:
-   - `~/.config/mytool/config` → `home/dot_config/mytool/config`.
-   - `~/.mytoolrc` → `home/dot_mytoolrc`.
-2. Примените конфигурацию:
-   ```bash
-   chezmoi apply --source /data/projects/dotfiles --force
+### Сценарий B: Добавление новой конфигурации программы (Yggdrasil)
+Если вы настраиваете новую программу, например `hypridle` или `waypaper`:
+1. Разместите файлы конфигурации внутри соответствующего каталога репозитория (например, `mytool/config`).
+2. Объявите сопоставление в `links.toml`:
+   ```toml
+   "mytool" = "~/.config/mytool"
    ```
-3. Проверьте отсутствие дрифта:
+3. Примените конфигурацию:
    ```bash
-   chezmoi verify
+   ygg apply
    ```
-4. Обновите список в [`README.md`](file:///home/gidragir/projects/dotfiles/README.md).
+4. Проверьте отсутствие дрифта:
+   ```bash
+   ygg status
+   ```
+5. Обновите список в [`README.md`](file:///home/gidragir/projects/dotfiles/README.md).
 
 ### Сценарий C: Изменение настроек Niri (Wayland композитор)
-Конфигурация Niri декомпозирована в [`home/dot_config/niri/cfg/`](file:///home/gidragir/projects/dotfiles/home/dot_config/niri/cfg):
+Конфигурация Niri декомпозирована в [`niri/cfg/`](file:///home/gidragir/projects/dotfiles/niri/cfg):
 - `keybinds.kdl`: Горячие клавиши (используйте существующие соглашения `Mod+...`).
 - `rules.kdl`: Правила для окон (floating, geometry-corner-radius, maximized-to-edges).
 - `autostart.kdl`: Фоновые демоны (панели, буфер обмена `cliphist`, обои).
-- `display.kdl.tmpl`: Разрешение и частота мониторов (шаблон Chezmoi с ветвлением по шасси `desktop` / `laptop`).
+- `display.kdl`: Разрешение и частота мониторов (линкуется через скоупы `pc` или `asus` из `niri/displays/`).
 - `env/`: Локальные оверрайды для конкретной рабочей машины (`include optional=true`).
 
 **Безопасное тестирование без выхода из сеанса:**
@@ -296,16 +268,16 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 
 ### Сценарий E: Создание скриптов автоматизации и CLI-утилит (Window & System Helpers)
 Когда требуется создать вспомогательный скрипт для автоматизации (переключение/вызов окон в Niri, тумблеры режимов, CLI-хелперы, интеграции):
-1. **Единый каталог размещения:** Создавайте файл строго внутри `home/dot_zsh/scripts/<script-name>.sh` (или без расширения).
+1. **Единый каталог размещения:** Создавайте файл строго внутри `zsh/scripts/<script-name>.sh` (или без расширения).
 2. **Права на выполнение:** Всегда выставляйте флаг исполняемости:
    ```bash
-   chmod +x home/dot_zsh/scripts/<script-name>.sh
+   chmod +x zsh/scripts/<script-name>.sh
    ```
-3. **Обновление линков:** Примените Chezmoi:
+3. **Обновление линков:** Примените Yggdrasil:
    ```bash
-   chezmoi apply --source /data/projects/dotfiles --force
+   ygg apply
    ```
-4. **Интеграция с Niri / горячими клавишами:** В `home/dot_config/niri/cfg/keybinds.kdl` привязывайте скрипт через:
+4. **Интеграция с Niri / горячими клавишами:** В `niri/cfg/keybinds.kdl` привязывайте скрипт через:
    ```kdl
    Mod+<Key> { spawn "bash" "-c" "~/.zsh/scripts/<script-name>.sh"; }
    ```
@@ -363,8 +335,8 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 
 ## 💎 7. Золотые правила для AI-агентов (UX & Quality Checklist)
 
-- [ ] **Не ломайте симлинки Chezmoi:** Конфигурации в `~/.config/...` развернуты как симлинки на `/data/projects/dotfiles/home/...` (`mode = "symlink"`). Изменения вносятся либо через Neovim напрямую (симлинк прозрачен), либо в файл исходника репозитория. Никогда не заменяйте симлинк регулярным файлом вручную!
-- [ ] **Все скрипты автоматизации строго в dotfiles:** Никаких разовых скриптов в `~/.local/bin/` или вне репозитория! Все пользовательские CLI-утилиты, хелперы для Niri и скрипты автоматизации создаются в `home/dot_zsh/scripts/`, имеют права `+x`, разворачиваются через Chezmoi и коммитятся в Git.
+- [ ] **Не ломайте симлинки Yggdrasil:** Конфигурации в `~/.config/...` развернуты как симлинки на репозиторий через `links.toml`. Изменения вносятся либо через Neovim напрямую (симлинк прозрачен), либо в файл исходника репозитория. Никогда не заменяйте симлинк регулярным файлом вручную!
+- [ ] **Все скрипты автоматизации строго в dotfiles:** Никаких разовых скриптов в `~/.local/bin/` или вне репозитория! Все пользовательские CLI-утилиты, хелперы для Niri и скрипты автоматизации создаются в `zsh/scripts/`, имеют права `+x`, разворачиваются через Yggdrasil (`ygg apply`) и коммитятся в Git.
 - [ ] **Никаких секретов напрямую — только `mise.local.toml`:** Все чувствительные переменные, токены и приватные настройки выносятся строго в `mise.local.toml` (с добавлением в `.gitignore`), запрещено писать секреты открытым текстом в репозиторий.
 - [ ] **Соблюдайте тему оформления:** Единый визуальный стиль системы — **Catppuccin Frappe**. Все новые терминальные утилиты, темы SDDM, Limine, Ghostty и Neovim должны соответствовать этой палитре.
 - [ ] **Сохраняйте целостность кэшей:** Не меняйте пути кэшей в `setup_user.yml`, так как они завязаны на Dual-NVMe разметку дисков.
@@ -396,7 +368,7 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - **Корень кастомизаций:** Строго использовать `.agents/` для workspace-уровня (навыки, правила, плагины, база знаний). Категорически запрещено создавать или внедрять `.agent/`.
 - **Локации скриптов:**
   - Системный бутстрап и диагностика хоста: [`scripts/`](file:///home/gidragir/projects/dotfiles/scripts) (например, [`scripts/setup_system.sh`](file:///home/gidragir/projects/dotfiles/scripts/setup_system.sh), [`scripts/check.sh`](file:///home/gidragir/projects/dotfiles/scripts/check.sh)).
-  - Пользовательский CLI и оконные хелперы Niri: [`home/dot_zsh/scripts/`](file:///home/gidragir/projects/dotfiles/home/dot_zsh/scripts) (управляются через Chezmoi, развертываются в `~/.zsh/scripts/`).
+  - Пользовательский CLI и оконные хелперы Niri: [`zsh/scripts/`](file:///home/gidragir/projects/dotfiles/zsh/scripts) (управляются через Yggdrasil, развертываются в `~/.zsh/scripts/`).
 - **Синхронизация документации (Doc Integrity):** Поддерживать [`README.md`](file:///home/gidragir/projects/dotfiles/README.md) и [`AGENTS.md`](file:///home/gidragir/projects/dotfiles/AGENTS.md) в строгой синхронизации с реальным деревом каталогов при перемещении или удалении файлов.
 
 ### 3. Shell, Scripting & CLI Invariants
@@ -420,3 +392,32 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - **Card Containers:** `ui.box` является строго терминальным узлом без дочерних элементов (leaf node). Все карточки-контейнеры и секции с дочерними элементами обязаны использовать `ui.column` или `ui.row` (`fill = "surface_variant/0.25"`, `radius = 8`, `border = "outline"`, `borderWidth = 1`).
 - **Panel Padding:** Корневой контейнер любой панели обязан указывать `padding = 14` и `gap = 12` для предотвращения прилипания контента к краям окна.
 - **Plugin Validation:** Всегда выполнять `noctalia plugins lint <path>` после модификации манифестов плагинов или скриптов.
+
+
+## 🗺 Архитектурная карта и навигация (OpenViking L0-L2)
+
+Проект `dotfiles` описан трехуровневой базой знаний context-init (L0-L2), которая лежит в `.context-init/knowledge/` и коммитится вместе с кодом. Людям можно читать её напрямую; агентам — предпочитать MCP/`pack` ниже: это компактнее и учитывает бюджет токенов. После структурных изменений запустите `context-init update` и закоммитьте изменения базы в том же PR.
+
+### ⚡ MCP-First Protocol (context-init)
+
+1. `context_get_subsystems` — карта подсистем проекта (L0).
+2. `context_get_subsystem(subsystem_id)` — компактная L1-карточка подсистемы.
+3. `context_pack(subsystem_id, compress=true)` — AST-сжатый код подсистемы.
+4. `context_check` — проверка архитектурного дрейфа перед сдачей задачи.
+
+Без доступа к MCP (субагенты, скрипты): `rtk context-init pack <subsystem_id> --compress` и `rtk context-init check --compact`.
+
+### 📦 Доступные подсистемы:
+- `docs` (Docs) — Модуль и компоненты директории `docs` (5 файлов)
+- `niri` (Niri) — Модуль и компоненты директории `niri` (15 файлов)
+- `noctalia` (Noctalia) — Модуль и компоненты директории `noctalia` (3 файлов)
+- `noctalia_plugins` (Noctalia Plugins) — Модуль и компоненты директории `noctalia/plugins` (15 файлов)
+- `noctalia_plugins_audio-outputs` (Noctalia Plugins Audio Outputs) — Модуль и компоненты директории `noctalia/plugins/audio-outputs` (4 файлов)
+- `noctalia_plugins_audio-outputs_tests` (Noctalia Plugins Audio Outputs Tests) — Тесты для `noctalia_plugins_audio-outputs`
+- `noctalia_plugins_obsidian` (Noctalia Plugins Obsidian) — Модуль и компоненты директории `noctalia/plugins/obsidian` (6 файлов)
+- `playbooks` (Playbooks) — Модуль и компоненты директории `playbooks` (11 файлов)
+- `playbooks_vars` (Playbooks Vars) — Модуль и компоненты директории `playbooks/vars` (1 файлов)
+- `scripts` (Scripts) — Модуль и компоненты директории `scripts` (8 файлов)
+- `tests` (Tests) — Тесты проекта
+- `wallpaper-engine` (Wallpaper Engine) — Модуль и компоненты директории `wallpaper-engine` (1 файлов)
+- `zsh` (Zsh) — Модуль и компоненты директории `zsh` (14 файлов)

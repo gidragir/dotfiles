@@ -121,7 +121,7 @@ Centralized AI stack and agent orchestration are tracked in [`ai-dotfiles`](file
 
 ## 💻 Terminal & Zsh Integration (`~/.zsh/`)
 
-The terminal environment is built on Zsh in [`home/dot_zsh/`](file:///data/projects/dotfiles/home/dot_zsh) (deployed to `~/.zsh/`) with deep tool integration:
+The terminal environment is built on Zsh in [`zsh/`](file:///data/projects/dotfiles/zsh) (deployed to `~/.zsh/`) with deep tool integration:
 
 ### 1. Vi-mode & Dynamic Cursor
 - Full Vi keymap enabled (`bindkey -v`)
@@ -212,7 +212,6 @@ dotfiles/
 │   └── displays/                # Display configurations (pc.kdl, asus.kdl)
 ├── noctalia/                    # ~/.config/noctalia (config.toml, colors.json, plugins/)
 ├── rofi/                        # ~/.config/rofi (cliphist, main, noctalia.rasi)
-├── sheldon/                     # ~/.config/sheldon (plugins.toml)
 ├── systemd/                     # ~/.config/systemd/user (openrgb, rclone)
 ├── vivaldi-stable.conf          # ~/.config/vivaldi-stable.conf
 ├── wallpaper-engine/            # ~/.config/wallpaper-engine (config.json)
@@ -276,7 +275,7 @@ The repository includes built-in diagnostic scripts in `scripts/` to verify syst
 
 Audit findings for maintaining a clean public dotfiles repository:
 
-1. **Cargo Runtime Artifacts & Caching (`home/dot_cargo/` / `~/.cargo/`)**:
+1. **Cargo Runtime Artifacts & Caching (`~/.cargo/`)**:
    - `~/.cargo/.global-cache` (binary cache file ~80 KB)
    - `~/.cargo/.package-cache` and `.package-cache-mutate`
    - Local binaries in `~/.cargo/bin/`, `registry/`, `git/`, `binstall/`

@@ -17,21 +17,21 @@
   tasks:
 
 
-    # ── 2. Configure Projects symlink & Chezmoi (Dotfiles) ───────────────────
+    # ── 2. Configure Projects symlink & Yggdrasil (Dotfiles) ──────────────────
     - name: Create projects symlink
       ansible.builtin.file:
         src: /data/projects
         dest: "{{ ansible_facts.env.HOME }}/projects"
         state: link
         force: yes
-      tags: [dotfiles, chezmoi]
+      tags: [dotfiles, ygg]
 
     - name: Clone dotfiles repository
       ansible.builtin.git:
         repo: https://github.com/gidragir/dotfiles.git
         dest: /data/projects/dotfiles
         update: no
-      tags: [dotfiles, chezmoi]
+      tags: [dotfiles, ygg]
 
     - name: Ensure target config directories exist
       ansible.builtin.file:
@@ -44,25 +44,25 @@
         - "{{ ansible_facts.env.HOME }}/.config/systemd/user"
         - "{{ ansible_facts.env.HOME }}/.config/wireplumber"
         - "{{ ansible_facts.env.HOME }}/.local/state/zsh"
-      tags: [dotfiles, chezmoi]
+      tags: [dotfiles, ygg]
 
-    - name: Apply dotfiles configuration via chezmoi
+    - name: Apply dotfiles configuration via ygg
       ansible.builtin.command:
-        cmd: chezmoi apply --source /data/projects/dotfiles --force
-      tags: [dotfiles, chezmoi]
+        cmd: ygg apply
+      tags: [dotfiles, ygg]
 
     - name: Clear legacy WirePlumber stream target state
       ansible.builtin.file:
         path: "{{ ansible_facts.env.HOME }}/.local/state/wireplumber/stream-properties"
         state: absent
-      tags: [dotfiles, chezmoi, audio]
+      tags: [dotfiles, ygg, audio]
 
     - name: Restart WirePlumber service to apply new settings
       ansible.builtin.systemd:
         name: wireplumber
         state: restarted
         scope: user
-      tags: [dotfiles, chezmoi, audio]
+      tags: [dotfiles, ygg, audio]
 
     # ── 3. Rust & Cargo (Optimized Layout) ────────────────────────────────────
     - name: Create Cargo cache directories
@@ -135,42 +135,6 @@
         path: /data/obsidian
         state: directory
         mode: '0755'
-      tags: [systemd]
-
-    - name: Create rclone-obsidian-sync.service
-      ansible.builtin.copy:
-        dest: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.service"
-        mode: '0644'
-        content: |
-          [Unit]
-          Description=Rclone – Bisync Obsidian Vault with Google Drive
-
-          [Service]
-          Type=oneshot
-          ExecStart=/usr/bin/rclone bisync /data/obsidian gdrive:Obsidian \
-              --fast-list \
-              --modify-window 2s \
-              --resilient \
-              --recover \
-              --retries 3 \
-              --log-level INFO \
-              --log-file=%h/.cache/rclone/obsidian-sync.log
-      tags: [systemd]
-
-    - name: Create rclone-obsidian-sync.timer
-      ansible.builtin.copy:
-        dest: "{{ ansible_facts.env.HOME }}/.config/systemd/user/rclone-obsidian-sync.timer"
-        mode: '0644'
-        content: |
-          [Unit]
-          Description=Run rclone bisync for Obsidian every 15 minutes
-
-          [Timer]
-          OnBootSec=2m
-          OnUnitActiveSec=15m
-
-          [Install]
-          WantedBy=timers.target
       tags: [systemd]
 
     - name: Create rclone cache directory

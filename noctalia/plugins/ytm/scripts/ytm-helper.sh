@@ -19,7 +19,7 @@ log_msg() {
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOGGLE_SCRIPT="${HOME}/.zsh/scripts/ytm-toggle.sh"
-[ -f "$TOGGLE_SCRIPT" ] || TOGGLE_SCRIPT="${SCRIPT_DIR}/../../../../home/dot_zsh/scripts/ytm-toggle.sh"
+[ -f "$TOGGLE_SCRIPT" ] || TOGGLE_SCRIPT="${SCRIPT_DIR}/../../../../zsh/scripts/ytm-toggle.sh"
 VOLUME_FILE="${LOG_DIR}/ytm-volume"
 
 get_player_name() {

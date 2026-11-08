@@ -1,0 +1,695 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": 4,
+  "project": "dotfiles",
+  "description": "Automated setup scripts and Ansible playbooks for configuring a **CachyOS (Niri)** installation. Transforms a bare system into an optimized development environment for Rust, TypeScript, Python, Kubernetes, and DevOps...",
+  "updated_at": "2026-11-08",
+  "project_type": "Generic / Multi-language",
+  "entrypoints": [
+    "mise.toml"
+  ],
+  "commands": {
+    "custom": {
+      "dotfiles:diff": "rtk mise run dotfiles:diff",
+      "dotfiles:verify": "rtk mise run dotfiles:verify",
+      "test:check": "rtk mise run test:check",
+      "knowledge:l0": "rtk mise run knowledge:l0",
+      "dotfiles:apply": "rtk mise run dotfiles:apply",
+      "dotfiles:status": "rtk mise run dotfiles:status",
+      "test:e2e": "rtk mise run test:e2e",
+      "apply:all": "rtk mise run apply:all"
+    }
+  },
+  "subsystems": [
+    {
+      "id": "docs",
+      "name": "Docs",
+      "summary": "Модуль и компоненты директории `docs` (5 файлов)",
+      "l1_path": "subsystems/docs.md",
+      "tags": [
+        "Generic / Multi-language",
+        "docs"
+      ],
+      "key_files": [
+        "docs/superpowers/plans/2026-10-26-audio-outputs-modernization.md",
+        "docs/superpowers/plans/2026-10-26-audio-outputs.md",
+        "docs/superpowers/plans/2026-11-03-network-optimization-playbook.md",
+        "docs/superpowers/specs/2026-10-26-audio-outputs-design.md",
+        "docs/superpowers/specs/2026-11-03-network-optimization-design.md"
+      ],
+      "files": [
+        {
+          "path": "docs/superpowers/plans/2026-10-26-audio-outputs-modernization.md",
+          "is_entrypoint": false
+        },
+        {
+          "path": "docs/superpowers/plans/2026-10-26-audio-outputs.md",
+          "is_entrypoint": false
+        },
+        {
+          "path": "docs/superpowers/plans/2026-11-03-network-optimization-playbook.md",
+          "is_entrypoint": false
+        },
+        {
+          "path": "docs/superpowers/specs/2026-10-26-audio-outputs-design.md",
+          "is_entrypoint": false
+        },
+        {
+          "path": "docs/superpowers/specs/2026-11-03-network-optimization-design.md",
+          "is_entrypoint": false
+        }
+      ],
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "niri",
+      "name": "Niri",
+      "summary": "Модуль и компоненты директории `niri` (15 файлов)",
+      "l1_path": "subsystems/niri.md",
+      "tags": [
+        "Generic / Multi-language",
+        "niri"
+      ],
+      "key_files": [
+        "niri/cfg/animation.kdl",
+        "niri/cfg/autostart.kdl",
+        "niri/cfg/input.kdl",
+        "niri/cfg/keybinds.kdl",
+        "niri/cfg/keybinds/apps.kdl",
+        "niri/cfg/keybinds/layout-system.kdl",
+        "niri/cfg/keybinds/media.kdl",
+        "niri/cfg/keybinds/navigation.kdl",
+        "niri/cfg/keybinds/workspaces.kdl",
+        "niri/cfg/layout.kdl",
+        "niri/cfg/misc.kdl",
+        "niri/cfg/rules.kdl",
+        "niri/config.kdl",
+        "niri/displays/pc.kdl",
+        "niri/noctalia.kdl"
+      ],
+      "files": [
+        {
+          "path": "niri/cfg/animation.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/autostart.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/input.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/keybinds.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/keybinds/apps.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/keybinds/layout-system.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/keybinds/media.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/keybinds/navigation.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/keybinds/workspaces.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/layout.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/misc.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/cfg/rules.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/config.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/displays/pc.kdl",
+          "is_entrypoint": false
+        },
+        {
+          "path": "niri/noctalia.kdl",
+          "is_entrypoint": false
+        }
+      ],
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "noctalia",
+      "name": "Noctalia",
+      "summary": "Модуль и компоненты директории `noctalia` (3 файлов)",
+      "l1_path": "subsystems/noctalia.md",
+      "tags": [
+        "Generic / Multi-language",
+        "noctalia"
+      ],
+      "key_files": [
+        "noctalia/colors.json",
+        "noctalia/config.toml",
+        "noctalia/settings.json"
+      ],
+      "files": [
+        {
+          "path": "noctalia/colors.json",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/config.toml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/settings.json",
+          "is_entrypoint": false
+        }
+      ],
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "noctalia_plugins",
+      "name": "Noctalia Plugins",
+      "summary": "Модуль и компоненты директории `noctalia/plugins` (15 файлов)",
+      "l1_path": "subsystems/noctalia_plugins.md",
+      "tags": [
+        "Generic / Multi-language",
+        "noctalia_plugins"
+      ],
+      "key_files": [
+        "noctalia/plugins/catalog.toml",
+        "noctalia/plugins/hermes/plugin.toml",
+        "noctalia/plugins/openrgb/README.md",
+        "noctalia/plugins/openrgb/plugin.toml",
+        "noctalia/plugins/openrgb/scripts/lib/devices.sh",
+        "noctalia/plugins/openrgb/scripts/lib/json.sh",
+        "noctalia/plugins/openrgb/scripts/lib/state.sh",
+        "noctalia/plugins/openrgb/scripts/openrgb-helper.sh",
+        "noctalia/plugins/virt-manager/README.md",
+        "noctalia/plugins/virt-manager/plugin.toml",
+        "noctalia/plugins/virt-manager/scripts/virt-helper.sh",
+        "noctalia/plugins/ytm/plugin.toml",
+        "noctalia/plugins/ytm/scripts/ytm-helper.sh",
+        "noctalia/plugins/ytm/translations/en.json",
+        "noctalia/plugins/ytm/translations/ru.json"
+      ],
+      "files": [
+        {
+          "path": "noctalia/plugins/catalog.toml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/hermes/plugin.toml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/openrgb/README.md",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/openrgb/plugin.toml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/openrgb/scripts/lib/devices.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/openrgb/scripts/lib/json.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/openrgb/scripts/lib/state.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/openrgb/scripts/openrgb-helper.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/virt-manager/README.md",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/virt-manager/plugin.toml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/virt-manager/scripts/virt-helper.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/ytm/plugin.toml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/ytm/scripts/ytm-helper.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/ytm/translations/en.json",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/ytm/translations/ru.json",
+          "is_entrypoint": false
+        }
+      ],
+      "parent": "noctalia",
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "noctalia_plugins_audio-outputs",
+      "name": "Noctalia Plugins Audio Outputs",
+      "summary": "Модуль и компоненты директории `noctalia/plugins/audio-outputs` (4 файлов)",
+      "l1_path": "subsystems/noctalia_plugins_audio-outputs.md",
+      "tags": [
+        "Generic / Multi-language",
+        "noctalia_plugins_audio-outputs"
+      ],
+      "key_files": [
+        "noctalia/plugins/audio-outputs/README.md",
+        "noctalia/plugins/audio-outputs/plugin.toml",
+        "noctalia/plugins/audio-outputs/translations/en.json",
+        "noctalia/plugins/audio-outputs/translations/ru.json"
+      ],
+      "files": [
+        {
+          "path": "noctalia/plugins/audio-outputs/README.md",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/audio-outputs/plugin.toml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/audio-outputs/translations/en.json",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/audio-outputs/translations/ru.json",
+          "is_entrypoint": false
+        }
+      ],
+      "parent": "noctalia_plugins",
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "noctalia_plugins_audio-outputs_tests",
+      "name": "Noctalia Plugins Audio Outputs Tests",
+      "summary": "Тесты для `noctalia_plugins_audio-outputs`",
+      "l1_path": "subsystems/noctalia_plugins_audio-outputs_tests.md",
+      "tags": [
+        "Generic / Multi-language",
+        "noctalia_plugins_audio-outputs_tests",
+        "tests"
+      ],
+      "key_files": [
+        "noctalia/plugins/audio-outputs/tests/fixtures/cards.json",
+        "noctalia/plugins/audio-outputs/tests/fixtures/sinks.json",
+        "noctalia/plugins/audio-outputs/tests/json.lua",
+        "noctalia/plugins/audio-outputs/tests/modern_service_test.lua",
+        "noctalia/plugins/audio-outputs/tests/parser_test.lua",
+        "noctalia/plugins/audio-outputs/tests/service_test.lua",
+        "noctalia/plugins/audio-outputs/tests/widget_launcher_test.lua"
+      ],
+      "files": [
+        {
+          "path": "noctalia/plugins/audio-outputs/tests/fixtures/cards.json",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/audio-outputs/tests/fixtures/sinks.json",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/audio-outputs/tests/json.lua",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/audio-outputs/tests/modern_service_test.lua",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/audio-outputs/tests/parser_test.lua",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/audio-outputs/tests/service_test.lua",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/audio-outputs/tests/widget_launcher_test.lua",
+          "is_entrypoint": false
+        }
+      ],
+      "parent": "noctalia_plugins_audio-outputs",
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "noctalia_plugins_obsidian",
+      "name": "Noctalia Plugins Obsidian",
+      "summary": "Модуль и компоненты директории `noctalia/plugins/obsidian` (6 файлов)",
+      "l1_path": "subsystems/noctalia_plugins_obsidian.md",
+      "tags": [
+        "Generic / Multi-language",
+        "noctalia_plugins_obsidian"
+      ],
+      "key_files": [
+        "noctalia/plugins/obsidian/README.md",
+        "noctalia/plugins/obsidian/plugin.toml",
+        "noctalia/plugins/obsidian/scripts/create-note.sh",
+        "noctalia/plugins/obsidian/scripts/obsidian-helper.sh",
+        "noctalia/plugins/obsidian/translations/en.json",
+        "noctalia/plugins/obsidian/translations/ru.json"
+      ],
+      "files": [
+        {
+          "path": "noctalia/plugins/obsidian/README.md",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/obsidian/plugin.toml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/obsidian/scripts/create-note.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/obsidian/scripts/obsidian-helper.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/obsidian/translations/en.json",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/plugins/obsidian/translations/ru.json",
+          "is_entrypoint": false
+        }
+      ],
+      "parent": "noctalia_plugins",
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "playbooks",
+      "name": "Playbooks",
+      "summary": "Модуль и компоненты директории `playbooks` (11 файлов)",
+      "l1_path": "subsystems/playbooks.md",
+      "tags": [
+        "Generic / Multi-language",
+        "playbooks"
+      ],
+      "key_files": [
+        "playbooks/packages.yml",
+        "playbooks/setup_cooler_control.yml",
+        "playbooks/setup_display_manager.yml",
+        "playbooks/setup_gaming.yml",
+        "playbooks/setup_network_optimization.yml",
+        "playbooks/setup_rclone.yml",
+        "playbooks/setup_rust.yml",
+        "playbooks/setup_system.yml",
+        "playbooks/setup_user.yml",
+        "playbooks/setup_virt.yml",
+        "playbooks/setup_wallpaper_engine.yml"
+      ],
+      "files": [
+        {
+          "path": "playbooks/packages.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_cooler_control.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_display_manager.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_gaming.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_network_optimization.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_rclone.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_rust.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_system.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_user.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_virt.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/setup_wallpaper_engine.yml",
+          "is_entrypoint": false
+        }
+      ],
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "playbooks_vars",
+      "name": "Playbooks Vars",
+      "summary": "Модуль и компоненты директории `playbooks/vars` (1 файлов)",
+      "l1_path": "subsystems/playbooks_vars.md",
+      "tags": [
+        "Generic / Multi-language",
+        "playbooks_vars"
+      ],
+      "key_files": [
+        "playbooks/vars/packages.yml"
+      ],
+      "files": [
+        {
+          "path": "playbooks/vars/packages.yml",
+          "is_entrypoint": false
+        }
+      ],
+      "parent": "playbooks",
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "scripts",
+      "name": "Scripts",
+      "summary": "Модуль и компоненты директории `scripts` (8 файлов)",
+      "l1_path": "subsystems/scripts.md",
+      "tags": [
+        "Generic / Multi-language",
+        "scripts"
+      ],
+      "key_files": [
+        "scripts/check.sh",
+        "scripts/check_setup.sh",
+        "scripts/configure_win11_vm_postinstall.sh",
+        "scripts/create_win11_vm.sh",
+        "scripts/patrition_delete.sh",
+        "scripts/setup_system.sh",
+        "scripts/setup_user.sh",
+        "scripts/setup_wallpaper_engine.sh"
+      ],
+      "files": [
+        {
+          "path": "scripts/check.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "scripts/check_setup.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "scripts/configure_win11_vm_postinstall.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "scripts/create_win11_vm.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "scripts/patrition_delete.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "scripts/setup_system.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "scripts/setup_user.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "scripts/setup_wallpaper_engine.sh",
+          "is_entrypoint": false
+        }
+      ],
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "tests",
+      "name": "Tests",
+      "summary": "Тесты проекта",
+      "l1_path": "subsystems/tests.md",
+      "tags": [
+        "Generic / Multi-language",
+        "tests",
+        "tests"
+      ],
+      "key_files": [
+        "tests/e2e_virt_manager_test.sh",
+        "tests/test_network_optimization.sh"
+      ],
+      "files": [
+        {
+          "path": "tests/e2e_virt_manager_test.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "tests/test_network_optimization.sh",
+          "is_entrypoint": false
+        }
+      ],
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "wallpaper-engine",
+      "name": "Wallpaper Engine",
+      "summary": "Модуль и компоненты директории `wallpaper-engine` (1 файлов)",
+      "l1_path": "subsystems/wallpaper-engine.md",
+      "tags": [
+        "Generic / Multi-language",
+        "wallpaper-engine"
+      ],
+      "key_files": [
+        "wallpaper-engine/config.json"
+      ],
+      "files": [
+        {
+          "path": "wallpaper-engine/config.json",
+          "is_entrypoint": false
+        }
+      ],
+      "summary_source": "heuristic"
+    },
+    {
+      "id": "zsh",
+      "name": "Zsh",
+      "summary": "Модуль и компоненты директории `zsh` (14 файлов)",
+      "l1_path": "subsystems/zsh.md",
+      "tags": [
+        "Generic / Multi-language",
+        "zsh"
+      ],
+      "key_files": [
+        "zsh/alias-pc/cooler.zsh",
+        "zsh/alias/core.zsh",
+        "zsh/alias/git.zsh",
+        "zsh/alias/k8s.zsh",
+        "zsh/scripts-pc/cooler-toggle.sh",
+        "zsh/scripts/clipboard-picker.sh",
+        "zsh/scripts/noctalia-dmenu.sh",
+        "zsh/scripts/obsidian-create-note.sh",
+        "zsh/scripts/obsidian-helper.sh",
+        "zsh/scripts/path-picker-dmenu.sh",
+        "zsh/scripts/path-picker.sh",
+        "zsh/scripts/spf-clip.sh",
+        "zsh/scripts/virt-helper.sh",
+        "zsh/scripts/ytm-toggle.sh"
+      ],
+      "files": [
+        {
+          "path": "zsh/alias-pc/cooler.zsh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/alias/core.zsh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/alias/git.zsh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/alias/k8s.zsh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/scripts-pc/cooler-toggle.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/scripts/clipboard-picker.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/scripts/noctalia-dmenu.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/scripts/obsidian-create-note.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/scripts/obsidian-helper.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/scripts/path-picker-dmenu.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/scripts/path-picker.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/scripts/spf-clip.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/scripts/virt-helper.sh",
+          "is_entrypoint": false
+        },
+        {
+          "path": "zsh/scripts/ytm-toggle.sh",
+          "is_entrypoint": false
+        }
+      ],
+      "summary_source": "heuristic"
+    }
+  ],
+  "core_rules": [
+    "Поддерживать актуальность карт модулей и документации архитектуры.",
+    "Все изменения фиксируются через атомарные и типизированные коммиты."
+  ],
+  "generator": {
+    "version": "0.4.0",
+    "build": "05b1743"
+  }
+}

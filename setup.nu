@@ -1,4 +1,5 @@
 #!/usr/bin/env nu
+use sdk.nu [safe-link, onchange]
 use state.nu [expand-target-path]
 
 let is_dry = (($env.YGG_DRY_RUN? | default "false") == "true")
@@ -35,11 +36,14 @@ if not $is_dry {
         if ("/data/projects" | path exists) {
             mkdir "/data/projects/.cargo-cache/registry" "/data/projects/.cargo-cache/git"
             mkdir ("~/.cargo" | path expand)
-            ^ln -sfn "/data/projects/.cargo-cache/registry" ("~/.cargo/registry" | path expand)
-            ^ln -sfn "/data/projects/.cargo-cache/git" ("~/.cargo/git" | path expand)
+            safe-link "/data/projects/.cargo-cache/registry" "~/.cargo/registry"
+            safe-link "/data/projects/.cargo-cache/git" "~/.cargo/git"
         }
 
-        ^systemctl --user daemon-reload | complete | ignore
+        onchange "dotfiles_user_units" ["systemd/user/*", "systemd/user-pc/*"] {
+            ^systemctl --user daemon-reload | complete | ignore
+        }
+
         if (("~/.config/rclone/rclone.conf" | path expand) | path exists) {
             ^systemctl --user enable --now rclone-obsidian-sync.timer | complete | ignore
         }

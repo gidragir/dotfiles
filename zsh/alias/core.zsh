@@ -17,8 +17,8 @@ alias apt-get="man pacman"
 # ── Utilities ─────────────────────────────────────────────────────────────────
 alias please="sudo"
 alias tb="nc termbin.com 9999"
-alias dotfiles-sync="ansible-playbook /data/projects/dotfiles/playbooks/setup_user.yml --tags chezmoi"
-alias dotfiles-sync-cli="sudo -v && ansible-playbook /data/projects/dotfiles/playbooks/setup_user.yml --tags chezmoi && ansible-playbook /data/projects/dotfiles/playbooks/packages.yml --tags cli"
+alias dotfiles-sync="ygg apply"
+alias dotfiles-sync-cli="sudo -v && ygg apply && ansible-playbook /data/projects/dotfiles/playbooks/packages.yml --tags cli"
 
 # ── Sandbox & Containers ──────────────────────────────────────────────────────
 # Sandbox: test Wayland GUI tools without polluting main session

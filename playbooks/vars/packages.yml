@@ -45,7 +45,6 @@ unwanted_packages:
 
 # Essential CLI tools for shell environment (pacman / AUR)
 cli_essential_packages:
-  - chezmoi
   - eza
   - bat
   - ripgrep
@@ -60,7 +59,6 @@ user_pacman_packages:
   - neovim
   - jq
   - chromium
-  - chezmoi
   - stow   # Required for ai-dotfiles repository on workstation host
   - git
   - ripgrep
