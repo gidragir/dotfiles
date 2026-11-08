@@ -30,6 +30,18 @@ run = "ygg apply"
 description = "Run E2E test suite for Noctalia plugins"
 run = "bash tests/e2e_virt_manager_test.sh"
 
-[tasks."test:check"]
-description = "Run comprehensive host environment health check"
-run = "bash scripts/check_setup.sh"
+[tasks."vm:create"]
+description = "Automated creation of Windows 11 VM in KVM/libvirt"
+run = "bash scripts/create_win11_vm.sh"
+
+[tasks."vm:postinstall"]
+description = "Post-installation configuration for Windows 11 VM (virtio-fs and video)"
+run = "bash scripts/configure_win11_vm_postinstall.sh"
+
+[tasks."disk:wipe"]
+description = "Destructive disk wipe utility for /dev/nvme1n1"
+run = "sudo bash scripts/patrition_delete.sh"
+
+[tasks."docker:check"]
+description = "Verify Docker storage configuration (overlay2 + XFS)"
+run = "sudo bash scripts/check.sh"

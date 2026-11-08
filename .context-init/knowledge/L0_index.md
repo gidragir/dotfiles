@@ -21,9 +21,9 @@
 | **Noctalia Plugins Audio Outputs** | Модуль и компоненты директории `noctalia/plugins/audio-outputs` (4 файлов) | `-` | [subsystems/noctalia_plugins_audio-outputs.md](subsystems/noctalia_plugins_audio-outputs.md) |
 | **Noctalia Plugins Audio Outputs Tests** | Тесты для `noctalia_plugins_audio-outputs` | `-` | [subsystems/noctalia_plugins_audio-outputs_tests.md](subsystems/noctalia_plugins_audio-outputs_tests.md) |
 | **Noctalia Plugins Obsidian** | Модуль и компоненты директории `noctalia/plugins/obsidian` (6 файлов) | `-` | [subsystems/noctalia_plugins_obsidian.md](subsystems/noctalia_plugins_obsidian.md) |
-| **Playbooks** | Модуль и компоненты директории `playbooks` (11 файлов) | `-` | [subsystems/playbooks.md](subsystems/playbooks.md) |
-| **Playbooks Vars** | Модуль и компоненты директории `playbooks/vars` (1 файлов) | `-` | [subsystems/playbooks_vars.md](subsystems/playbooks_vars.md) |
-| **Scripts** | Модуль и компоненты директории `scripts` (8 файлов) | `-` | [subsystems/scripts.md](subsystems/scripts.md) |
+| **Playbooks** | Модуль и компоненты директории `playbooks` (2 файлов) | `-` | [subsystems/playbooks.md](subsystems/playbooks.md) |
+| **Playbooks Archive** | Модуль и компоненты директории `playbooks/archive` (10 файлов) | `-` | [subsystems/playbooks_archive.md](subsystems/playbooks_archive.md) |
+| **Scripts** | Модуль и компоненты директории `scripts` (4 файлов) | `-` | [subsystems/scripts.md](subsystems/scripts.md) |
 | **Tests** | Тесты проекта | `-` | [subsystems/tests.md](subsystems/tests.md) |
 | **Wallpaper Engine** | Модуль и компоненты директории `wallpaper-engine` (1 файлов) | `-` | [subsystems/wallpaper-engine.md](subsystems/wallpaper-engine.md) |
 | **Zsh** | Модуль и компоненты директории `zsh` (14 файлов) | `-` | [subsystems/zsh.md](subsystems/zsh.md) |

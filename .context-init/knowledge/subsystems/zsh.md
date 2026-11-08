@@ -2,8 +2,8 @@
 directory: zsh
 source:
   kind: git
-  blob_sha: d72b8b86fceec7ab86de8db09274ea990abca08f
-  commit_sha: ba439a6caee1b925979b54cd7c941cfd1937f1a9
+  blob_sha: ddeaf9d5c19931d0de0d03832ebbd24108c9a989
+  commit_sha: 3513584e9132f4a9b405ac86a35ab7e259512521
 generated_by:
   component: context-init
   role: update

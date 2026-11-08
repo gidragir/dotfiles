@@ -2,8 +2,8 @@
 directory: noctalia/plugins
 source:
   kind: git
-  blob_sha: 074b692ab8bae73a5249c8923d56c68ab5f85aef
-  commit_sha: ba439a6caee1b925979b54cd7c941cfd1937f1a9
+  blob_sha: d832a3e3f3936edcd6da90150f25c818fa5add5b
+  commit_sha: 4f014b69b5a4f93ef6619c7dec99aa846a474bd2
 generated_by:
   component: context-init
   role: update

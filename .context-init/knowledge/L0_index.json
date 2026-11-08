@@ -10,14 +10,17 @@
   ],
   "commands": {
     "custom": {
-      "dotfiles:diff": "rtk mise run dotfiles:diff",
       "dotfiles:verify": "rtk mise run dotfiles:verify",
-      "test:check": "rtk mise run test:check",
-      "knowledge:l0": "rtk mise run knowledge:l0",
-      "dotfiles:apply": "rtk mise run dotfiles:apply",
       "dotfiles:status": "rtk mise run dotfiles:status",
+      "knowledge:l0": "rtk mise run knowledge:l0",
+      "apply:all": "rtk mise run apply:all",
+      "disk:wipe": "rtk mise run disk:wipe",
+      "vm:create": "rtk mise run vm:create",
+      "dotfiles:diff": "rtk mise run dotfiles:diff",
       "test:e2e": "rtk mise run test:e2e",
-      "apply:all": "rtk mise run apply:all"
+      "vm:postinstall": "rtk mise run vm:postinstall",
+      "docker:check": "rtk mise run docker:check",
+      "dotfiles:apply": "rtk mise run dotfiles:apply"
     }
   },
   "subsystems": [
@@ -409,88 +412,88 @@
     {
       "id": "playbooks",
       "name": "Playbooks",
-      "summary": "Модуль и компоненты директории `playbooks` (11 файлов)",
+      "summary": "Модуль и компоненты директории `playbooks` (2 файлов)",
       "l1_path": "subsystems/playbooks.md",
       "tags": [
         "Generic / Multi-language",
         "playbooks"
       ],
       "key_files": [
-        "playbooks/packages.yml",
-        "playbooks/setup_cooler_control.yml",
-        "playbooks/setup_display_manager.yml",
-        "playbooks/setup_gaming.yml",
         "playbooks/setup_network_optimization.yml",
-        "playbooks/setup_rclone.yml",
-        "playbooks/setup_rust.yml",
-        "playbooks/setup_system.yml",
-        "playbooks/setup_user.yml",
-        "playbooks/setup_virt.yml",
-        "playbooks/setup_wallpaper_engine.yml"
+        "playbooks/vars/packages.yml"
       ],
       "files": [
-        {
-          "path": "playbooks/packages.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/setup_cooler_control.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/setup_display_manager.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/setup_gaming.yml",
-          "is_entrypoint": false
-        },
         {
           "path": "playbooks/setup_network_optimization.yml",
           "is_entrypoint": false
         },
         {
-          "path": "playbooks/setup_rclone.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/setup_rust.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/setup_system.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/setup_user.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/setup_virt.yml",
-          "is_entrypoint": false
-        },
-        {
-          "path": "playbooks/setup_wallpaper_engine.yml",
+          "path": "playbooks/vars/packages.yml",
           "is_entrypoint": false
         }
       ],
       "summary_source": "heuristic"
     },
     {
-      "id": "playbooks_vars",
-      "name": "Playbooks Vars",
-      "summary": "Модуль и компоненты директории `playbooks/vars` (1 файлов)",
-      "l1_path": "subsystems/playbooks_vars.md",
+      "id": "playbooks_archive",
+      "name": "Playbooks Archive",
+      "summary": "Модуль и компоненты директории `playbooks/archive` (10 файлов)",
+      "l1_path": "subsystems/playbooks_archive.md",
       "tags": [
         "Generic / Multi-language",
-        "playbooks_vars"
+        "playbooks_archive"
       ],
       "key_files": [
-        "playbooks/vars/packages.yml"
+        "playbooks/archive/packages.yml",
+        "playbooks/archive/setup_cooler_control.yml",
+        "playbooks/archive/setup_display_manager.yml",
+        "playbooks/archive/setup_gaming.yml",
+        "playbooks/archive/setup_rclone.yml",
+        "playbooks/archive/setup_rust.yml",
+        "playbooks/archive/setup_system.yml",
+        "playbooks/archive/setup_user.yml",
+        "playbooks/archive/setup_virt.yml",
+        "playbooks/archive/setup_wallpaper_engine.yml"
       ],
       "files": [
         {
-          "path": "playbooks/vars/packages.yml",
+          "path": "playbooks/archive/packages.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/archive/setup_cooler_control.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/archive/setup_display_manager.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/archive/setup_gaming.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/archive/setup_rclone.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/archive/setup_rust.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/archive/setup_system.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/archive/setup_user.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/archive/setup_virt.yml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "playbooks/archive/setup_wallpaper_engine.yml",
           "is_entrypoint": false
         }
       ],
@@ -500,7 +503,7 @@
     {
       "id": "scripts",
       "name": "Scripts",
-      "summary": "Модуль и компоненты директории `scripts` (8 файлов)",
+      "summary": "Модуль и компоненты директории `scripts` (4 файлов)",
       "l1_path": "subsystems/scripts.md",
       "tags": [
         "Generic / Multi-language",
@@ -508,21 +511,13 @@
       ],
       "key_files": [
         "scripts/check.sh",
-        "scripts/check_setup.sh",
         "scripts/configure_win11_vm_postinstall.sh",
         "scripts/create_win11_vm.sh",
-        "scripts/patrition_delete.sh",
-        "scripts/setup_system.sh",
-        "scripts/setup_user.sh",
-        "scripts/setup_wallpaper_engine.sh"
+        "scripts/patrition_delete.sh"
       ],
       "files": [
         {
           "path": "scripts/check.sh",
-          "is_entrypoint": false
-        },
-        {
-          "path": "scripts/check_setup.sh",
           "is_entrypoint": false
         },
         {
@@ -535,18 +530,6 @@
         },
         {
           "path": "scripts/patrition_delete.sh",
-          "is_entrypoint": false
-        },
-        {
-          "path": "scripts/setup_system.sh",
-          "is_entrypoint": false
-        },
-        {
-          "path": "scripts/setup_user.sh",
-          "is_entrypoint": false
-        },
-        {
-          "path": "scripts/setup_wallpaper_engine.sh",
           "is_entrypoint": false
         }
       ],

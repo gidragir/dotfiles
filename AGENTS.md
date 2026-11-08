@@ -9,7 +9,7 @@
 Данный репозиторий представляет собой декларативную систему автоматизированного развертывания и управления окружением (Infrastructure-as-Code для локальной рабочей станции):
 - **ОС:** CachyOS (оптимизированный Arch Linux под x86-64-v3/v4).
 - **Оконный менеджер / Композитор:** Niri (scrollable-tiling Wayland композитор с конфигурацией на KDL).
-- **Автоматизация установки:** Bash-бутстрапперы (`setup_system.sh`, `setup_user.sh`) и модульные Ansible-плейбуки (`playbooks/`).
+- **Автоматизация и управление:** Декларативное управление через Yggdrasil (`ygg apply`) и задачи `mise` (`mise run ...`).
 - **Управление конфигурациями:** **Yggdrasil (`ygg`)** (декларативное управление модулями, симлинки напрямую в `$HOME`, разделение по аппаратным скоупам `pc` и `asus`, процедурные хуки `setup.nu`).
 - **Стек разработки:** Rust (`rustup`, `mold`, `sccache`), TypeScript/Node (`mise`, `pnpm`, `biome`), Python (`uv`), Cloud-Native & DevOps (`k3d`, `kubectl`, `k9s`, `helm`, `argocd`, `sops`, `age`, `distrobox`, `docker`), QEMU/KVM (`libvirt`, `virtio-fs`).
 - **Аппаратная архитектура хранения:** Оптимизированный двухдисковый Dual-NVMe сетап с распределением файловых систем (Btrfs zstd, XFS prjquota, ext4 noatime).
@@ -30,7 +30,8 @@ dotfiles/
 ├── noctalia/                    # ~/.config/noctalia (config.toml, plugins/)
 ├── rofi/                        # ~/.config/rofi (cliphist, main, noctalia.rasi)
 ├── systemd/                     # ~/.config/systemd/user (openrgb, rclone)
-├── vivaldi-stable.conf          # ~/.config/vivaldi-stable.conf
+├── vivaldi/                     # ~/.config/vivaldi-stable.conf
+│   └── vivaldi-stable.conf
 ├── wallpaper-engine/            # ~/.config/wallpaper-engine (config.json)
 ├── waypaper/                    # ~/.config/waypaper (config.ini)
 ├── wireplumber/                 # ~/.config/wireplumber (SPA-JSON 0.5 правила)
@@ -39,8 +40,8 @@ dotfiles/
 │   ├── alias-pc/                # Аппаратные алиасы (cooler.zsh)
 │   ├── scripts/                 # Пользовательские скрипты автоматизации
 │   └── scripts-pc/              # Аппаратные скрипты (cooler-toggle.sh)
-├── scripts/                     # Системные скрипты и бутстрапперы хоста
-├── playbooks/                   # Модульные Ansible-плейбуки
+├── scripts/                     # Вспомогательные скрипты хоста (mise run ...)
+├── playbooks/                   # Плейбуки (сеть, vars) и архив (playbooks/archive/)
 ├── tests/                       # Тесты инфраструктуры (e2e_virt_manager_test.sh)
 ├── mise.toml                    # Задачи сборки и проверки окружения
 └── lefthook.yml                 # Git хуки качества и линтинга
@@ -188,40 +189,29 @@ dotfiles/
 
 ## 🚀 4. Инструкция по установке и тестированию
 
-### Системный этап (Root)
-Запускается на чистой системе CachyOS:
-```bash
-sudo bash scripts/setup_system.sh
-```
-Что делает:
-1. Клонирует репозиторий при необходимости в `/data/projects/dotfiles`.
-2. Запускает `playbooks/packages.yml --tags system`.
-3. Запускает `playbooks/setup_system.yml` (разбивает NVMe 1, настраивает монтирование, группы `docker`, `libvirt`, `kvm`).
-4. Запускает `playbooks/setup_display_manager.yml` (темизация SDDM и Limine).
-> **Важно:** После выполнения шага обязателен перезаход в сессию (`log out` / `reboot`) для применения групп пользователя.
+### Системный этап (Архив)
+Исторические плейбуки первичной подготовки накопителей и бутстрапа сохранены в `playbooks/archive/` (`setup_system.yml`, `setup_display_manager.yml`).
 
-### Пользовательский этап (User)
-Запускается от обычного пользователя (не root):
+### Развертывание и синхронизация (Yggdrasil)
+Конфигурация применяется декларативно:
 ```bash
-bash scripts/setup_user.sh
+# Статус модулей:
+ygg status
+
+# Предпросмотр изменений (dry-run):
+ygg apply -n
+
+# Применение конфигурации и установка пакетов:
+ygg apply
 ```
-Что делает:
-1. Устанавливает коллекцию `kewlfft.aur` в Ansible Galaxy.
-2. Ставит официальные и AUR пакеты, базовый CLI-стек и Cargo-утилиты (`packages.yml --tags user,aur,cargo,cli`).
-3. Настраивает симлинки проектов и применяет конфигурации Yggdrasil (`setup_user.yml`).
-4. Настраивает структуру кэшей Rust, pnpm, uv.
-5. Разворачивает фоновый таймер двусторонней синхронизации rclone для Obsidian (`rclone-obsidian-sync.timer`).
 
 ### Проверка корректности окружения (Health Checks)
-После установки или внесения инфраструктурных изменений обязательно запустите диагностические скрипты:
+После внесения инфраструктурных изменений запустите диагностические задачи:
 ```bash
-# 1. Проверка пользовательского окружения, кэшей и монтирования:
-bash scripts/check_setup.sh
+# 1. Проверка Docker-хранилища, XFS ftype и prjquota:
+mise run docker:check
 
-# 2. Проверка Docker-хранилища, XFS ftype и prjquota:
-sudo bash scripts/check.sh
-
-# 3. Комплексная проверка AI-стека (Ollama, Headroom, Khoj, Postgres):
+# 2. Комплексная проверка AI-стека (Ollama, Headroom, Khoj, Postgres):
 mise -C /data/projects/ai-dotfiles run status
 ```
 
@@ -363,7 +353,7 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - [ ] **Декларативность моделей AI:** Все локальные модели Ollama объявляются в `ai-dotfiles/infra/playbooks/setup_ollama.yml`.
 - [ ] **Защитное программирование MCP:** При реализации или обновлении MCP-инструментов обеспечьте Zod-валидацию аргументов и осмысленные подсказки со списком доступных инструментов (`available_tools`) для самокоррекции моделей 14B.
 - [ ] **Осторожность с дисками:** Никогда не запускайте скрипты разметки диска (`playbooks/setup_system.yml`, `scripts/patrition_delete.sh`) без явного указания и подтверждения от пользователя.
-- [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `scripts/check_setup.sh`, а для AI-сервисов — `mise -C /data/projects/ai-dotfiles run status`.
+- [ ] **Проверяйте работоспособность:** Перед отчетом пользователю о завершении задачи выполните синтаксическую валидацию или `mise run test:e2e`, а для AI-сервисов — `mise -C /data/projects/ai-dotfiles run status`.
 
 ---
 
@@ -384,7 +374,7 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 ### 2. Antigravity & Workspace Topology Invariants
 - **Корень кастомизаций:** Строго использовать `.agents/` для workspace-уровня (навыки, правила, плагины, база знаний). Категорически запрещено создавать или внедрять `.agent/`.
 - **Локации скриптов:**
-  - Системный бутстрап и диагностика хоста: [`scripts/`](file:///home/gidragir/projects/dotfiles/scripts) (например, [`scripts/setup_system.sh`](file:///home/gidragir/projects/dotfiles/scripts/setup_system.sh), [`scripts/check.sh`](file:///home/gidragir/projects/dotfiles/scripts/check.sh)).
+  - Системная диагностика и вспомогательные утилиты хоста: [`scripts/`](file:///home/gidragir/projects/dotfiles/scripts) (например, [`scripts/check.sh`](file:///home/gidragir/projects/dotfiles/scripts/check.sh), [`scripts/create_win11_vm.sh`](file:///home/gidragir/projects/dotfiles/scripts/create_win11_vm.sh)).
   - Пользовательский CLI и оконные хелперы Niri: [`zsh/scripts/`](file:///home/gidragir/projects/dotfiles/zsh/scripts) (управляются через Yggdrasil, развертываются в `~/.zsh/scripts/`).
 - **Синхронизация документации (Doc Integrity):** Поддерживать [`README.md`](file:///home/gidragir/projects/dotfiles/README.md) и [`AGENTS.md`](file:///home/gidragir/projects/dotfiles/AGENTS.md) в строгой синхронизации с реальным деревом каталогов при перемещении или удалении файлов.
 
@@ -413,7 +403,6 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
   - В `noctalia/config.toml` секция `[[plugins.source]]` с `kind = "path"` использует канонический абсолютный путь (`location = "/home/gidragir/.config/noctalia/plugins"`).
   - Раскрытие `~` в этом поле не подтверждено (проверка бинарника `noctalia` по `strings` результата не дала): использовать `~` в `location` запрещено до явной проверки.
 
-
 ## 🗺 Архитектурная карта и навигация (OpenViking L0-L2)
 
 Проект `dotfiles` описан трехуровневой базой знаний context-init (L0-L2), которая лежит в `.context-init/knowledge/` и коммитится вместе с кодом. Людям можно читать её напрямую; агентам — предпочитать MCP/`pack` ниже: это компактнее и учитывает бюджет токенов. После структурных изменений запустите `context-init update` и закоммитьте изменения базы в том же PR.
@@ -435,9 +424,9 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - `noctalia_plugins_audio-outputs` (Noctalia Plugins Audio Outputs) — Модуль и компоненты директории `noctalia/plugins/audio-outputs` (4 файлов)
 - `noctalia_plugins_audio-outputs_tests` (Noctalia Plugins Audio Outputs Tests) — Тесты для `noctalia_plugins_audio-outputs`
 - `noctalia_plugins_obsidian` (Noctalia Plugins Obsidian) — Модуль и компоненты директории `noctalia/plugins/obsidian` (6 файлов)
-- `playbooks` (Playbooks) — Модуль и компоненты директории `playbooks` (11 файлов)
-- `playbooks_vars` (Playbooks Vars) — Модуль и компоненты директории `playbooks/vars` (1 файлов)
-- `scripts` (Scripts) — Модуль и компоненты директории `scripts` (8 файлов)
+- `playbooks` (Playbooks) — Модуль и компоненты директории `playbooks` (2 файлов)
+- `playbooks_archive` (Playbooks Archive) — Модуль и компоненты директории `playbooks/archive` (10 файлов)
+- `scripts` (Scripts) — Модуль и компоненты директории `scripts` (4 файлов)
 - `tests` (Tests) — Тесты проекта
 - `wallpaper-engine` (Wallpaper Engine) — Модуль и компоненты директории `wallpaper-engine` (1 файлов)
 - `zsh` (Zsh) — Модуль и компоненты директории `zsh` (14 файлов)

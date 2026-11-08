@@ -6,107 +6,37 @@ Automated setup scripts and Ansible playbooks for configuring a **CachyOS (Niri)
 
 ## ⚡ Quick Start
 
-All installation scripts support **both direct execution via `curl`** and local execution in a cloned repository. When executed via `curl`, the scripts automatically check for local playbooks and clone the repository to `~/projects/dotfiles` if necessary.
-
-### 1. System Setup (sudo required)
-
-Formats the target NVMe drive, installs system packages via Pacman, configures the `/data` mount points (Btrfs, XFS, ext4), and sets up Docker and libvirt user groups and services.
+Configuration is declaratively managed via **Yggdrasil (`ygg`)**:
 
 ```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/scripts/setup_system.sh)"
-```
+# Check status across modules
+ygg status
 
-> ⚠️ **IMPORTANT**: After the script finishes, **log out and back in** (or reboot) to apply new group memberships (`docker`, `libvirt`, `kvm`).
+# Dry-run inspection
+ygg apply -n
 
-### 2. User Setup (run as normal user)
-
-Configures the user environment: development runtimes via [mise](https://mise.jdx.sh/), AUR packages via `paru`, Cargo tools, dotfiles via Yggdrasil (`ygg`), and background `rclone` sync timers.
-
-```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/gidragir/dotfiles/main/scripts/setup_user.sh)"
+# Apply dotfiles and install packages
+ygg apply
 ```
 
 ---
 
-## 🛠 Utility & Specialized Playbooks (`playbooks/`)
+## 🛠 Playbooks & Network Optimization (`playbooks/`)
 
-The [`playbooks/`](file:///data/projects/dotfiles/playbooks) directory contains modular Ansible playbooks for selective execution and maintenance:
+The [`playbooks/`](file:///data/projects/dotfiles/playbooks) directory contains standalone playbooks such as network bufferbloat optimization (`setup_network_optimization.yml`), with legacy provisioning playbooks archived under `playbooks/archive/`.
 
-### 1. 🦀 Rust Development Stack (`playbooks/setup_rust.yml`)
-Installs and isolates an optimized Rust toolchain:
-- `rustup` (activates `stable` channel)
-- Fast linker: `mold` + `clang`
-- Compilation cache: `sccache` (cache stored on NVMe 1 at `/data/projects/.sccache`)
-- Fast binary installer: `cargo-binstall`
-- Developer utilities: `cargo-nextest`, `bacon`, `cargo-machete`, `cargo-ramdisk`
-
+### 1. 🌐 Network Bufferbloat & Latency Optimization (`playbooks/setup_network_optimization.yml`)
+Standalone playbook for TCP BBR, CAKE qdisc, and network optimizations with full revert capability:
 ```bash
-ansible-playbook playbooks/setup_rust.yml
+# Apply optimizations:
+ansible-playbook playbooks/setup_network_optimization.yml --ask-become-pass --tags apply
+
+# Revert optimizations:
+ansible-playbook playbooks/setup_network_optimization.yml --ask-become-pass --tags revert
 ```
 
-### 2. 🎮 Gaming Environment & Steam (`playbooks/setup_gaming.yml`)
-Configures CachyOS for gaming and graphics drivers:
-- Packages: `cachyos-gaming-meta`, `lutris`, `protontricks`, `wine-mono`, `nvidia-prime`, `nvidia-utils`, `envycontrol` (AUR)
-- Automatic Steam Library integration: links `~/.local/share/Steam/steamapps` to `/data/games/SteamLibrary` on main storage
-- Proton/Wayland optimizations in `~/.config/environment.d/10-gaming.conf` (`PROTON_USE_NTSYNC=1`, `PROTON_ENABLE_WAYLAND=0`)
-- GPU switching (Optimus/Prime):
-
-```bash
-# Basic gaming stack installation:
-ansible-playbook -K playbooks/setup_gaming.yml
-
-# Force switch GPU globally to NVIDIA via envycontrol:
-ansible-playbook -K playbooks/setup_gaming.yml -e "switch_gpu_to_nvidia=true"
-```
-
-### 3. 🖥 QEMU/KVM Virtualization & Libvirt (`playbooks/setup_virt.yml`)
-Deploys a complete KVM virtualization stack:
-- Packages: `qemu-full`, `libvirt`, `virt-manager`, `edk2-ovmf` (UEFI), `swtpm` (TPM 2.0 emulator), `dnsmasq`, `ufw`
-- Enables `virbr0` bridge and sets up UFW routing rules
-- Fixes `swtpm` directory permissions
-- Configures secure Virtio-FS shared folder `/srv/Shared` with `virtshare` group for host/VM file sharing
-
-```bash
-ansible-playbook -K playbooks/setup_virt.yml
-```
-
-### 4. 📦 Package Management (`playbooks/packages.yml`)
-Selective package installation and updates:
-```bash
-# System packages (run as root):
-ansible-playbook playbooks/packages.yml --tags system
-
-# User pacman, AUR, and cargo packages:
-ansible-playbook playbooks/packages.yml --tags user,aur,cargo,cli
-```
-
-### 5. 🖥️ Display Manager & Bootloader UI (`playbooks/setup_display_manager.yml`)
-Configures SDDM and Limine with Catppuccin Frappe theme:
-- SDDM restricted exclusively to primary monitor `DP-2` (turns `HDMI-A-1` off in `Xsetup`)
-- Installs `catppuccin-frappe-blue` SDDM theme and configures `/etc/sddm.conf.d/`
-- Customizes Limine bootloader with Frappe color palette, wallpaper, and resolution
-
-```bash
-ansible-playbook -K playbooks/setup_display_manager.yml
-```
-
-### 6. ❄️ CoolerControl Fan Curves (`playbooks/setup_cooler_control.yml`)
-Configures system cooling daemon, fan curves, and profiles (Quiet, Gaming, Work):
-```bash
-ansible-playbook -K playbooks/setup_cooler_control.yml
-```
-
-### 7. 🔄 Rclone Obsidian Bisync Timer (`playbooks/setup_rclone.yml`)
-Configures systemd user service and timer for bidirectional sync of Obsidian vaults via `rclone bisync`:
-```bash
-ansible-playbook playbooks/setup_rclone.yml
-```
-
-### 8. 🖼️ Wallpaper Engine for Wayland (`playbooks/setup_wallpaper_engine.yml`)
-Configures `linux-wallpaperengine` for Niri Wayland sessions with systemd user unit:
-```bash
-ansible-playbook -K playbooks/setup_wallpaper_engine.yml
-```
+### 2. 📦 Archived Bootstrap Playbooks (`playbooks/archive/`)
+Legacy provisioning playbooks (system partitioning, user toolchains, SDDM/Limine theming, gaming) have been superseded by `ygg` and `mise`, and are preserved in `playbooks/archive/` for historical reference.
 
 ### 9. 🧠 Sovereign AI Infrastructure (`ai-dotfiles`)
 Centralized AI stack and agent orchestration are tracked in [`ai-dotfiles`](file:///data/projects/ai-dotfiles):
@@ -185,7 +115,7 @@ The terminal environment is built on Zsh in [`zsh/`](file:///data/projects/dotfi
 | `swap` | 8 GB | Swap / hibernation support |
 | `/home` | ~891 GB | User data, configs, toolchains, games (`~/Games`) |
 
-### NVMe 1 — Data (`scripts/setup_system.sh` partitions automatically)
+### NVMe 1 — Data (Dual-NVMe Storage Architecture)
 
 | Label | Mount Point | FS | Mount Options | Purpose |
 |-------|-------------|------|------------|---------|
@@ -213,7 +143,8 @@ dotfiles/
 ├── noctalia/                    # ~/.config/noctalia (config.toml, colors.json, plugins/)
 ├── rofi/                        # ~/.config/rofi (cliphist, main, noctalia.rasi)
 ├── systemd/                     # ~/.config/systemd/user (openrgb, rclone)
-├── vivaldi-stable.conf          # ~/.config/vivaldi-stable.conf
+├── vivaldi/                     # ~/.config/vivaldi-stable.conf
+│   └── vivaldi-stable.conf
 ├── wallpaper-engine/            # ~/.config/wallpaper-engine (config.json)
 ├── waypaper/                    # ~/.config/waypaper (config.ini)
 ├── wireplumber/                 # ~/.config/wireplumber (SPA-JSON 0.5 rules)
@@ -246,28 +177,29 @@ ygg apply --sandbox /tmp/ygg-sandbox --skip-packages
 
 ---
 
-## 🔍 Audit & Diagnostic Scripts
+## 🔍 Audit & Diagnostic Utilities
 
-The repository includes built-in diagnostic scripts in `scripts/` to verify system setup:
+The repository includes diagnostic utilities in `scripts/` orchestrated via `mise`:
 
-1. **[`scripts/check.sh`](file:///data/projects/dotfiles/scripts/check.sh)**:
-   Docker storage verification. Validates `/var/lib/docker` mount point, XFS `ftype=1` flag, `prjquota` mount options, `/etc/fstab` entries, parses `/etc/docker/daemon.json`, and performs a test container execution.
+1. **Docker Storage Verification** (`scripts/check.sh`):
+   Validates `/var/lib/docker` mount point, XFS `ftype=1` flag, `prjquota` mount options, `/etc/fstab` entries, parses `/etc/docker/daemon.json`, and performs a test container execution.
    ```bash
-   sudo bash scripts/check.sh
+   mise run docker:check
    ```
 
-2. **[`scripts/check_setup.sh`](file:///data/projects/dotfiles/scripts/check_setup.sh)**:
-   Comprehensive environment check-list. Verifies mount points (`/data/projects`, `/data/sync`, `/var/lib/docker`, `/var/lib/libvirt/images`), cache directories (`.pnpm-store`, `.uv-cache`, `.sccache`), Cargo symlinks, CLI tools availability, and `rclone` background timers status.
-   ```bash
-   bash scripts/check_setup.sh
-   ```
-
-3. **[`scripts/patrition_delete.sh`](file:///data/projects/dotfiles/scripts/patrition_delete.sh)**:
+2. **Destructive Disk Wipe** (`scripts/patrition_delete.sh`):
    Standalone utility for destructive disk wiping of `/dev/nvme1n1` (`wipefs`, `sgdisk --zap-all`, `dd zero`). 
    > ⚠️ **WARNING**: Use only when completely re-partitioning the second NVMe drive!
+   ```bash
+   mise run disk:wipe
+   ```
 
-4. **[`scripts/create_win11_vm.sh`](file:///data/projects/dotfiles/scripts/create_win11_vm.sh)**:
-   Automated QEMU/KVM Windows 11 VM deployment script with TPM 2.0, VirtIO drivers, and shared virtio-fs configuration.
+3. **Windows 11 VM Automation** (`scripts/create_win11_vm.sh`, `scripts/configure_win11_vm_postinstall.sh`):
+   Automated QEMU/KVM Windows 11 VM deployment script with TPM 2.0, VirtIO drivers, shared virtio-fs, and post-installation configuration.
+   ```bash
+   mise run vm:create
+   mise run vm:postinstall
+   ```
 
 ---
 

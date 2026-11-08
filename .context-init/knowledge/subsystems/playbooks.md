@@ -2,22 +2,22 @@
 directory: playbooks
 source:
   kind: git
-  blob_sha: e10e5be055a21707821a8e63ac828bc12574701e
-  commit_sha: ba439a6caee1b925979b54cd7c941cfd1937f1a9
+  blob_sha: 34cb89ac5cdbf7997ea4412ddf23ae290123ff74
+  commit_sha: 3513584e9132f4a9b405ac86a35ab7e259512521
 generated_by:
   component: context-init
   role: update
   model: none
 freshness:
-  total_entries: 11
-  sampled_entries: 11
+  total_entries: 2
+  sampled_entries: 2
   unsampled_entries: 0
   pending_child_changes: 0
 ---
 
 # Подсистема: Playbooks (L1)
 
-Модуль и компоненты директории `playbooks` (11 файлов)
+Модуль и компоненты директории `playbooks` (2 файлов)
 
 > **Идентификатор:** `playbooks`
 > **Теги:** Generic / Multi-language, playbooks
@@ -26,17 +26,8 @@ freshness:
 
 | Файл | Статус |
 | :--- | :--- |
-| `playbooks/packages.yml` | Исходный код |
-| `playbooks/setup_cooler_control.yml` | Исходный код |
-| `playbooks/setup_display_manager.yml` | Исходный код |
-| `playbooks/setup_gaming.yml` | Исходный код |
 | `playbooks/setup_network_optimization.yml` | Исходный код |
-| `playbooks/setup_rclone.yml` | Исходный код |
-| `playbooks/setup_rust.yml` | Исходный код |
-| `playbooks/setup_system.yml` | Исходный код |
-| `playbooks/setup_user.yml` | Исходный код |
-| `playbooks/setup_virt.yml` | Исходный код |
-| `playbooks/setup_wallpaper_engine.yml` | Исходный код |
+| `playbooks/vars/packages.yml` | Исходный код |
 
 ## 🧪 Запуск и тестирование
 ```bash

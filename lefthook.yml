@@ -15,4 +15,4 @@ pre-commit:
 
     check-ansible:
       glob: "playbooks/**/*.yml"
-      run: ansible-playbook --syntax-check playbooks/setup_system.yml playbooks/setup_user.yml playbooks/packages.yml
+      run: ansible-playbook --syntax-check playbooks/setup_network_optimization.yml

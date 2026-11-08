@@ -6,7 +6,7 @@
 "noctalia" = "~/.config/noctalia"
 "rofi" = "~/.config/rofi"
 "systemd/user/*" = "~/.config/systemd/user/*"
-"vivaldi-stable.conf" = "~/.config/vivaldi-stable.conf"
+"vivaldi/vivaldi-stable.conf" = "~/.config/vivaldi-stable.conf"
 "wallpaper-engine" = "~/.config/wallpaper-engine"
 "waypaper" = "~/.config/waypaper"
 "wireplumber" = "~/.config/wireplumber"

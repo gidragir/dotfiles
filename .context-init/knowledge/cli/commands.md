@@ -11,14 +11,17 @@
 
 | Скрипт | Выполняемая команда |
 | :--- | :--- |
-| `dotfiles:diff` | `rtk mise run dotfiles:diff` |
 | `dotfiles:verify` | `rtk mise run dotfiles:verify` |
-| `test:check` | `rtk mise run test:check` |
-| `knowledge:l0` | `rtk mise run knowledge:l0` |
-| `dotfiles:apply` | `rtk mise run dotfiles:apply` |
 | `dotfiles:status` | `rtk mise run dotfiles:status` |
-| `test:e2e` | `rtk mise run test:e2e` |
+| `knowledge:l0` | `rtk mise run knowledge:l0` |
 | `apply:all` | `rtk mise run apply:all` |
+| `disk:wipe` | `rtk mise run disk:wipe` |
+| `vm:create` | `rtk mise run vm:create` |
+| `dotfiles:diff` | `rtk mise run dotfiles:diff` |
+| `test:e2e` | `rtk mise run test:e2e` |
+| `vm:postinstall` | `rtk mise run vm:postinstall` |
+| `docker:check` | `rtk mise run docker:check` |
+| `dotfiles:apply` | `rtk mise run dotfiles:apply` |
 
 ## Быстрый запуск
 ```bash
