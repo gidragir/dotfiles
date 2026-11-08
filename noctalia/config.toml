@@ -54,28 +54,44 @@ show_on_workspace_switch = true
 smart_auto_hide = false
 thickness = 36
 widget_spacing = 8
-start = ["launcher", "niri_preview", "workspaces"]
-center = ["clock", "date", "weather"]
+start = [
+    "launcher",
+    "niri_preview",
+    "workspaces",
+    "virt_manager",
+    "drive_health",
+    "arch_updater",
+    "group:g1",
+]
+center = ["clock", "date", "weather", "wallhaven", "mpvpaper"]
 end = [
     "hermes",
     "headroom",
     "docker",
     "obsidian",
     "openrgb",
-    "virt_manager",
-    "ytm",
     "temp",
     "cpu",
     "gpu",
     "ram",
-    "drive_health",
-    "media",
     "keyboard_layout",
     "audio_switcher",
-    "arch_updater",
     "tray",
     "notifications",
 ]
+
+[[bar.islands.capsule_group]]
+accordion = true
+accordion_direction = "end"
+border = "outline_variant"
+border_width = 1.0
+enabled = true
+fill = "surface_container"
+foreground = "on_surface"
+id = "g1"
+members = ["ytm", "media"]
+opacity = 0.85
+padding = 6.0
 
 [battery]
 warning_threshold = 10
@@ -800,3 +816,10 @@ type = "teagar/niri-workspace-preview:preview"
 
 [widget.notes]
 type = "noctalia/notes:notes"
+
+[widget.wallhaven]
+type = "noctalia/wallhaven:wallhaven"
+
+[widget.mpvpaper]
+type = "noctalia/mpvpaper:mpvpaper"
+
