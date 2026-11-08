@@ -81,7 +81,7 @@ function render(st)
       height = 36,
       radius = 8,
       fill = "#" .. c.hex,
-      border = "outline",
+      border = "outline_variant",
       borderWidth = 1,
       onClick = function()
         setColor(c.hex)
@@ -115,9 +115,9 @@ function render(st)
 
     -- Status Card
     ui.column({
-      fill = "surface_variant/0.25",
+      fill = "surface_container/0.25",
       radius = 8,
-      border = "outline",
+      border = "outline_variant",
       borderWidth = 1,
       padding = 10,
     }, {
@@ -147,9 +147,9 @@ function render(st)
     ui.scroll({ flexGrow = 1, gap = 12 }, {
       -- Profiles Section Card
       ui.column({
-        fill = "surface_variant/0.25",
+        fill = "surface_container/0.25",
         radius = 8,
-        border = "outline",
+        border = "outline_variant",
         borderWidth = 1,
         padding = 12,
         gap = 8,
@@ -165,9 +165,9 @@ function render(st)
 
       -- Brightness Section Card
       ui.column({
-        fill = "surface_variant/0.25",
+        fill = "surface_container/0.25",
         radius = 8,
-        border = "outline",
+        border = "outline_variant",
         borderWidth = 1,
         padding = 12,
         gap = 8,
@@ -191,9 +191,9 @@ function render(st)
 
       -- Quick Colors Section Card
       ui.column({
-        fill = "surface_variant/0.25",
+        fill = "surface_container/0.25",
         radius = 8,
-        border = "outline",
+        border = "outline_variant",
         borderWidth = 1,
         padding = 12,
         gap = 8,
