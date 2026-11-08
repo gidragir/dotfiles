@@ -14,13 +14,20 @@ run = "ygg status"
 description = "Inspect diff between dotfiles repository and $HOME"
 run = "ygg apply --dry-run"
 
+[tasks."dotfiles:verify"]
+description = "Verify zero drift between dotfiles repository and $HOME"
+run = "ygg apply --dry-run"
+
 [tasks."dotfiles:apply"]
 description = "Apply repository configurations to $HOME"
 run = "ygg apply"
 
 [tasks."apply:all"]
-description = "Apply all modules from host.toml"
-run = "ygg apply"
+description = "Apply omni-dotfiles (L-Core) followed by dotfiles (L-Host CachyOS)"
+run = """
+chezmoi apply --source /home/gidragir/projects/omni-dotfiles
+ygg apply
+"""
 
 [tasks."test:e2e"]
 description = "Run E2E test suite for Noctalia plugins"

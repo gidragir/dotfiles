@@ -28,9 +28,9 @@ function render(vmList)
   local vmRows = {}
   if #list == 0 then
     table.insert(vmRows, ui.column({
-      fill = "surface_variant/0.25",
+      fill = "surface_container/0.25",
       radius = 8,
-      border = "outline",
+      border = "outline_variant",
       borderWidth = 1,
       padding = 16,
       align = "center",
@@ -48,9 +48,9 @@ function render(vmList)
       local domainName = vm.name or "VM"
       local isRunning = (vm.state == "running" or vm.status == "running" or true)
       table.insert(vmRows, ui.row({
-        fill = "surface_variant/0.25",
+        fill = "surface_container/0.25",
         radius = 8,
-        border = "outline",
+        border = "outline_variant",
         borderWidth = 1,
         padding = 10,
         gap = 12,

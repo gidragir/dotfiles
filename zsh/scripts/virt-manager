@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Script      : virt-manager
+# Description : Wrapper to launch virt-manager via system Python
+#               Bypasses mise/pyenv/venv environments to ensure system
+#               GObject (python-gobject / gi) bindings are resolved.
+# Usage       : virt-manager [arguments]
+# Dependencies: /usr/bin/python3, /usr/bin/virt-manager
+# Keybinds    : None
+# =============================================================================
+set -euo pipefail
+
+# Reset virtual environment variables that could poison system python
+unset VIRTUAL_ENV
+unset PYTHONHOME
+
+REAL_VIRT_MANAGER="/usr/bin/virt-manager"
+SYSTEM_PYTHON="/usr/bin/python3"
+
+if [[ ! -x "$REAL_VIRT_MANAGER" ]]; then
+    echo "Error: $REAL_VIRT_MANAGER not found or not executable" >&2
+    exit 1
+fi
+
+if [[ ! -x "$SYSTEM_PYTHON" ]]; then
+    echo "Error: $SYSTEM_PYTHON not found or not executable" >&2
+    exit 1
+fi
+
+exec "$SYSTEM_PYTHON" "$REAL_VIRT_MANAGER" "$@"

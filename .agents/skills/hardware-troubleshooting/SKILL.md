@@ -89,15 +89,24 @@ journalctl --user -u openrgb.service -u openrgb-profile.service -b --no-pager | 
 
 ### Invariants & Configuration Standards
 
-1. **Systemd Targets (`graphical-session.target`):**
-   - Both `openrgb.service` and `openrgb-profile.service` must specify:
+1. **Systemd Targets & Ordering Cycles (`graphical-session.target`):**
+   - `openrgb.service` must declare:
      ```ini
      PartOf=graphical-session.target
      After=graphical-session.target
      [Install]
      WantedBy=graphical-session.target
      ```
-   - Never use `default.target` or `multi-user.target` for these user units to avoid startup ordering cycles.
+   - `openrgb-profile.service` (oneshot profile loader) MUST specify both `openrgb.service` AND `graphical-session.target` in `After=`:
+     ```ini
+     PartOf=graphical-session.target
+     After=openrgb.service graphical-session.target
+     Wants=openrgb.service
+     [Install]
+     WantedBy=graphical-session.target
+     ```
+     *Why:* Omitting `graphical-session.target` from `After=` in the profile service creates an ordering cycle where systemd drops `openrgb-profile.service/start` to break the cycle at desktop login.
+   - Never use `default.target` or `multi-user.target` for these user units.
 
 2. **CLI Argument Isolation (No Zone Leakage):**
    - In OpenRGB CLI (`cli.cpp`), setting `-z <N>` modifies `current_devices[i].zone`.
@@ -131,3 +140,36 @@ journalctl --user -u openrgb.service -u openrgb-profile.service -b --no-pager | 
 
 4. **Tool Standard (`rg` / `fd`):**
    - Never use GNU `grep` or `find` in diagnostic scripts. Use `rg` and `fd`.
+
+---
+
+## 💡 3. OpenRGB Version Upgrade & Zone Size Recovery (ASUS Aura USB)
+
+### Symptoms
+- RAM, GPU, and Mouse change color, but fans or custom ARGB strips attached to ASUS motherboard headers (`Addressable RGB Header 1/2/3`) remain unlit or stuck in an old color.
+- Occurs after upgrading OpenRGB (e.g., `1.0 -> 1.1`), where controller capabilities and mode lists change.
+
+### Root Cause
+- OpenRGB stores hardware zone sizes in `~/.config/OpenRGB/Configuration.json`.
+- When upgraded, OpenRGB may discover the device with a new mode count (e.g. 19 modes instead of 9) and append a duplicate controller entry with uninitialized zone LED counts (`0` LEDs).
+- Commands targeting the motherboard then fail silently or send packets to empty zones.
+
+### Recovery Procedure
+1. Stop the OpenRGB daemon:
+   ```bash
+   rtk systemctl --user stop openrgb.service
+   ```
+2. Verify zone LED counts in OpenRGB CLI:
+   ```bash
+   rtk openrgb --noautoconnect -ld | rtk rg -A 5 "Addressable RGB Header"
+   ```
+   If LEDs list only contains Header 1 or has 0 LEDs, restore zone lengths:
+   ```bash
+   rtk openrgb --noautoconnect -d "ASUS PRIME Z790-P WIFI" -z 1 -sz 60 -z 2 -sz 60 -z 3 -sz 60
+   ```
+3. Inspect `~/.config/OpenRGB/Configuration.json` for duplicate `ASUS Aura USB Mainboard Device` entries. If duplicated, retain only the newest controller schema and remove the stale entry.
+4. Restart daemon and re-apply profile:
+   ```bash
+   rtk systemctl --user start openrgb.service
+   rtk systemctl --user start openrgb-profile.service
+   ```

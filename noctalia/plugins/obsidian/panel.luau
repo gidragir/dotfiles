@@ -64,9 +64,9 @@ function render(st)
   local taskElements = {}
   if #tasks == 0 then
     table.insert(taskElements, ui.column({
-      fill = "surface_variant/0.25",
+      fill = "surface_container/0.25",
       radius = 8,
-      border = "outline",
+      border = "outline_variant",
       borderWidth = 1,
       padding = 16,
       align = "center",
@@ -86,9 +86,9 @@ function render(st)
       local taskText = t.text or ""
 
       table.insert(taskElements, ui.row({
-        fill = isDone and "surface_variant/0.10" or "surface_variant/0.25",
+        fill = isDone and "surface_container/0.10" or "surface_container/0.25",
         radius = 8,
-        border = "outline",
+        border = "outline_variant",
         borderWidth = 1,
         padding = 8,
         gap = 10,
@@ -132,9 +132,9 @@ function render(st)
 
     -- Status & Sync Card
     ui.column({
-      fill = "surface_variant/0.25",
+      fill = "surface_container/0.25",
       radius = 8,
-      border = "outline",
+      border = "outline_variant",
       borderWidth = 1,
       padding = 10,
     }, {
@@ -162,9 +162,9 @@ function render(st)
 
     -- Quick Action Buttons Card
     ui.column({
-      fill = "surface_variant/0.25",
+      fill = "surface_container/0.25",
       radius = 8,
-      border = "outline",
+      border = "outline_variant",
       borderWidth = 1,
       padding = 8,
     }, {

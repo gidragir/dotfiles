@@ -53,4 +53,13 @@ description = "Hermes AI Hub with live Kanban status telemetry, fast toggle, and
 plugin_api = 9
 tags = ["ai", "hermes", "kanban", "bar", "utility"]
 
-
+[[plugin]]
+id = "gidragir/audio-outputs"
+name = "Audio Outputs"
+version = "2.0.0"
+author = "gidragir"
+license = "MIT"
+icon = "switch-horizontal"
+description = "Seamless audio outputs switcher with PipeWire sinks and GPU HDMI profiles support"
+plugin_api = 32
+tags = ["audio", "bar", "hardware", "launcher", "panel", "service", "system", "utility"]

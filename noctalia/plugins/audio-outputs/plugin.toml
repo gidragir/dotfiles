@@ -1,0 +1,69 @@
+id = "gidragir/audio-outputs"
+name = "Audio Outputs"
+version = "2.0.0"
+plugin_api = 32
+author = "gidragir"
+license = "MIT"
+icon = "switch-horizontal"
+description = "Modern audio switcher with PipeWire sinks, sources, Bluetooth handoff, and ACP GPU profile support."
+tags = ["audio", "bar", "hardware", "launcher", "panel", "service", "system", "utility"]
+dependencies = ["pactl", "bluetoothctl", "sleep"]
+
+[[setting]]
+key = "show_percentage"
+type = "bool"
+label_key = "settings.show_percentage.label"
+description_key = "settings.show_percentage.description"
+default = true
+
+[[setting]]
+key = "show_notification_on_switch"
+type = "bool"
+label_key = "settings.show_notification_on_switch.label"
+description_key = "settings.show_notification_on_switch.description"
+default = true
+
+[[setting]]
+key = "show_actions_in_tooltip"
+type = "bool"
+label_key = "settings.show_actions_in_tooltip.label"
+description_key = "settings.show_actions_in_tooltip.description"
+default = true
+
+[[setting]]
+key = "show_disconnected"
+type = "bool"
+label_key = "settings.show_disconnected.label"
+description_key = "settings.show_disconnected.description"
+default = true
+
+[[widget]]
+id = "widget"
+entry = "widget.luau"
+
+  [widget.actions]
+  scroll_up = "volume-up"
+  scroll_down = "volume-down"
+  left = "panel-toggle gidragir/audio-outputs:audio-outputs"
+  right = "plugin gidragir/audio-outputs:service all cycle-output"
+  middle = "plugin gidragir/audio-outputs:service all cycle-input"
+
+[[panel]]
+id = "audio-outputs"
+entry = "panel.luau"
+width = 620
+height = 650
+placement = "attached"
+position = "top_right"
+open_near_click = true
+
+[[launcher_provider]]
+id = "launcher"
+entry = "launcher.luau"
+prefix = "audio"
+glyph = "switch-horizontal"
+include_in_global_search = true
+
+[[service]]
+id = "service"
+entry = "service.luau"

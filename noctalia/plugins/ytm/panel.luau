@@ -31,12 +31,43 @@ local function fetchStatus(callback)
   end)
 end
 
+local function setVolume(val)
+  local helper = getHelperPath()
+  local v = math.floor(tonumber(val) or 100)
+  if v < 0 then v = 0 elseif v > 100 then v = 100 end
+
+  local currentData = noctalia.state.get("ytm_status") or {}
+  currentData.volume = v / 100.0
+  noctalia.state.set("ytm_status", currentData)
+  render(currentData)
+
+  noctalia.runAsync(string.format("%s volume %f", helper, v / 100.0), function()
+    fetchStatus(render)
+  end)
+end
+
 function render(customData)
   local data = customData or noctalia.state.get("ytm_status") or {}
   local status = data.status or "Inactive"
   local title = (data.title and data.title ~= "") and data.title or noctalia.tr("panel.no_track")
   local artist = data.artist or ""
   local isPlaying = (status == "Playing")
+
+  local rawVol = tonumber(data.volume)
+  local volumePercent = 100
+  if rawVol ~= nil then
+    volumePercent = math.floor(rawVol * 100 + 0.5)
+  end
+  if volumePercent < 0 then volumePercent = 0 elseif volumePercent > 100 then volumePercent = 100 end
+
+  local volGlyph = "volume-2"
+  if volumePercent == 0 then
+    volGlyph = "volume-off"
+  elseif volumePercent < 50 then
+    volGlyph = "volume"
+  else
+    volGlyph = "volume-2"
+  end
 
   local statusText = noctalia.tr("panel.status_inactive")
   local statusColor = "on_surface_variant"
@@ -77,9 +108,9 @@ function render(customData)
 
     -- Track info card
     ui.column({
-      fill = "surface_variant/0.25",
+      fill = "surface_container/0.25",
       radius = 8,
-      border = "outline",
+      border = "outline_variant",
       borderWidth = 1,
       padding = 12,
       gap = 4,
@@ -112,9 +143,9 @@ function render(customData)
 
     -- Playback controls
     ui.row({
-      fill = "surface_variant/0.25",
+      fill = "surface_container/0.25",
       radius = 8,
-      border = "outline",
+      border = "outline_variant",
       borderWidth = 1,
       padding = 10,
       align = "center",
@@ -143,11 +174,52 @@ function render(customData)
       }),
     }),
 
+    -- Volume Slider Card
+    ui.column({
+      fill = "surface_container/0.25",
+      radius = 8,
+      border = "outline_variant",
+      borderWidth = 1,
+      padding = 12,
+      gap = 8,
+    }, {
+      ui.row({ align = "center", justify = "space_between" }, {
+        ui.row({ align = "center", gap = 6 }, {
+          ui.glyph({
+            name = volGlyph,
+            size = 14,
+            color = "primary",
+          }),
+          ui.label({
+            text = noctalia.tr("panel.volume") or "Громкость",
+            fontSize = 12,
+            fontWeight = "medium",
+            color = "on_surface",
+          }),
+        }),
+        ui.label({
+          text = tostring(volumePercent) .. "%",
+          fontSize = 12,
+          fontWeight = "semibold",
+          color = "on_surface_variant",
+        }),
+      }),
+      ui.slider({
+        min = 0,
+        max = 100,
+        step = 5,
+        value = volumePercent,
+        onChange = function(val)
+          setVolume(val)
+        end,
+      }),
+    }),
+
     -- Scratchpad Window Toggle Action
     ui.column({
-      fill = "surface_variant/0.25",
+      fill = "surface_container/0.25",
       radius = 8,
-      border = "outline",
+      border = "outline_variant",
       borderWidth = 1,
       padding = 12,
       gap = 8,

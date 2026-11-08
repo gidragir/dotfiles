@@ -1,0 +1,157 @@
+{
+  "actions": {
+    "cancel": "Отмена",
+    "close": "Закрыть",
+    "connect_and_use": "Подключить и использовать",
+    "create_group": "Создать группу ({count})",
+    "cycle": "Сменить",
+    "disband": "Расформировать",
+    "edit": "Настроить устройство",
+    "group_outputs": "Объединить выходы",
+    "hide": "Скрыть устройство",
+    "refresh": "Обновить",
+    "save": "Сохранить",
+    "select": "Выбрать",
+    "selected": "Выбрано",
+    "settings": "Настройки плагина",
+    "show": "Показать устройство",
+    "use": "Использовать"
+  },
+  "device": {
+    "active": "Активно",
+    "available": "Доступно",
+    "bluetooth_connected": "Bluetooth подключен",
+    "bluetooth_disconnected": "Bluetooth отключен",
+    "current": "Текущее",
+    "output_group": "Группа выходов",
+    "port": "Порт",
+    "profile": "Профиль карты",
+    "gpu_output": "Звук монитора",
+    "unavailable_port": "{port} (недоступен)"
+  },
+  "editor": {
+    "alias": "Отображаемое имя",
+    "icon": "Иконка устройства",
+    "icon_options": {
+      "automatic": "Автоматически",
+      "over_ear": "Полноразмерные наушники",
+      "speaker": "Динамики",
+      "tws": "TWS наушники",
+      "wired": "Проводные наушники"
+    },
+    "slot": "Номер горячей клавиши",
+    "slot_hint": "Используйте этот номер в команде IPC connect, например: connect 2.",
+    "title": "Настройки устройства"
+  },
+  "errors": {
+    "audio_unavailable": "Аудиослужба недоступна.",
+    "bluetooth_audio_timeout": "Bluetooth подключен, но аудиовыход не появился в PipeWire вовремя.",
+    "bluetooth_connect_failed": "Не удалось подключить Bluetooth-устройство.",
+    "bluetooth_device_not_found": "Bluetooth-устройство не найдено. Попробуйте обновить поиск.",
+    "bluetooth_pair_failed": "Не удалось сопрячь Bluetooth-устройство.",
+    "busy": "Выполняется другая аудио-операция.",
+    "command_start": "Не удалось запустить системную команду.",
+    "device_not_found": "Выбранное устройство больше не существует.",
+    "device_unavailable": "Выбранное устройство сейчас недоступно.",
+    "group_create_failed": "Не удалось создать группу выходов.",
+    "group_not_found": "Группа выходов больше не существует.",
+    "group_remove_failed": "Не удалось расформировать группу выходов.",
+    "group_requires_two": "Выберите как минимум два доступных выхода.",
+    "group_switch_failed": "Группа выходов создана, но её не удалось активировать.",
+    "input_port_not_found": "Выбранный входной порт больше не существует.",
+    "input_port_switch_failed": "Не удалось переключить входной порт.",
+    "input_port_unavailable": "Выбранный входной порт сейчас недоступен.",
+    "invalid_audio_data": "Аудиослужба вернула некорректные данные.",
+    "invalid_slot": "Номер должен быть целым числом от 1 до 99.",
+    "invalid_volume": "Запрошена недопустимая громкость.",
+    "no_visible_devices": "Нет видимых устройств для циклического переключения.",
+    "pactl_missing": "Утилита pactl необходима, но не найдена в PATH.",
+    "profile_switch_failed": "Не удалось переключить профиль звуковой карты.",
+    "scan_in_progress": "Поиск Bluetooth-устройств уже выполняется.",
+    "sink_spawn_timeout": "Таймаут ожидания аудиовыхода при смене профиля карты.",
+    "slot_in_use": "Номер клавиши {slot} уже назначен другому устройству.",
+    "slot_not_found": "Нет Bluetooth-устройства с номером {slot}.",
+    "switch_failed": "Не удалось переключить аудиоустройство по умолчанию."
+  },
+  "launcher": {
+    "description": "Переключение аудиовхода (микрофона) или вывода звука.",
+    "open": "Открыть Audio Outputs"
+  },
+  "notifications": {
+    "bluetooth_disconnected": "Bluetooth-устройство отключено.",
+    "group_created": "Группа выходов создана и активирована.",
+    "group_removed": "Группа выходов расформирована.",
+    "input_port_selected": "Входной порт переключен на {port}.",
+    "input_selected": "Вход переключен на {device}.",
+    "output_selected": "Выход переключен на {device}.",
+    "preferences_saved": "Настройки устройства сохранены.",
+    "profile_switched": "Аудиопрофиль переключен на {profile}.",
+    "scan_complete": "Поиск Bluetooth-устройств завершен.",
+    "slot_saved": "Номер быстрого подключения {slot} сохранен."
+  },
+  "panel": {
+    "group_hint": "Выбрано: {count}. Выберите хотя бы два доступных выхода.",
+    "hidden": "Скрытые",
+    "hidden_count": "Скрытых: {count}",
+    "input_volume": "Микрофон",
+    "inputs_tab": "Входы",
+    "keybind_hint": "Скрытые устройства пропускаются при циклическом переключении. Номера Bluetooth можно использовать в команде IPC connect.",
+    "loading": "Загрузка аудиоустройств…",
+    "mute": "Заглушить",
+    "no_device": "Нет устройства",
+    "no_devices": "Аудиоустройства не найдены.",
+    "no_input": "Нет входа",
+    "no_output": "Нет выхода",
+    "no_visible_devices": "Все устройства в этом списке скрыты.",
+    "output_volume": "Звук",
+    "outputs_tab": "Выходы",
+    "title": "Audio Switcher",
+    "unmute": "Включить звук",
+    "visible_count": "Видимых: {count}"
+  },
+  "tabs": {
+    "inputs": "Входы",
+    "outputs": "Выходы"
+  },
+  "title": "Audio Switcher",
+  "settings": {
+    "show_actions_in_tooltip": {
+      "description": "Показывать подсказки жестов мыши и кликов в тултипе бара.",
+      "label": "Подсказки действий в тултипе"
+    },
+    "show_disconnected": {
+      "description": "Отображать неактивные HDMI/DP профили в списке выходов.",
+      "label": "Показывать отключенные HDMI/DP профили"
+    },
+    "show_notification_on_switch": {
+      "description": "Показывать всплывающее уведомление при смене устройства.",
+      "label": "Уведомления при переключении"
+    },
+    "show_percentage": {
+      "description": "Показывать процент громкости в виджете панели.",
+      "label": "Процент громкости на панели"
+    }
+  },
+  "widget": {
+    "action": {
+      "left_click": {
+        "description": "Открыть аудиопанель",
+        "key": "Левый клик"
+      },
+      "middle_click": {
+        "description": "Сменить микрофон",
+        "key": "Средний клик"
+      },
+      "right_click": {
+        "description": "Сменить аудиовыход",
+        "key": "Правый клик"
+      },
+      "scroll": {
+        "description": "Регулировка громкости",
+        "key": "Колесо мыши"
+      }
+    },
+    "input": "Вход",
+    "output": "Выход"
+  }
+}
