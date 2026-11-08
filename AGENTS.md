@@ -87,31 +87,38 @@ dotfiles/
   - **System (Root):** Запускается через `sudo`, отвечает за блочные устройства, `/etc/fstab`, системные пакеты, udev, SDDM, system systemd-юниты.
   - **User (Non-Root):** Запускается от обычного пользователя. AUR-хелпер (`paru` через модуль `kewlfft.aur`) **категорически запрещено** запускать из-под root! Пользовательские юниты systemd настраиваются со `scope: user`.
 
-### 2. Модель управления конфигурациями через Chezmoi
+### 2. Модель управления конфигурациями через Yggdrasil (`ygg`)
 Репозиторий dotfiles располагается в `/data/projects/dotfiles` (с симлинком в `~/projects/dotfiles`).
-Управление пользовательскими конфигурациями (`$HOME`) переведено с GNU Stow на **Chezmoi** с сохранением zero-latency symlink рабочего процесса:
-- **Корень source-state:** Задан через `.chezmoiroot = home`. Все управляемые файлы размещаются внутри `home/` с префиксами `dot_`.
-- **Режим live-editing (`mode = "symlink"`):** Статические файлы (`nvim`, `ghostty`, `sheldon`, `bat`, `fzf`, `rtk`, `television`, `superfile`, скрипты) разворачиваются как прямые симлинки на исходники в репозитории. Изменения мгновенно видны в `rtk git status` без необходимости вызова `chezmoi apply`.
-- **Шаблонизация (`.tmpl`):** Хост-зависимые параметры (мониторы Niri `display.kdl.tmpl`, окружение `dot_zshenv.tmpl`, `environment.d/10-environment.conf.tmpl`, пути к обоям `waypaper/config.ini.tmpl`, `wallpaper-engine/config.json.tmpl`) компилируются на основе переменных (`chassis`, `.chezmoi.homeDir`).
-- **Симлинки целых каталогов (`symlink_`):** Для приложений с runtime-состоянием (Noctalia) директория монтируется целиком через `home/dot_config/symlink_noctalia.tmpl` на `linked/noctalia`.
-- **Границы Chezmoi vs Unmanaged / Host-Local:**
-  - *Managed:* CLI/TUI инструменты и основные файлы рабочего окружения.
-  - *Intentionally Unmanaged (Host-Local):* Системные настройки GTK (`gtk-3.0`, `gtk-4.0`), дефолтные ассоциации (`mimeapps.list`), дефолтный редактор `micro`, дампы оборудования OpenRGB (`Configuration.json`, `sizes.ors`), токены авторизации (`gh`, `coolercontrol/token`, `rclone.conf`).
+Управление конфигурациями рабочей станции переведено на декларативный кроссплатформенный менеджер модулей **Yggdrasil (`ygg`)** на базе Nushell:
+- **Структура модуля dotfiles:**
+  - `ygg.toml`: Идентификатор модуля, поддерживаемые платформы (`os = ["cachyos", "arch"]`).
+  - `links.toml`: Декларация развертывания симлинков (`[links]`) и аппаратных скоупов (`[scope.pc.links]`, `[scope.asus.links]`). Симлинки разворачиваются напрямую из репозитория без шаблонизаторов.
+  - `packages.toml`: Декларация пакетов по менеджерам (`pacman`, `paru`, `cargo`) с аппаратным разделением скоупов (`[scope.pc.packages]`, `[scope.asus.packages]`).
+  - `setup.nu`: Идемпотентный процедурный хук жизненного цикла (настройка MIME-типов для Neovim в `mimeapps.list`, подготовка кэшей, активация systemd-таймеров и сервисов OpenRGB).
+- **Многоуровневое разделение (L-Core vs L-Host):**
+  - **L-Core (`omni-dotfiles`):** Базовые CLI/TUI инструменты и общий шелл (`nvim`, `ghostty`, `sheldon`, `bat`, `fzf`, `rtk`, `television`, `superfile`, `zshrc`, `zshenv`, `mise`).
+  - **L-Host CachyOS (`dotfiles`):** Графическое окружение и аппаратный стек рабочей станции (`niri`, `noctalia`, `rofi`, `wireplumber`, `hypridle`, `OpenRGB`, `waypaper`, `wallpaper-engine`, `zsh/alias`, `zsh/scripts`, сервисы systemd).
 - **Изоляция и аудит зависимостей `ai-dotfiles`:**
-  - Через `home/.chezmoiignore` жестко исключены пути AI-стека (`.hermes/**`, `.config/Hermes/**`, `.opencommit*`, `.gemini/**`), обслуживаемые независимо через Stow.
-  - **Инвариант аудита перед удалением:** Запрещено удалять битые симлинки и артефакты в `$HOME` и `~/.config` без проверки в `/data/projects/ai-dotfiles`.
-  - При обнаружении ссылок на устаревший `local-ai-stack` (например, в `~/.config/anythingllm-desktop/` или `ollama.service`), они перелинковываются на актуальные службы `ai-dotfiles`, а не удаляются.
+  - Развертывание скриптов через глоб `zsh/scripts/*` гарантирует сохранение всех симлинков AI-стека (`ai-status.sh`, `hermes-*.sh`, `khoj-*.sh`), разворачиваемых независимо через GNU Stow из `/data/projects/ai-dotfiles`.
+  - Запрещено удалять или затирать симлинки скриптов AI-стека в `~/.zsh/scripts/`.
   - Файл `~/.config/environment.d/pythonpath.conf` является обязательным инвариантом Hermes (`/opt/hermes-agent/venv`, Python 3.11) и не подлежит удалению.
 
-**Команды работы с Chezmoi:**
-- Для применения конфигурации:
+**Команды работы с Ygg:**
+- Проверка статуса синхронизации модулей:
   ```bash
-  chezmoi apply --source /data/projects/dotfiles --force
+  ygg status
   ```
-- Для проверки дрифта:
+- Применение конфигурации:
   ```bash
-  chezmoi verify
-  chezmoi diff
+  ygg apply
+  ```
+- Проверка дрифта и симуляция изменений (Dry-Run):
+  ```bash
+  ygg apply -n
+  ```
+- Изолированное тестирование без мутации хоста (Sandbox):
+  ```bash
+  ygg apply --sandbox /tmp/ygg-sandbox --skip-packages
   ```
 
 
