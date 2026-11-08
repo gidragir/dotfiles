@@ -16,7 +16,7 @@
 
 [scope.pc.links]
 "niri/displays/pc.kdl" = "~/.config/niri/cfg/display.kdl"
-"OpenRGB" = "~/.config/OpenRGB"
+"OpenRGB/off.orp" = "~/.config/OpenRGB/off.orp"
 "systemd/user-pc/*" = "~/.config/systemd/user/*"
 "zsh/alias-pc/cooler.zsh" = "~/.zsh/alias/cooler.zsh"
 "zsh/scripts-pc/cooler-toggle.sh" = "~/.zsh/scripts/cooler-toggle.sh"
