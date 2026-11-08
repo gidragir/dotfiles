@@ -56,6 +56,10 @@ dotfiles/
 - **Разделение привилегий:**
   - **System (Root):** Запускается через `sudo`, отвечает за блочные устройства, `/etc/fstab`, системные пакеты, udev, SDDM, system systemd-юниты.
   - **User (Non-Root):** Запускается от обычного пользователя. AUR-хелпер (`paru` через модуль `kewlfft.aur`) **категорически запрещено** запускать из-под root! Пользовательские юниты systemd настраиваются со `scope: user`.
+- **Инвариант неприкосновенности симлинков Yggdrasil в Ansible (Anti-Overwrite Invariant):**
+  - Категорически запрещено использовать `ansible.builtin.copy`, `ansible.builtin.template` или `ansible.builtin.ini_file` для путей, управляемых Yggdrasil через `links.toml` (например, `~/.config/systemd/user/*`, `~/.config/niri/*`, `~/.zsh/alias/*`).
+  - Копирование файлов поверх симлинков заменяет их на физические копии хоста, вызывая дрейф и ломая обратную связь с репозиторием.
+  - Ansible отвечает строго за низкоуровневые системные задачи (разметка NVMe, fstab, udev, SDDM, systemd-юниты с `scope: system`) и вызывает `ygg apply` для развёртывания пользовательских файлов.
 
 ### 2. Модель управления конфигурациями через Yggdrasil (`ygg`)
 Репозиторий dotfiles располагается в `/data/projects/dotfiles` (с симлинком в `~/projects/dotfiles`).
@@ -93,10 +97,23 @@ dotfiles/
   ```bash
   ygg apply -n
   ```
-- Изолированное тестирование без мутации хоста (Sandbox):
-  ```bash
-  ygg apply --sandbox /tmp/ygg-sandbox --skip-packages
-  ```
+- **Протокол тестирования в изолированной песочнице (Zero Host Mutation):**
+  - Движок Yggdrasil требует явного задания `YGG_HOME` при использовании `--sandbox` во избежание мутации рабочего `~/.ygg/host.toml` и кэшей хоста.
+  - Канонический шаблон тестирования в песочнице (Nushell):
+    ```bash
+    rtk nu -c '
+    let sandbox = (mktemp -d -t verify-sandbox-XXXXXX)
+    let ygg_home = $"($sandbox)/.ygg"
+    mkdir $"($ygg_home)/modules"
+    ^ln -s /data/projects/dotfiles $"($ygg_home)/modules/dotfiles"
+    "[[modules]]\nname = \"dotfiles\"\nscopes = [\"pc\"]\n" | save -f $"($ygg_home)/host.toml"
+
+    with-env { YGG_HOME: $ygg_home, YGG_SANDBOX: $sandbox } {
+        ^ygg apply --sandbox $sandbox --skip-packages
+    }
+    rm -rf $sandbox
+    '
+    ```
 
 
 ### 3. Dual-NVMe архитектура и стратегия кэширования
@@ -392,6 +409,9 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 - **Card Containers:** `ui.box` является строго терминальным узлом без дочерних элементов (leaf node). Все карточки-контейнеры и секции с дочерними элементами обязаны использовать `ui.column` или `ui.row` (`fill = "surface_variant/0.25"`, `radius = 8`, `border = "outline"`, `borderWidth = 1`).
 - **Panel Padding:** Корневой контейнер любой панели обязан указывать `padding = 14` и `gap = 12` для предотвращения прилипания контента к краям окна.
 - **Plugin Validation:** Всегда выполнять `noctalia plugins lint <path>` после модификации манифестов плагинов или скриптов.
+- **Noctalia Plugin Sources Invariant:**
+  - В `noctalia/config.toml` секция `[[plugins.source]]` с `kind = "path"` использует канонический абсолютный путь (`location = "/home/gidragir/.config/noctalia/plugins"`).
+  - Раскрытие `~` в этом поле не подтверждено (проверка бинарника `noctalia` по `strings` результата не дала): использовать `~` в `location` запрещено до явной проверки.
 
 
 ## 🗺 Архитектурная карта и навигация (OpenViking L0-L2)
