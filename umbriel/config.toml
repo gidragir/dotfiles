@@ -1,0 +1,272 @@
+# ==============================================================================
+# Umbriel Configuration — Host: CachyOS (NVIDIA RTX 4070 Ti Super + LG Ultrawide)
+# ==============================================================================
+
+[include]
+files = [
+    "/usr/share/umbriel/effects/cursor/trail/effect.toml",
+    "/usr/share/umbriel/effects/border/pulse/effect.toml",
+]
+
+[include.optional]
+files = []
+
+# ==============================================================================
+# General & Autostart
+# ==============================================================================
+[general]
+autostart = [
+    "noctalia",
+    "wl-paste --type text --watch cliphist store",
+    "wl-paste --type image --watch cliphist store",
+]
+nvidia_sync_workaround = false
+xwayland_native_resolution = true
+xwayland_primary_output = "DP-2"
+attach_modal_dialogs = false
+
+# ==============================================================================
+# Display / Outputs (LG Ultrawide 3440x1440 @ 144Hz)
+# ==============================================================================
+[output.DP-2]
+mode = "3440x1440@144"
+position = [0, 0]
+scale = 1.0
+vrr = "fullscreen"
+direct_scanout = true
+
+# ==============================================================================
+# Appearance & Effects
+# ==============================================================================
+[appearance.blur]
+radius = 4
+
+[effects]
+cursor = "trail"
+border = "pulse"
+
+# ==============================================================================
+# Input (Keyboard, Focus, Mouse)
+# ==============================================================================
+[input.keyboard]
+layout = "us,ru"
+options = "grp:caps_toggle"
+numlock_toggle = true
+
+[input.focus]
+follows_mouse = true
+hover_raises = false
+
+# ==============================================================================
+# Layout
+# ==============================================================================
+[layout]
+mode = "scrolling"
+extent_presets = [0.25, 0.333, 0.5, 0.667, 1.0]
+
+[layout.scrolling]
+default_extent_fraction = 0.5
+center_on_overview_select = true
+
+# ==============================================================================
+# Keybinds
+# ==============================================================================
+[keybinds]
+
+# --- Applications & Terminals ---
+"Mod+Return" = { action = "spawn ghostty -e zellij", repeat = false }
+"Mod+E" = { action = "spawn ghostty -e spf", repeat = false }
+"Mod+Shift+Escape" = { action = "spawn ghostty -e btop", repeat = false }
+"Mod+B" = { action = "spawn vivaldi", repeat = false }
+
+# --- Noctalia Shell Integrations ---
+"Mod" = "spawn noctalia msg panel-toggle launcher"
+"Mod+Ctrl+Return" = { action = "spawn noctalia msg panel-toggle launcher", repeat = false }
+"Mod+V" = { action = "spawn noctalia msg panel-toggle clipboard", repeat = false }
+"Mod+Shift+Q" = { action = "spawn noctalia msg panel-toggle session", repeat = false }
+"Mod+Alt+L" = { action = "spawn sh -c 'noctalia msg media pause && noctalia msg session lock'", repeat = false }
+
+# --- Screenshots ---
+"Mod+Shift+S" = { action = "spawn noctalia msg screenshot-region", repeat = false }
+"Print" = { action = "spawn noctalia msg screenshot-fullscreen", repeat = false }
+
+# --- Window & Column Actions ---
+"Mod+Q" = { action = "window-close", repeat = false }
+"Mod+T" = { action = "window-toggle-floating", repeat = false }
+"Mod+F" = { action = "window-toggle-maximize", repeat = false }
+"Mod+Ctrl+F" = { action = "window-toggle-fullscreen", repeat = false }
+"Mod+Shift+F" = { action = "window-toggle-maximize-to-edges", repeat = false }
+"Mod+C" = "column-center"
+"Mod+R" = "window-cycle-primary-extent"
+"Mod+Shift+R" = "window-cycle-primary-extent-back"
+"Mod+Comma" = "window-consume-left"
+"Mod+Period" = "window-consume-right"
+"Mod+Ctrl+Comma" = "window-consume-from-left"
+"Mod+Ctrl+Period" = "window-consume-from-right"
+"Mod+W" = { action = "column-toggle-tabbed", repeat = false }
+"Mod+Alt+Right" = "column-focus-tab-next"
+"Mod+Alt+Left" = "column-focus-tab-previous"
+
+# --- Navigation & Focus ---
+"Mod+Left" = "window-focus-left"
+"Mod+Right" = "window-focus-right"
+"Mod+Up" = "window-focus-up"
+"Mod+Down" = "window-focus-down"
+"Mod+H" = "window-focus-left"
+"Mod+L" = "window-focus-right"
+"Mod+K" = "window-focus-up"
+"Mod+J" = "window-focus-down"
+
+# --- Column & Window Moving ---
+"Mod+Shift+Left" = "column-move-left"
+"Mod+Shift+Right" = "column-move-right"
+"Mod+Shift+Up" = "window-move-up"
+"Mod+Shift+Down" = "window-move-down"
+"Mod+Shift+H" = "column-move-left"
+"Mod+Shift+L" = "column-move-right"
+"Mod+Shift+K" = "window-move-up"
+"Mod+Shift+J" = "window-move-down"
+
+# --- Layout Mode Switcher & Overview ---
+"Mod+Alt+Space" = "workspace-set-layout toggle scrolling dwindle master stacking"
+"Mod+O" = { action = "overview-toggle", repeat = false }
+"Mod+Escape" = "session-quit"
+
+# --- Scratchpad ---
+"Mod+Space" = "scratchpad-toggle"
+"Mod+Shift+Space" = { action = "window-move-to-scratchpad", repeat = false }
+"Mod+Tab" = "scratchpad-focus-next"
+
+# --- Workspaces (1-9) ---
+"Mod+1" = "workspace-switch 1"
+"Mod+2" = "workspace-switch 2"
+"Mod+3" = "workspace-switch 3"
+"Mod+4" = "workspace-switch 4"
+"Mod+5" = "workspace-switch 5"
+"Mod+6" = "workspace-switch 6"
+"Mod+7" = "workspace-switch 7"
+"Mod+8" = "workspace-switch 8"
+"Mod+9" = "workspace-switch 9"
+
+"Mod+Shift+1" = "window-move-to-workspace 1"
+"Mod+Shift+2" = "window-move-to-workspace 2"
+"Mod+Shift+3" = "window-move-to-workspace 3"
+"Mod+Shift+4" = "window-move-to-workspace 4"
+"Mod+Shift+5" = "window-move-to-workspace 5"
+"Mod+Shift+6" = "window-move-to-workspace 6"
+"Mod+Shift+7" = "window-move-to-workspace 7"
+"Mod+Shift+8" = "window-move-to-workspace 8"
+"Mod+Shift+9" = "window-move-to-workspace 9"
+
+# --- Media & Volume Controls (Noctalia OSD) ---
+"XF86AudioRaiseVolume" = { action = "spawn noctalia msg volume-up", allow_when_locked = true }
+"XF86AudioLowerVolume" = { action = "spawn noctalia msg volume-down", allow_when_locked = true }
+"XF86AudioMute" = { action = "spawn noctalia msg volume-mute", allow_when_locked = true, repeat = false }
+"XF86AudioPlay" = { action = "spawn noctalia msg media toggle", allow_when_locked = true, repeat = false }
+"XF86AudioPause" = { action = "spawn noctalia msg media pause", allow_when_locked = true, repeat = false }
+"XF86AudioNext" = { action = "spawn noctalia msg media next", allow_when_locked = true }
+"XF86AudioPrev" = { action = "spawn noctalia msg media previous", allow_when_locked = true }
+"XF86MonBrightnessUp" = { action = "spawn noctalia msg brightness-up", allow_when_locked = true }
+"XF86MonBrightnessDown" = { action = "spawn noctalia msg brightness-down", allow_when_locked = true }
+
+# --- Custom AI & Productivity Helpers ---
+"Mod+M" = { action = "spawn ytm-toggle.sh", repeat = false }
+"Mod+Shift+M" = { action = "spawn noctalia msg panel-toggle gidragir/ytm:panel", repeat = false }
+"Mod+Shift+O" = { action = "spawn noctalia msg panel-toggle gidragir/obsidian:panel", repeat = false }
+"Mod+N" = { action = "spawn obsidian-create-note.sh", repeat = false }
+"Mod+A" = { action = "spawn anythingllm-assistant-toggle.sh", repeat = false }
+"Mod+Alt+A" = { action = "spawn khoj-toggle.sh", repeat = false }
+"Mod+Ctrl+A" = { action = "spawn ai-launcher.sh", repeat = false }
+
+# ==============================================================================
+# Window Rules
+# ==============================================================================
+[[window_rule]]
+blur = true
+corner_radius = 10
+
+# Noctalia components
+[[window_rule]]
+match.app_id = "^dev.noctalia.Noctalia$"
+default_floating = true
+default_floating_size_px = { width = 1020, height = 900 }
+
+[[window_rule]]
+match.app_id = "^dev.noctalia.UmbrielSharePicker$"
+default_floating = true
+default_floating_size_px = { width = 800, height = 600 }
+
+# Browser and Terminals width ratio on Ultrawide
+[[window_rule]]
+match.app_id = "^(vivaldi-stable|ghostty|com\\.mitchellh\\.ghostty|kitty)$"
+default_scrolling_extent = 0.5
+
+# Messengers width ratio
+[[window_rule]]
+match.app_id = "^(telegramdesktop|org\\.telegram\\.desktop|discord|vesktop|slack)$"
+default_scrolling_extent = 0.25
+
+# Floating dialogs and popups
+[[window_rule]]
+match.is_dialog = true
+default_floating = true
+
+[[window_rule]]
+match.title = "^[Ss]ettings.*"
+default_floating = true
+
+[[window_rule]]
+match.app_id = "^(rofi|org\\.gnome\\.Nautilus|anythingllm-desktop)$"
+default_floating = true
+
+[[window_rule]]
+match.app_id = "^(Hermes|hermes-desktop)$"
+default_floating = true
+default_floating_size_px = { width = 1100, height = 850 }
+
+[[window_rule]]
+match.app_id = "^(pear-desktop|youtube-music|com\\.github\\.th[-_]ch\\.youtube[-_]music)$"
+default_floating = true
+default_floating_size_px = { width = 1200, height = 850 }
+
+# Picture in Picture
+[[window_rule]]
+match.title = "^(Picture-in-Picture|Picture in picture)$"
+default_floating = true
+default_position = { x = 20, y = 20, anchor = "bottom_right" }
+default_pinned = true
+
+# Games & Gamescope (Pure Fullscreen)
+[[window_rule]]
+match.app_id = "^(gamescope|steam_app_.*)$"
+default_fullscreen = true
+corner_radius = 0
+border_width = 0
+
+# Steam Notification Toasts
+[[window_rule]]
+match.title = "^notificationtoasts_.+_desktop"
+default_position = { x = 10, y = 10, anchor = "bottom_right" }
+default_focused = false
+default_pinned = true
+
+# ==============================================================================
+# Layer Rules (Noctalia UI Blur & Optimization)
+# ==============================================================================
+[[layer_rule]]
+match.namespace = "^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd|desktop-widget-[^\"]*)$"
+blur = true
+blur_ignore_alpha = 0.5
+blur_popups = true
+
+[[layer_rule]]
+match.namespace = "^noctalia-(notification|dock|panel|attached-panel|osd)$"
+blur_optimized = false
+
+# ==============================================================================
+# Overview & Hot Corners
+# ==============================================================================
+[hot_corners.top_left]
+enabled = true
+delay_ms = 500
+action = "overview-open"
