@@ -135,6 +135,7 @@ center_on_overview_select = true
 # --- Scratchpad ---
 "Mod+Space" = "scratchpad-toggle"
 "Mod+Shift+Space" = { action = "window-move-to-scratchpad", repeat = false }
+"Mod+Ctrl+Space" = { action = "window-restore-from-scratchpad", repeat = false }
 "Mod+Tab" = "scratchpad-focus-next"
 
 # --- Workspaces (1-9) ---
