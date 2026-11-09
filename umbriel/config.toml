@@ -115,6 +115,10 @@ back_and_forth = true
 "Mod+E" = { action = "spawn ghostty -e spf", repeat = false }
 "Mod+Shift+Escape" = { action = "spawn ghostty -e btop", repeat = false }
 "Mod+B" = { action = "spawn vivaldi", repeat = false }
+"Mod+Shift+A" = { action = "spawn nu -c 'source $nu.config-path; open-focus-id code code'", repeat = false }
+"Mod+Z" = { action = "spawn sh -c 'res=$(zoxide query -l | noctalia dmenu -p Zoxide:); [ -n \"$res\" ] && antigravity-ide \"$res\"'", repeat = false }
+"Mod+X" = { action = "spawn sh -c 'res=$(ls ~/workspaces | noctalia dmenu -p Workspace:); [ -n \"$res\" ] && antigravity-ide ~/workspaces/\"$res\"'", repeat = false }
+"Mod+F1" = { action = "spawn cooler-toggle.sh", repeat = false }
 
 # --- Noctalia Shell Integrations ---
 "Mod" = "spawn noctalia msg panel-toggle launcher"
@@ -229,6 +233,9 @@ back_and_forth = true
 "Mod+Shift+M" = { action = "spawn noctalia msg panel-toggle gidragir/ytm:panel", repeat = false }
 "Mod+Shift+O" = { action = "spawn noctalia msg panel-toggle gidragir/obsidian:panel", repeat = false }
 "Mod+N" = { action = "spawn obsidian-create-note.sh", repeat = false }
+"Mod+Alt+N" = { action = "spawn obsidian-create-note.sh", repeat = false }
+"Mod+I" = { action = "spawn path-picker-dmenu.sh", repeat = false }
+"Mod+Alt+F" = { action = "spawn obsidian-helper.sh search-notes", repeat = false }
 "Mod+A" = { action = "spawn anythingllm-assistant-toggle.sh", repeat = false }
 "Mod+Alt+A" = { action = "spawn khoj-toggle.sh", repeat = false }
 "Mod+Ctrl+A" = { action = "spawn ai-launcher.sh", repeat = false }
