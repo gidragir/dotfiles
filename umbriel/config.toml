@@ -126,6 +126,8 @@ back_and_forth = true
 "Mod+V" = { action = "spawn noctalia msg panel-toggle clipboard", repeat = false }
 "Mod+Shift+Q" = { action = "spawn noctalia msg panel-toggle session", repeat = false }
 "Mod+Alt+L" = { action = "spawn sh -c 'noctalia msg media pause && noctalia msg session lock'", repeat = false }
+"Mod+Shift+0" = { action = "cheatsheet-toggle", repeat = false }
+"Mod+Shift+P" = { action = "dpms-off", repeat = false }
 
 # --- Screenshots ---
 "Mod+Shift+S" = { action = "spawn noctalia msg screenshot-region", repeat = false }
@@ -187,7 +189,8 @@ back_and_forth = true
 "Mod+Ctrl+E" = "effect-border-toggle"
 "Mod+Alt+E" = "effect-border-reset"
 "Mod+O" = { action = "overview-toggle", repeat = false }
-"Mod+Escape" = "session-quit"
+"Mod+Escape" = { action = "shortcuts-inhibit-toggle", allow_when_inhibited = true, repeat = false }
+"Ctrl+Alt+Delete" = { action = "session-quit", repeat = false }
 
 # --- Scratchpad ---
 "Mod+Space" = "scratchpad-toggle"
@@ -221,6 +224,7 @@ back_and_forth = true
 "XF86AudioRaiseVolume" = { action = "spawn noctalia msg volume-up", allow_when_locked = true }
 "XF86AudioLowerVolume" = { action = "spawn noctalia msg volume-down", allow_when_locked = true }
 "XF86AudioMute" = { action = "spawn noctalia msg volume-mute", allow_when_locked = true, repeat = false }
+"XF86AudioMicMute" = { action = "spawn noctalia msg mic-mute", allow_when_locked = true, repeat = false }
 "XF86AudioPlay" = { action = "spawn noctalia msg media toggle", allow_when_locked = true, repeat = false }
 "XF86AudioPause" = { action = "spawn noctalia msg media pause", allow_when_locked = true, repeat = false }
 "XF86AudioNext" = { action = "spawn noctalia msg media next", allow_when_locked = true }
