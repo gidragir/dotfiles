@@ -164,6 +164,12 @@ back_and_forth = true
 "Mod+K" = "window-focus-up"
 "Mod+J" = "window-focus-down"
 "Alt+Tab" = "window-focus-last"
+"Mod+WheelRight" = "window-focus-right"
+"Mod+WheelLeft" = "window-focus-left"
+"Mod+Shift+WheelDown" = "window-focus-right"
+"Mod+Shift+WheelUp" = "window-focus-left"
+"Mod+Alt+WheelUp" = "window-focus-up"
+"Mod+Alt+WheelDown" = "window-focus-down"
 
 # --- Column & Window Moving ---
 "Mod+Shift+Left" = "column-move-left"
@@ -180,6 +186,10 @@ back_and_forth = true
 "Mod+End" = "column-focus-last"
 "Mod+Ctrl+Home" = "column-move-to-first"
 "Mod+Ctrl+End" = "column-move-to-last"
+"Mod+Ctrl+WheelRight" = "column-move-right"
+"Mod+Ctrl+WheelLeft" = "column-move-left"
+"Mod+Ctrl+Shift+WheelDown" = "column-move-right"
+"Mod+Ctrl+Shift+WheelUp" = "column-move-left"
 "Mod+Shift+Ctrl+Up" = "column-move-to-workspace-previous"
 "Mod+Shift+Ctrl+Down" = "column-move-to-workspace-next"
 
@@ -236,6 +246,11 @@ back_and_forth = true
 "Mod+Ctrl+7" = "column-move-to-workspace 7"
 "Mod+Ctrl+8" = "column-move-to-workspace 8"
 "Mod+Ctrl+9" = "column-move-to-workspace 9"
+
+"Mod+WheelDown" = { action = "workspace-next", cooldown_ms = 150 }
+"Mod+WheelUp" = { action = "workspace-previous", cooldown_ms = 150 }
+"Mod+Ctrl+WheelDown" = { action = "column-move-to-workspace-next", cooldown_ms = 150 }
+"Mod+Ctrl+WheelUp" = { action = "column-move-to-workspace-previous", cooldown_ms = 150 }
 
 # --- Media & Volume Controls (Noctalia OSD) ---
 "XF86AudioRaiseVolume" = { action = "spawn noctalia msg volume-up", allow_when_locked = true }
