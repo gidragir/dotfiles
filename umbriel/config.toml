@@ -163,6 +163,7 @@ back_and_forth = true
 "Mod+L" = "window-focus-right"
 "Mod+K" = "window-focus-up"
 "Mod+J" = "window-focus-down"
+"Alt+Tab" = "window-focus-last"
 
 # --- Column & Window Moving ---
 "Mod+Shift+Left" = "column-move-left"
@@ -179,6 +180,8 @@ back_and_forth = true
 "Mod+End" = "column-focus-last"
 "Mod+Ctrl+Home" = "column-move-to-first"
 "Mod+Ctrl+End" = "column-move-to-last"
+"Mod+Shift+Ctrl+Up" = "column-move-to-workspace-previous"
+"Mod+Shift+Ctrl+Down" = "column-move-to-workspace-next"
 
 # --- Layout Mode Switcher & Controls ---
 "Mod+Alt+Space" = "workspace-set-layout toggle scrolling dwindle master stacking"
@@ -223,6 +226,16 @@ back_and_forth = true
 "Mod+Shift+7" = "window-move-to-workspace 7"
 "Mod+Shift+8" = "window-move-to-workspace 8"
 "Mod+Shift+9" = "window-move-to-workspace 9"
+
+"Mod+Ctrl+1" = "column-move-to-workspace 1"
+"Mod+Ctrl+2" = "column-move-to-workspace 2"
+"Mod+Ctrl+3" = "column-move-to-workspace 3"
+"Mod+Ctrl+4" = "column-move-to-workspace 4"
+"Mod+Ctrl+5" = "column-move-to-workspace 5"
+"Mod+Ctrl+6" = "column-move-to-workspace 6"
+"Mod+Ctrl+7" = "column-move-to-workspace 7"
+"Mod+Ctrl+8" = "column-move-to-workspace 8"
+"Mod+Ctrl+9" = "column-move-to-workspace 9"
 
 # --- Media & Volume Controls (Noctalia OSD) ---
 "XF86AudioRaiseVolume" = { action = "spawn noctalia msg volume-up", allow_when_locked = true }
