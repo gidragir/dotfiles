@@ -67,7 +67,7 @@ options = "grp:caps_toggle"
 numlock_toggle = true
 
 [input.focus]
-follows_mouse = true
+follows_mouse = "sloppy"
 hover_raises = false
 
 # ==============================================================================

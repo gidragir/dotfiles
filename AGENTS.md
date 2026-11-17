@@ -27,7 +27,8 @@ dotfiles/
 ├── secrets.example.toml         # Шаблон хостовых секретов для ~/.ygg/secrets.toml
 ├── niri/                        # ~/.config/niri (config.kdl, noctalia.kdl, cfg/*.kdl)
 │   └── displays/                # Конфигурации дисплеев (pc.kdl, asus.kdl)
-├── noctalia/                    # ~/.config/noctalia (config.toml, plugins/)
+├── noctalia/                    # ~/.config/noctalia (пофайловый линкинг: config.toml, plugins/, colors.json, settings.json)
+│   └── hosts/                   # Хостовые переопределения (pc.toml, asus.toml -> ~/.config/noctalia/host.toml)
 ├── rofi/                        # ~/.config/rofi (cliphist, main, noctalia.rasi)
 ├── systemd/                     # ~/.config/systemd/user (openrgb, rclone)
 ├── vivaldi/                     # ~/.config/vivaldi-stable.conf
@@ -408,7 +409,12 @@ niri-sandbox    # Запускает вложенную сессию Wayland в 
 ### 4. Noctalia Shell v5 & Luau Plugin Invariants
 - **Noctalia Configuration & State Synchronization Invariant:**
   - **Config Stack:** Базовый декларативный конфиг хранится в [`noctalia/config.toml`](file:///home/gidragir/projects/dotfiles/noctalia/config.toml) (версионируется в Git), динамическое runtime-состояние — в `~/.local/state/noctalia/settings.toml`.
-  - **Правило синхронизации раскладки:** Все структурные элементы панели (раскладки островов `start`/`center`/`end`, капсульные группы `[[bar.islands.capsule_group]]`, аккордеоны плеера, виджеты `wallhaven`/`mpvpaper`/`audio_switcher`) обязаны быть задекларированы в `noctalia/config.toml`.
+  - **Правило синхронизации раскладки:** Все структурные элементы панели (раскладки островов `start`/`center`/`end`, капсульные группы `[[bar.islands.capsule_group]]`, аккордеоны плеера, виджеты `wallhaven`/`mpvpaper`/`audio_switcher`) обязаны быть задекларированы в `noctalia/config.toml` (общие) или в `noctalia/hosts/<host>.toml` (хостово-специфичные, например `end` с `openrgb`/`battery`).
+  - **Multi-File & Host Scope Invariant:**
+    - `~/.config/noctalia/` является **физической гибридной директорией** (монолитный симлинк директории запрещён в `links.toml`); общие файлы (`config.toml`, `colors.json`, `plugins`, `settings.json`) линкуются гранулярно, а хостовый профиль `noctalia/hosts/{pc,asus}.toml` линкуется через `[scope.<host>.links]` в `~/.config/noctalia/host.toml`.
+    - Порядок слияния Noctalia: `*.toml` в `~/.config/noctalia/` по алфавиту (`config.toml` → `host.toml` → опциональный нетрекаемый `zzz-local.toml`), затем `~/.local/state/noctalia/settings.toml`.
+    - При `deepMerge` таблицы сливаются рекурсивно, а **массивы и скаляры перезаписываются целиком** — списки (`[bar.islands].end`, `[plugins].enabled`) при хостовом делении целиком задаются в `noctalia/hosts/<host>.toml`.
+    - После любых правок TOML выполнять проверку: `noctalia config validate`.
   - **Запрет слепого сброса `settings.toml`:** Категорически запрещено удалять `settings.toml` или вырезать из него блок `[bar.islands]` без предварительного бэкапа и переноса пользовательских настроек в `config.toml`. Сброс затирает эргономику пользователя (аккордеоны, порядок виджетов).
   - **Протокол восстановления после смены симлинков:**
     1. Создать резервную копию: `cp ~/.local/state/noctalia/settings.toml ~/.local/state/noctalia/settings.toml.bak`.

@@ -951,15 +951,15 @@ print('true' if 'virt-viewer' in sys_pkgs else 'false')
         record_fail "T1.7.1" "ygg status exits with code 0" "Exit code $ygg_exit: $ygg_out"
     fi
 
-    # T1.7.2: Noctalia symlink in ~/.config points to repository noctalia
+    # T1.7.2: Noctalia plugins symlink in ~/.config/noctalia points to repository noctalia/plugins
     local noc_target
-    noc_target=$(readlink -f "${HOME}/.config/noctalia" 2>/dev/null || echo "")
+    noc_target=$(readlink -f "${HOME}/.config/noctalia/plugins" 2>/dev/null || echo "")
     local expected_noc
-    expected_noc=$(readlink -f "${REPO_ROOT}/noctalia" 2>/dev/null || echo "")
+    expected_noc=$(readlink -f "${REPO_ROOT}/noctalia/plugins" 2>/dev/null || echo "")
     if [[ -n "$noc_target" && "$noc_target" == "$expected_noc" ]]; then
-        record_pass "T1.7.2" "~/.config/noctalia correctly symlinks to repo noctalia"
+        record_pass "T1.7.2" "~/.config/noctalia/plugins correctly symlinks to repo noctalia/plugins"
     else
-        record_fail "T1.7.2" "~/.config/noctalia symlink check" "Target '$noc_target' does not match expected '$expected_noc'"
+        record_fail "T1.7.2" "~/.config/noctalia/plugins symlink check" "Target '$noc_target' does not match expected '$expected_noc'"
     fi
 
     # T1.7.3: Directory structure mirrors noctalia layout

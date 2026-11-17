@@ -3,7 +3,10 @@
 "niri/config.kdl" = "~/.config/niri/config.kdl"
 "niri/noctalia.kdl" = "~/.config/niri/noctalia.kdl"
 "niri/cfg/*" = "~/.config/niri/cfg/*"
-"noctalia" = "~/.config/noctalia"
+"noctalia/colors.json" = "~/.config/noctalia/colors.json"
+"noctalia/config.toml" = "~/.config/noctalia/config.toml"
+"noctalia/plugins" = "~/.config/noctalia/plugins"
+"noctalia/settings.json" = "~/.config/noctalia/settings.json"
 "rofi" = "~/.config/rofi"
 "systemd/user/*" = "~/.config/systemd/user/*"
 "umbriel/config.toml" = "~/.config/umbriel/config.toml"
@@ -16,6 +19,7 @@
 
 [scope.pc.links]
 "niri/displays/pc.kdl" = "~/.config/niri/cfg/display.kdl"
+"noctalia/hosts/pc.toml" = "~/.config/noctalia/host.toml"
 "OpenRGB/off.orp" = "~/.config/OpenRGB/off.orp"
 "systemd/user-pc/*" = "~/.config/systemd/user/*"
 "zsh/alias-pc/cooler.zsh" = "~/.zsh/alias/cooler.zsh"
@@ -23,3 +27,4 @@
 
 [scope.asus.links]
 "niri/displays/asus.kdl" = "~/.config/niri/cfg/display.kdl"
+"noctalia/hosts/asus.toml" = "~/.config/noctalia/host.toml"

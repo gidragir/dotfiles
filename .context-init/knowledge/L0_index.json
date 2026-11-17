@@ -3,32 +3,32 @@
   "schema_version": 4,
   "project": "dotfiles",
   "description": "Automated setup scripts and Ansible playbooks for configuring a **CachyOS (Niri)** installation. Transforms a bare system into an optimized development environment for Rust, TypeScript, Python, Kubernetes, and DevOps...",
-  "updated_at": "2026-11-08",
+  "updated_at": "2026-11-17",
   "project_type": "Generic / Multi-language",
   "entrypoints": [
     "mise.toml"
   ],
   "commands": {
     "custom": {
-      "dotfiles:verify": "rtk mise run dotfiles:verify",
-      "dotfiles:diff": "rtk mise run dotfiles:diff",
-      "knowledge:l0": "rtk mise run knowledge:l0",
-      "net:revert": "rtk mise run net:revert",
-      "vm:postinstall": "rtk mise run vm:postinstall",
-      "dotfiles:status": "rtk mise run dotfiles:status",
-      "docker:check": "rtk mise run docker:check",
-      "setup:wallpaper-engine": "rtk mise run setup:wallpaper-engine",
-      "apply:all": "rtk mise run apply:all",
-      "dotfiles:apply": "rtk mise run dotfiles:apply",
-      "disk:wipe": "rtk mise run disk:wipe",
-      "test:e2e": "rtk mise run test:e2e",
+      "setup:virt": "rtk mise run setup:virt",
       "net:optimize": "rtk mise run net:optimize",
       "rclone:resync": "rtk mise run rclone:resync",
-      "vm:create": "rtk mise run vm:create",
-      "setup:virt": "rtk mise run setup:virt",
-      "setup:sddm": "rtk mise run setup:sddm",
+      "net:revert": "rtk mise run net:revert",
+      "setup:wallpaper-engine": "rtk mise run setup:wallpaper-engine",
       "setup:gaming": "rtk mise run setup:gaming",
-      "setup:cooler-control": "rtk mise run setup:cooler-control"
+      "knowledge:l0": "rtk mise run knowledge:l0",
+      "setup:cooler-control": "rtk mise run setup:cooler-control",
+      "dotfiles:verify": "rtk mise run dotfiles:verify",
+      "vm:postinstall": "rtk mise run vm:postinstall",
+      "apply:all": "rtk mise run apply:all",
+      "test:e2e": "rtk mise run test:e2e",
+      "dotfiles:diff": "rtk mise run dotfiles:diff",
+      "dotfiles:status": "rtk mise run dotfiles:status",
+      "setup:sddm": "rtk mise run setup:sddm",
+      "dotfiles:apply": "rtk mise run dotfiles:apply",
+      "disk:wipe": "rtk mise run disk:wipe",
+      "docker:check": "rtk mise run docker:check",
+      "vm:create": "rtk mise run vm:create"
     }
   },
   "subsystems": [
@@ -165,7 +165,7 @@
     {
       "id": "noctalia",
       "name": "Noctalia",
-      "summary": "Модуль и компоненты директории `noctalia` (3 файлов)",
+      "summary": "Модуль и компоненты директории `noctalia` (5 файлов)",
       "l1_path": "subsystems/noctalia.md",
       "tags": [
         "Generic / Multi-language",
@@ -174,6 +174,8 @@
       "key_files": [
         "noctalia/colors.json",
         "noctalia/config.toml",
+        "noctalia/hosts/asus.toml",
+        "noctalia/hosts/pc.toml",
         "noctalia/settings.json"
       ],
       "files": [
@@ -183,6 +185,14 @@
         },
         {
           "path": "noctalia/config.toml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/hosts/asus.toml",
+          "is_entrypoint": false
+        },
+        {
+          "path": "noctalia/hosts/pc.toml",
           "is_entrypoint": false
         },
         {
@@ -570,6 +580,26 @@
       "summary_source": "heuristic"
     },
     {
+      "id": "umbriel",
+      "name": "Umbriel",
+      "summary": "Модуль и компоненты директории `umbriel` (1 файлов)",
+      "l1_path": "subsystems/umbriel.md",
+      "tags": [
+        "Generic / Multi-language",
+        "umbriel"
+      ],
+      "key_files": [
+        "umbriel/config.toml"
+      ],
+      "files": [
+        {
+          "path": "umbriel/config.toml",
+          "is_entrypoint": false
+        }
+      ],
+      "summary_source": "heuristic"
+    },
+    {
       "id": "wallpaper-engine",
       "name": "Wallpaper Engine",
       "summary": "Модуль и компоненты директории `wallpaper-engine` (1 файлов)",
@@ -680,7 +710,7 @@
     "Все изменения фиксируются через атомарные и типизированные коммиты."
   ],
   "generator": {
-    "version": "0.4.0",
-    "build": "05b1743"
+    "version": "0.5.1",
+    "build": "3697e79"
   }
 }

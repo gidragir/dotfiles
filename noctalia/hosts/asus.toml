@@ -1,0 +1,74 @@
+# Хостовые настройки Noctalia для профиля asus (накладываются поверх config.toml)
+
+[bar.islands]
+end = [
+    "hermes",
+    "headroom",
+    "docker",
+    "obsidian",
+    "temp",
+    "cpu",
+    "gpu",
+    "ram",
+    "battery",
+    "keyboard_layout",
+    "audio_switcher",
+    "tray",
+    "notifications",
+]
+
+[battery]
+warning_threshold = 15
+
+[brightness]
+enable_ddcutil = false
+ignore_mmids = []
+minimum_brightness = 0.05
+sync_all_monitors = false
+
+[idle]
+behavior_order = ["lock", "screen-off", "lock-and-suspend"]
+pre_action_fade_seconds = 2.0
+
+[idle.behavior.lock]
+action = "lock"
+command = ""
+enabled = true
+locked_timeout = 0.0
+resume_command = ""
+timeout = 300.0
+
+[idle.behavior.lock-and-suspend]
+action = "lock_and_suspend"
+command = ""
+enabled = true
+locked_timeout = 0.0
+resume_command = ""
+timeout = 900.0
+
+[idle.behavior.screen-off]
+action = "screen_off"
+command = ""
+enabled = true
+locked_timeout = 0.0
+resume_command = ""
+timeout = 360.0
+
+[lockscreen_widgets]
+enabled = false
+schema_version = 2
+
+[plugins]
+enabled = [
+    "noctalia/notes",
+    "gidragir/hermes",
+    "gidragir/obsidian",
+    "gidragir/virt-manager",
+    "gidragir/ytm",
+    "ayagmar/headroom",
+    "yuuto/arch-updater",
+    "8bury/mini-docker",
+    "gidragir/audio-outputs",
+    "gustav0ar/drive-health",
+    "teagar/niri-workspace-preview",
+]
