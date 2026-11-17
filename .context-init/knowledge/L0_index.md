@@ -14,7 +14,7 @@
 
 | Подсистема | Роль / Назначение | Точки входа | L1 Карточка |
 | :--- | :--- | :--- | :--- |
-| **Docs** | Модуль и компоненты директории `docs` (5 файлов) | `-` | [subsystems/docs.md](subsystems/docs.md) |
+| **Docs** | Модуль и компоненты директории `docs` (7 файлов) | `-` | [subsystems/docs.md](subsystems/docs.md) |
 | **Niri** | Модуль и компоненты директории `niri` (15 файлов) | `-` | [subsystems/niri.md](subsystems/niri.md) |
 | **Noctalia** | Модуль и компоненты директории `noctalia` (5 файлов) | `-` | [subsystems/noctalia.md](subsystems/noctalia.md) |
 | **Noctalia Plugins** | Модуль и компоненты директории `noctalia/plugins` (15 файлов) | `-` | [subsystems/noctalia_plugins.md](subsystems/noctalia_plugins.md) |

@@ -10,38 +10,40 @@
   ],
   "commands": {
     "custom": {
-      "dotfiles:status": "rtk mise run dotfiles:status",
-      "test:e2e": "rtk mise run test:e2e",
-      "apply:all": "rtk mise run apply:all",
-      "setup:virt": "rtk mise run setup:virt",
-      "dotfiles:verify": "rtk mise run dotfiles:verify",
-      "net:optimize": "rtk mise run net:optimize",
-      "rclone:resync": "rtk mise run rclone:resync",
-      "setup:cooler-control": "rtk mise run setup:cooler-control",
       "dotfiles:diff": "rtk mise run dotfiles:diff",
+      "setup:virt": "rtk mise run setup:virt",
+      "apply:all": "rtk mise run apply:all",
+      "setup:gaming": "rtk mise run setup:gaming",
+      "rclone:resync": "rtk mise run rclone:resync",
+      "net:revert": "rtk mise run net:revert",
       "docker:check": "rtk mise run docker:check",
       "setup:wallpaper-engine": "rtk mise run setup:wallpaper-engine",
-      "dotfiles:apply": "rtk mise run dotfiles:apply",
-      "vm:create": "rtk mise run vm:create",
-      "net:revert": "rtk mise run net:revert",
+      "setup:sddm": "rtk mise run setup:sddm",
+      "dotfiles:verify": "rtk mise run dotfiles:verify",
+      "net:optimize": "rtk mise run net:optimize",
+      "dotfiles:status": "rtk mise run dotfiles:status",
+      "setup:cooler-control": "rtk mise run setup:cooler-control",
       "vm:postinstall": "rtk mise run vm:postinstall",
-      "knowledge:l0": "rtk mise run knowledge:l0",
+      "vm:create": "rtk mise run vm:create",
+      "dotfiles:apply": "rtk mise run dotfiles:apply",
+      "test:e2e": "rtk mise run test:e2e",
       "disk:wipe": "rtk mise run disk:wipe",
-      "setup:gaming": "rtk mise run setup:gaming",
-      "setup:sddm": "rtk mise run setup:sddm"
+      "knowledge:l0": "rtk mise run knowledge:l0"
     }
   },
   "subsystems": [
     {
       "id": "docs",
       "name": "Docs",
-      "summary": "Модуль и компоненты директории `docs` (5 файлов)",
+      "summary": "Модуль и компоненты директории `docs` (7 файлов)",
       "l1_path": "subsystems/docs.md",
       "tags": [
         "Generic / Multi-language",
         "docs"
       ],
       "key_files": [
+        "docs/noctalia-invariants.md",
+        "docs/playbooks-invariants.md",
         "docs/superpowers/plans/2026-10-26-audio-outputs-modernization.md",
         "docs/superpowers/plans/2026-10-26-audio-outputs.md",
         "docs/superpowers/plans/2026-11-03-network-optimization-playbook.md",
@@ -49,6 +51,14 @@
         "docs/superpowers/specs/2026-11-03-network-optimization-design.md"
       ],
       "files": [
+        {
+          "path": "docs/noctalia-invariants.md",
+          "is_entrypoint": false
+        },
+        {
+          "path": "docs/playbooks-invariants.md",
+          "is_entrypoint": false
+        },
         {
           "path": "docs/superpowers/plans/2026-10-26-audio-outputs-modernization.md",
           "is_entrypoint": false

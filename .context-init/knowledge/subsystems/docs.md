@@ -1,23 +1,23 @@
 ---
-directory: docs/superpowers
+directory: docs
 source:
   kind: git
-  blob_sha: 8b3acdc9a8af784f847e7ea467749c560a58bd10
-  commit_sha: ba439a6caee1b925979b54cd7c941cfd1937f1a9
+  blob_sha: 1345f149dcd8eb3aa0b74da45c795d76290ba03d
+  commit_sha: 2f2def043ba07071ee6a6f8591aa67080db07258
 generated_by:
   component: context-init
-  role: init
+  role: update
   model: none
 freshness:
-  total_entries: 5
-  sampled_entries: 5
+  total_entries: 7
+  sampled_entries: 7
   unsampled_entries: 0
   pending_child_changes: 0
 ---
 
 # Подсистема: Docs (L1)
 
-Модуль и компоненты директории `docs` (5 файлов)
+Модуль и компоненты директории `docs` (7 файлов)
 
 > **Идентификатор:** `docs`
 > **Теги:** Generic / Multi-language, docs
@@ -26,6 +26,8 @@ freshness:
 
 | Файл | Статус |
 | :--- | :--- |
+| `docs/noctalia-invariants.md` | Исходный код |
+| `docs/playbooks-invariants.md` | Исходный код |
 | `docs/superpowers/plans/2026-10-26-audio-outputs-modernization.md` | Исходный код |
 | `docs/superpowers/plans/2026-10-26-audio-outputs.md` | Исходный код |
 | `docs/superpowers/plans/2026-11-03-network-optimization-playbook.md` | Исходный код |
