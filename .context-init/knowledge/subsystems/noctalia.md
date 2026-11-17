@@ -2,8 +2,8 @@
 directory: noctalia
 source:
   kind: git
-  blob_sha: b94b570a39f08c38326c61acae90f92a76e69a02
-  commit_sha: 50e4c3374df4b0975991db0179ae8cb1f514d080
+  blob_sha: b1fb68047b437540303b23f4c0ca43d3f40cf02c
+  commit_sha: fa1b045a1e71978ecba356af20a3fd41aef4a1c7
 generated_by:
   component: context-init
   role: update

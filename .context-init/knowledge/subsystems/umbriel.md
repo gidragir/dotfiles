@@ -3,7 +3,7 @@ directory: umbriel/config.toml
 source:
   kind: git
   blob_sha: 21cc4bec168158a434f572e7beb834eca9900225
-  commit_sha: 50e4c3374df4b0975991db0179ae8cb1f514d080
+  commit_sha: fa1b045a1e71978ecba356af20a3fd41aef4a1c7
 generated_by:
   component: context-init
   role: update
